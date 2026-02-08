@@ -1,0 +1,166 @@
+{
+  "Home": {
+    "title": "AIエージェントの未来を習得する",
+    "subtitle": "自律型アーキテクチャの決定版リソース。次世代AI開発者のためのプロフェッショナルワークフロー。",
+    "searchPlaceholder": "リポジトリを検索...",
+    "hotTopics": "ホットトピック",
+    "viewAll": "すべて表示",
+    "featuredTutorials": "注目のチュートリアル",
+    "repositorySegments": "リポジトリセクション",
+    "systemStatus": "システム状態: 稼働中",
+    "categories": {
+      "foundation": "基礎",
+      "workflows": "ワークフロー",
+      "practice": "実践",
+      "showcase": "事例紹介",
+      "llms": "LLM"
+    }
+  },
+  "Navigation": {
+    "tutorials": "チュートリアル",
+    "explore": "探索",
+    "practice": "実践",
+    "showcase": "事例紹介",
+    "news": "ニュース",
+    "docs": "ドキュメント",
+    "signIn": "ログイン",
+    "createStudio": "クリエイタースタジオ",
+    "searchPlaceholder": "リソースを検索...",
+    "requestTutorial": "チュートリアルをリクエスト"
+  },
+  "Tutorial": {
+    "difficulty": {
+      "beginner": "初級",
+      "intermediate": "中級",
+      "advanced": "上級"
+    },
+    "format": {
+      "video": "動画",
+      "text": "記事",
+      "interactive": "インタラクティブ"
+    },
+    "relatedTutorials": "関連チュートリアル",
+    "nextLesson": "次のレッスン",
+    "prevLesson": "前のレッスン",
+    "tableOfContents": "目次",
+    "notFound": "チュートリアルが見つかりません",
+    "home": "ホーム",
+    "tutorials": "チュートリアル",
+    "featured": "注目",
+    "previous": "前へ",
+    "next": "次へ",
+    "tryItYourself": "自分で試してみよう",
+    "tryItDescription": "このチュートリアルを練習するためのインタラクティブ環境を起動します。",
+    "openSandbox": "サンドボックスを開く"
+  },
+  "News": {
+    "title": "ニュース＆アップデート",
+    "description": "AIエージェント、LLM、自律システムの最新動向をお届けします。",
+    "readMore": "続きを読む",
+    "all": "すべて",
+    "tech": "テクノロジー",
+    "research": "研究",
+    "industry": "業界"
+  },
+  "Explore": {
+    "title": "すべてのチュートリアル",
+    "description": "AIエージェントチュートリアルの包括的なコレクションを探索",
+    "allLanguages": "すべての言語",
+    "english": "英語",
+    "chinese": "中国語",
+    "japanese": "日本語",
+    "allLevels": "すべてのレベル",
+    "beginner": "初級",
+    "intermediate": "中級",
+    "advanced": "上級",
+    "tutorialsCount": "{count} 件のチュートリアル",
+    "noResults": "チュートリアルが見つかりません",
+    "noResultsDescription": "別のカテゴリを選択するか、フィルターを調整してください。"
+  },
+  "Practice": {
+    "title": "実践ラボ",
+    "description": "AIエージェントを構築・テストするためのインタラクティブなコーディング環境。サンドボックスを起動して、すぐに実験を始めましょう。",
+    "online": "オンライン",
+    "launchEnvironment": "環境を起動",
+    "underMaintenance": "メンテナンス中"
+  },
+  "Showcase": {
+    "title": "コミュニティショーケース",
+    "description": "コミュニティが構築した素晴らしいAIエージェントプロジェクトを発見。インスピレーションを得て、あなたの作品を共有しましょう。",
+    "fork": "フォーク",
+    "demo": "デモ"
+  },
+  "Docs": {
+    "title": "ドキュメント",
+    "loading": "ドキュメントを読み込み中...",
+    "searchPlaceholder": "ドキュメントを検索...",
+    "home": "ホーム",
+    "docs": "ドキュメント",
+    "editOnGithub": "GitHubで編集",
+    "lastUpdated": "最終更新: {date}"
+  },
+  "Common": {
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "notFound": "ページが見つかりません",
+    "backToHome": "ホームに戻る",
+    "readMore": "続きを読む",
+    "viewDetails": "詳細を表示",
+    "search": "検索",
+    "filter": "フィルター",
+    "all": "すべて"
+  },
+  "Footer": {
+    "copyright": "Agent Hub. 無断複写・転載を禁じます。",
+    "platform": "プラットフォーム",
+    "resources": "リソース",
+    "company": "会社",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約",
+    "tutorials": "チュートリアル",
+    "practice": "実践",
+    "legal": "法的情報",
+    "repoDescription": "高性能自律型アーキテクチャの決定版リソース。"
+  },
+  "RequestForm": {
+    "title": "チュートリアルをリクエスト",
+    "subtitle": "お探しの内容が見つかりませんか？専門チームが、次回取り上げてほしいテーマをお聞かせください。",
+    "topic": "チュートリアルのテーマ",
+    "topicPlaceholder": "例：ローカルハードウェアで Mistral 7B をファインチューニング",
+    "category": "カテゴリー",
+    "categoryPlaceholder": "カテゴリーを選択",
+    "description": "詳しい説明",
+    "descriptionPlaceholder": "どのような問題を解決したいですか？",
+    "email": "メールアドレス（任意）",
+    "emailPlaceholder": "公開時に通知を受け取れます",
+    "submit": "リクエストを送信",
+    "success": "リクエストが送信されました！ご提案を確認いたします。",
+    "error": "送信に失敗しました。もう一度お試しください。"
+  },
+  "CreatorStudio": {
+    "title": "クリエイタースタジオ",
+    "draftLastEdited": "下書き - 最終編集 {time}",
+    "autoSaved": "自動保存済み",
+    "saveDraft": "下書きを保存",
+    "publish": "公開",
+    "properties": "プロパティ",
+    "propertiesDesc": "メタデータとSEOの設定",
+    "generalInfo": "一般情報",
+    "localizations": "ローカライゼーション",
+    "seoSocial": "SEOとSNS",
+    "videoUrl": "動画URL",
+    "videoUrlPlaceholder": "YouTubeまたはLoomのURL",
+    "language": "言語",
+    "languagePlaceholder": "言語を選択",
+    "tags": "タグ",
+    "addTag": "+ 追加",
+    "thumbnail": "サムネイル",
+    "thumbnailDesc": "画像をアップロードまたはドラッグ",
+    "titlePlaceholder": "記事タイトルを入力...",
+    "source": "ソース",
+    "livePreview": "ライブプレビュー",
+    "dashboard": "ダッシュボード",
+    "tutorials": "チュートリアル",
+    "newPost": "新規投稿"
+  }
+}

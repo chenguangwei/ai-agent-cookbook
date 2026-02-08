@@ -1,0 +1,206 @@
+---
+title: "多语言AI智能体提示工程"
+slug: "multilingual-prompting"
+locale: "zh"
+description: "跨文化语境保持与动态语言路由的高级策略。"
+category: "提示工程"
+tags: ["提示工程", "国际化"]
+techStack: ["GPT-4o"]
+difficulty: "高级"
+duration: "24 分钟"
+thumbnail: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800"
+featured: false
+date: 2024-05-10
+---
+
+# 多语言AI智能体提示工程
+
+构建能在不同语言间无缝工作的AI智能体，需要的远不止翻译。本指南涵盖了保持语境和文化细微差别的高级策略。
+
+## 多语言智能体的挑战
+
+传统方法之所以失败，是因为：
+
+- 直接翻译会丢失语境和习语
+- 文化引用无法传递
+- 正式程度因语言而异
+- 技术术语可能没有对应词
+
+## 语言检测与路由
+
+### 动态语言检测
+
+```python
+from langdetect import detect
+from typing import Literal
+
+def detect_language(text: str) -> str:
+    """检测输入文本的主要语言。"""
+    try:
+        lang = detect(text)
+        return lang
+    except:
+        return "en"  # 默认使用英语
+
+def route_to_agent(text: str, agents: dict):
+    """将查询路由到相应的语言特定智能体。"""
+    lang = detect_language(text)
+    return agents.get(lang, agents["en"])
+```
+
+### 多语言系统提示词
+
+```python
+SYSTEM_PROMPTS = {
+    "en": """You are a helpful assistant. Respond in English.
+    Use professional but friendly language.""",
+
+    "zh": """你是一个有帮助的助手。请用中文回答。
+    使用专业但友好的语言。注意使用恰当的敬语。""",
+
+    "ja": """あなたは親切なアシスタントです。日本語で回答してください。
+    丁寧語を使用し、適切な敬意を示してください。""",
+
+    "es": """Eres un asistente útil. Responde en español.
+    Usa un lenguaje profesional pero amigable."""
+}
+```
+
+## 语境保持策略
+
+### 语义锚定
+
+在翻译中保持含义：
+
+```python
+def create_semantic_anchor(concept: str, languages: list) -> dict:
+    """创建语义锚点，以实现跨语言的一致理解。"""
+    anchors = {}
+    for lang in languages:
+        # 生成语言特定的解释
+        anchors[lang] = generate_explanation(concept, lang)
+    return anchors
+
+# 示例用法
+technical_terms = {
+    "machine_learning": {
+        "en": "machine learning (ML) - computers learning from data",
+        "zh": "机器学习 (ML) - 计算机从数据中学习",
+        "ja": "機械学習 (ML) - コンピュータがデータから学習すること"
+    }
+}
+```
+
+### 文化语境层
+
+```python
+class CulturalContextManager:
+    def __init__(self):
+        self.cultural_norms = {
+            "en": {
+                "greeting": "Hello",
+                "formality": "casual",
+                "date_format": "MM/DD/YYYY",
+                "currency_symbol": "$"
+            },
+            "zh": {
+                "greeting": "您好",
+                "formality": "formal",
+                "date_format": "YYYY年MM月DD日",
+                "currency_symbol": "¥"
+            },
+            "ja": {
+                "greeting": "こんにちは",
+                "formality": "very_formal",
+                "date_format": "YYYY年MM月DD日",
+                "currency_symbol": "¥"
+            }
+        }
+
+    def adapt_response(self, response: str, source_lang: str, target_lang: str) -> str:
+        """根据文化语境调整回复。"""
+        source_norms = self.cultural_norms[source_lang]
+        target_norms = self.cultural_norms[target_lang]
+
+        # 调整正式程度、日期格式等
+        adapted = self.adjust_formality(response, target_norms["formality"])
+        adapted = self.convert_date_format(adapted, target_norms["date_format"])
+
+        return adapted
+```
+
+## 高级提示工程技术
+
+### 母语思维链
+
+```python
+def multilingual_cot_prompt(question: str, lang: str) -> str:
+    """生成目标语言的思维链提示词。"""
+    cot_templates = {
+        "en": "Let's think step by step:\n1.",
+        "zh": "让我们一步一步思考：\n1.",
+        "ja": "順番に考えてみましょう：\n1."
+    }
+
+    return f"{question}\n\n{cot_templates.get(lang, cot_templates['en'])}"
+```
+
+### 每种语言的少样本示例
+
+```python
+EXAMPLES = {
+    "en": [
+        {"input": "What's the weather?", "output": "I'd be happy to help! Could you tell me your location?"},
+        {"input": "Book a flight", "output": "I can help with that. What's your destination and travel dates?"}
+    ],
+    "zh": [
+        {"input": "天气怎么样？", "output": "我很乐意帮助您！请问您在哪个城市？"},
+        {"input": "订机票", "output": "我可以帮您办理。请问您的目的地和出行日期是？"}
+    ]
+}
+```
+
+## 处理混合语言输入
+
+### 语码转换检测
+
+```python
+import re
+
+def detect_code_switching(text: str) -> bool:
+    """检测文本是否包含多种语言（语码转换）。"""
+    # 简单启发式方法：检查混合文字
+    has_latin = bool(re.search(r'[a-zA-Z]', text))
+    has_cjk = bool(re.search(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]', text))
+    has_arabic = bool(re.search(r'[\u0600-\u06ff]', text))
+
+    script_count = sum([has_latin, has_cjk, has_arabic])
+    return script_count > 1
+
+def handle_mixed_input(text: str) -> str:
+    """处理包含多种语言的输入。"""
+    if detect_code_switching(text):
+        # 使用主导语言回复
+        dominant_lang = get_dominant_language(text)
+        return f"[Responding in {dominant_lang}]"
+    return text
+```
+
+## 最佳实践
+
+1.  **原生提示词**：用目标语言编写系统提示词，而非翻译
+2.  **文化敏感性**：调整正式程度、敬语和表达方式
+3.  **术语一致性**：维护技术术语词汇表
+4.  **用户偏好**：允许用户设置语言偏好
+5.  **回退策略**：优雅地处理不支持的语言
+
+## 测试多语言智能体
+
+```python
+def test_language_consistency(agent, test_cases: dict):
+    """测试智能体是否以正确的语言回复。"""
+    for lang, queries in test_cases.items():
+        for query in queries:
+            response = agent.chat(query)
+            detected = detect_language(response)
+            assert detected == lang, f"Expected {lang}, got {detected}"

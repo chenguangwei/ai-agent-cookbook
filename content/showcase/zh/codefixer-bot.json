@@ -1,0 +1,14 @@
+{
+  "title": "代码修复机器人",
+  "locale": "zh",
+  "author": {
+    "name": "亚历克斯·里维拉",
+    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704d"
+  },
+  "description": "监控GitHub拉取请求，并自动为失败的CI/CD流水线提供修复建议。",
+  "tags": ["DevOps", "GitHub", "编程"],
+  "stars": 892,
+  "demoUrl": "#",
+  "repoUrl": "#",
+  "thumbnail": "https://images.unsplash.com/photo-1607799275518-d58665d099db?w=800"
+}

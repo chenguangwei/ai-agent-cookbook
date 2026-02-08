@@ -1,0 +1,217 @@
+---
+title: "LlamaIndex Agentic RAG"
+slug: "llamaindex-rag"
+locale: "en"
+description: "Connecting data-aware agents to your private knowledge base using advanced indexing."
+category: "RAG"
+tags: ["RAG", "LlamaIndex"]
+techStack: ["LlamaIndex", "OpenAI"]
+difficulty: "Intermediate"
+duration: "25 min read"
+thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800"
+featured: true
+date: 2024-05-12
+---
+
+# LlamaIndex Agentic RAG
+
+Learn how to build intelligent agents that can reason over your private data using LlamaIndex's powerful RAG capabilities.
+
+## What is Agentic RAG?
+
+Agentic RAG combines the retrieval power of RAG with the reasoning capabilities of AI agents. Instead of simple query-response patterns, agents can:
+
+- Plan multi-step retrieval strategies
+- Combine information from multiple sources
+- Reason about retrieved context
+- Take actions based on findings
+
+## Installation
+
+```bash
+pip install llama-index llama-index-agent-openai
+pip install llama-index-vector-stores-chroma
+```
+
+## Building Your Knowledge Base
+
+### Document Loading
+
+```python
+from llama_index.core import SimpleDirectoryReader
+
+# Load documents from a directory
+documents = SimpleDirectoryReader(
+    input_dir="./data",
+    recursive=True,
+    filename_as_id=True
+).load_data()
+
+print(f"Loaded {len(documents)} documents")
+```
+
+### Creating the Index
+
+```python
+from llama_index.core import VectorStoreIndex, Settings
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.openai import OpenAI
+
+# Configure models
+Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
+Settings.llm = OpenAI(model="gpt-4-turbo")
+
+# Create vector index
+index = VectorStoreIndex.from_documents(documents)
+
+# Persist for later use
+index.storage_context.persist(persist_dir="./storage")
+```
+
+## Query Engine as a Tool
+
+Transform your index into an agent tool:
+
+```python
+from llama_index.core.tools import QueryEngineTool
+
+# Create query engine
+query_engine = index.as_query_engine(
+    similarity_top_k=5,
+    response_mode="compact"
+)
+
+# Wrap as tool
+knowledge_tool = QueryEngineTool.from_defaults(
+    query_engine=query_engine,
+    name="knowledge_base",
+    description="Search the internal knowledge base for information about company policies and procedures."
+)
+```
+
+## Creating the Agent
+
+### Basic Agent Setup
+
+```python
+from llama_index.agent.openai import OpenAIAgent
+
+agent = OpenAIAgent.from_tools(
+    tools=[knowledge_tool],
+    verbose=True,
+    system_prompt="""You are a helpful assistant with access to a company knowledge base.
+    Always search the knowledge base before answering questions about policies."""
+)
+
+# Query the agent
+response = agent.chat("What is our vacation policy?")
+print(response)
+```
+
+### Multi-Tool Agent
+
+Combine multiple data sources:
+
+```python
+from llama_index.core.tools import FunctionTool
+
+# Create additional tools
+def get_current_date() -> str:
+    """Returns the current date."""
+    from datetime import datetime
+    return datetime.now().strftime("%Y-%m-%d")
+
+date_tool = FunctionTool.from_defaults(fn=get_current_date)
+
+# Create agent with multiple tools
+agent = OpenAIAgent.from_tools(
+    tools=[knowledge_tool, date_tool, calculator_tool],
+    verbose=True
+)
+```
+
+## Advanced RAG Patterns
+
+### Sub-Question Query Engine
+
+Break complex queries into simpler sub-queries:
+
+```python
+from llama_index.core.query_engine import SubQuestionQueryEngine
+from llama_index.core.tools import QueryEngineTool
+
+# Create tools for different indices
+tools = [
+    QueryEngineTool.from_defaults(
+        query_engine=hr_index.as_query_engine(),
+        name="hr_policies",
+        description="HR policies and employee handbook"
+    ),
+    QueryEngineTool.from_defaults(
+        query_engine=tech_index.as_query_engine(),
+        name="technical_docs",
+        description="Technical documentation and APIs"
+    )
+]
+
+# Create sub-question engine
+query_engine = SubQuestionQueryEngine.from_defaults(
+    query_engine_tools=tools
+)
+```
+
+### Router Query Engine
+
+Automatically route queries to the right index:
+
+```python
+from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.selectors import LLMSingleSelector
+
+query_engine = RouterQueryEngine(
+    selector=LLMSingleSelector.from_defaults(),
+    query_engine_tools=tools
+)
+```
+
+## Production Considerations
+
+### Vector Store Integration
+
+Use production-grade vector stores:
+
+```python
+import chromadb
+from llama_index.vector_stores.chroma import ChromaVectorStore
+
+# Setup Chroma
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_or_create_collection("knowledge_base")
+
+# Create index with Chroma
+vector_store = ChromaVectorStore(chroma_collection=collection)
+index = VectorStoreIndex.from_vector_store(vector_store)
+```
+
+### Caching and Performance
+
+```python
+from llama_index.core import Settings
+
+# Enable caching
+Settings.cache_enabled = True
+
+# Use faster embedding model for production
+Settings.embed_model = OpenAIEmbedding(
+    model="text-embedding-3-small",
+    embed_batch_size=100
+)
+```
+
+## Best Practices
+
+1. **Chunking Strategy**: Experiment with chunk sizes (512-1024 tokens)
+2. **Metadata Filtering**: Add metadata for better retrieval precision
+3. **Hybrid Search**: Combine vector and keyword search
+4. **Evaluation**: Use RAGAS or LlamaIndex evaluation modules
+5. **Observability**: Integrate with tracing tools like Phoenix

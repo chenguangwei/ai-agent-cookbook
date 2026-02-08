@@ -1,0 +1,242 @@
+---
+title: "Optimizing Context with Gemini 1.5 Pro"
+slug: "gemini-1-5-pro-context"
+locale: "en"
+description: "Learn how to effectively utilize the 1M+ token context window for large-scale document analysis."
+category: "LLM Models"
+tags: ["Gemini", "Google", "Context"]
+techStack: ["Gemini 1.5 Pro"]
+difficulty: "Intermediate"
+duration: "18 min read"
+thumbnail: "https://images.unsplash.com/photo-1617791160505-6f00504e3caf?w=800"
+featured: false
+date: 2024-05-08
+---
+
+# Optimizing Context with Gemini 1.5 Pro
+
+Gemini 1.5 Pro offers a revolutionary 1 million+ token context window, enabling new possibilities for document analysis and retrieval.
+
+## Understanding the Long Context Advantage
+
+Traditional LLMs are limited to 4K-128K tokens. Gemini 1.5 Pro's 1M+ context means you can:
+
+- Process entire codebases at once
+- Analyze lengthy legal documents
+- Review complete book manuscripts
+- Compare multiple documents simultaneously
+
+## Getting Started
+
+### Setup
+
+```python
+import google.generativeai as genai
+
+genai.configure(api_key="YOUR_API_KEY")
+
+model = genai.GenerativeModel('gemini-1.5-pro')
+```
+
+### Basic Long Context Query
+
+```python
+def analyze_large_document(document_path: str, query: str) -> str:
+    """Analyze a large document with a specific query."""
+    with open(document_path, 'r') as f:
+        content = f.read()
+
+    prompt = f"""
+    Document:
+    {content}
+
+    Query: {query}
+
+    Please analyze the document and answer the query comprehensively.
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## Context Window Strategies
+
+### Structured Context Loading
+
+Organize your context for better results:
+
+```python
+def create_structured_context(documents: list) -> str:
+    """Create a structured context from multiple documents."""
+    context_parts = []
+
+    for i, doc in enumerate(documents):
+        context_parts.append(f"""
+=== DOCUMENT {i+1}: {doc['title']} ===
+Source: {doc['source']}
+Date: {doc['date']}
+Content:
+{doc['content']}
+=== END DOCUMENT {i+1} ===
+""")
+
+    return "\n\n".join(context_parts)
+```
+
+### Hierarchical Context Organization
+
+```python
+def build_hierarchical_context(data: dict) -> str:
+    """Build hierarchical context for complex data structures."""
+    template = """
+# Project Overview
+{overview}
+
+## Architecture
+{architecture}
+
+## Components
+{components}
+
+## Dependencies
+{dependencies}
+
+## Recent Changes
+{changes}
+"""
+    return template.format(**data)
+```
+
+## Efficient Token Usage
+
+### Token Counting
+
+```python
+def count_tokens(text: str) -> int:
+    """Count tokens in text using Gemini's tokenizer."""
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    return model.count_tokens(text).total_tokens
+
+def check_context_fit(documents: list, max_tokens: int = 1000000) -> bool:
+    """Check if documents fit within context window."""
+    total = sum(count_tokens(doc) for doc in documents)
+    return total < max_tokens
+```
+
+### Context Compression
+
+When approaching limits, compress strategically:
+
+```python
+def compress_context(content: str, target_ratio: float = 0.5) -> str:
+    """Compress content while preserving key information."""
+    prompt = f"""
+    Summarize the following content, preserving:
+    - Key facts and figures
+    - Important decisions and conclusions
+    - Technical specifications
+    - Action items
+
+    Target compression: {int(target_ratio * 100)}% of original
+
+    Content:
+    {content}
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## Advanced Use Cases
+
+### Codebase Analysis
+
+```python
+def analyze_codebase(repo_path: str) -> str:
+    """Analyze an entire codebase at once."""
+    files = collect_code_files(repo_path)
+
+    context = "# CODEBASE ANALYSIS\n\n"
+    for file_path, content in files.items():
+        context += f"## File: {file_path}\n```\n{content}\n```\n\n"
+
+    prompt = f"""
+    {context}
+
+    Analyze this codebase and provide:
+    1. Architecture overview
+    2. Main components and their responsibilities
+    3. Code quality assessment
+    4. Potential improvements
+    5. Security considerations
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+### Multi-Document Comparison
+
+```python
+def compare_documents(docs: list, comparison_criteria: list) -> str:
+    """Compare multiple documents across specified criteria."""
+    context = create_structured_context(docs)
+
+    criteria_str = "\n".join(f"- {c}" for c in comparison_criteria)
+
+    prompt = f"""
+    {context}
+
+    Compare all documents above based on these criteria:
+    {criteria_str}
+
+    Provide a detailed comparison table and analysis.
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## Performance Optimization
+
+### Caching Strategies
+
+```python
+import hashlib
+from functools import lru_cache
+
+@lru_cache(maxsize=100)
+def cached_analysis(content_hash: str, query: str) -> str:
+    """Cache analysis results based on content hash."""
+    # Retrieve content by hash and analyze
+    pass
+
+def analyze_with_cache(content: str, query: str) -> str:
+    """Analyze content with caching."""
+    content_hash = hashlib.md5(content.encode()).hexdigest()
+    return cached_analysis(content_hash, query)
+```
+
+### Streaming for Long Outputs
+
+```python
+def stream_analysis(context: str, query: str):
+    """Stream analysis results for long outputs."""
+    prompt = f"{context}\n\nQuery: {query}"
+
+    response = model.generate_content(
+        prompt,
+        stream=True
+    )
+
+    for chunk in response:
+        yield chunk.text
+```
+
+## Best Practices
+
+1. **Structure Your Context**: Use clear delimiters and headers
+2. **Front-Load Important Info**: Place critical information early
+3. **Use Explicit References**: Reference specific sections by name
+4. **Monitor Token Usage**: Track consumption to avoid truncation
+5. **Implement Fallbacks**: Have strategies for oversized contexts

@@ -1,0 +1,10 @@
+{
+  "title": "Prompt Engineering Sandbox",
+  "locale": "en",
+  "description": "Test and iterate on system prompts with instant feedback from multiple LLM providers.",
+  "environment": "Python",
+  "difficulty": "Beginner",
+  "status": "Online",
+  "usersOnline": 124,
+  "thumbnail": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800"
+}

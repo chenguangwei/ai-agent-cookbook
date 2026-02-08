@@ -1,0 +1,217 @@
+---
+title: "LlamaIndex 智能体化 RAG"
+slug: "llamaindex-rag"
+locale: "zh"
+description: "使用高级索引技术，将数据感知型智能体连接到您的私有知识库。"
+category: "RAG"
+tags: ["RAG", "LlamaIndex"]
+techStack: ["LlamaIndex", "OpenAI"]
+difficulty: "中级"
+duration: "25 分钟阅读"
+thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800"
+featured: true
+date: 2024-05-12
+---
+
+# LlamaIndex 智能体化 RAG
+
+学习如何使用 LlamaIndex 强大的 RAG 能力，构建能够对您的私有数据进行推理的智能体。
+
+## 什么是智能体化 RAG？
+
+智能体化 RAG 将 RAG 的检索能力与 AI 智能体的推理能力相结合。它超越了简单的查询-响应模式，使智能体能够：
+
+- 规划多步骤检索策略
+- 整合来自多个来源的信息
+- 对检索到的上下文进行推理
+- 根据发现采取行动
+
+## 安装
+
+```bash
+pip install llama-index llama-index-agent-openai
+pip install llama-index-vector-stores-chroma
+```
+
+## 构建您的知识库
+
+### 文档加载
+
+```python
+from llama_index.core import SimpleDirectoryReader
+
+# 从目录加载文档
+documents = SimpleDirectoryReader(
+    input_dir="./data",
+    recursive=True,
+    filename_as_id=True
+).load_data()
+
+print(f"Loaded {len(documents)} documents")
+```
+
+### 创建索引
+
+```python
+from llama_index.core import VectorStoreIndex, Settings
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.openai import OpenAI
+
+# 配置模型
+Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
+Settings.llm = OpenAI(model="gpt-4-turbo")
+
+# 创建向量索引
+index = VectorStoreIndex.from_documents(documents)
+
+# 持久化以备后用
+index.storage_context.persist(persist_dir="./storage")
+```
+
+## 将查询引擎作为工具
+
+将您的索引转换为智能体工具：
+
+```python
+from llama_index.core.tools import QueryEngineTool
+
+# 创建查询引擎
+query_engine = index.as_query_engine(
+    similarity_top_k=5,
+    response_mode="compact"
+)
+
+# 包装为工具
+knowledge_tool = QueryEngineTool.from_defaults(
+    query_engine=query_engine,
+    name="knowledge_base",
+    description="搜索内部知识库，获取有关公司政策和流程的信息。"
+)
+```
+
+## 创建智能体
+
+### 基础智能体设置
+
+```python
+from llama_index.agent.openai import OpenAIAgent
+
+agent = OpenAIAgent.from_tools(
+    tools=[knowledge_tool],
+    verbose=True,
+    system_prompt="""您是一个可以访问公司知识库的有用助手。
+    在回答有关政策的问题之前，请务必先搜索知识库。"""
+)
+
+# 查询智能体
+response = agent.chat("What is our vacation policy?")
+print(response)
+```
+
+### 多工具智能体
+
+整合多个数据源：
+
+```python
+from llama_index.core.tools import FunctionTool
+
+# 创建额外的工具
+def get_current_date() -> str:
+    """返回当前日期。"""
+    from datetime import datetime
+    return datetime.now().strftime("%Y-%m-%d")
+
+date_tool = FunctionTool.from_defaults(fn=get_current_date)
+
+# 创建包含多个工具的智能体
+agent = OpenAIAgent.from_tools(
+    tools=[knowledge_tool, date_tool, calculator_tool],
+    verbose=True
+)
+```
+
+## 高级 RAG 模式
+
+### 子问题查询引擎
+
+将复杂查询分解为更简单的子查询：
+
+```python
+from llama_index.core.query_engine import SubQuestionQueryEngine
+from llama_index.core.tools import QueryEngineTool
+
+# 为不同索引创建工具
+tools = [
+    QueryEngineTool.from_defaults(
+        query_engine=hr_index.as_query_engine(),
+        name="hr_policies",
+        description="人力资源政策和员工手册"
+    ),
+    QueryEngineTool.from_defaults(
+        query_engine=tech_index.as_query_engine(),
+        name="technical_docs",
+        description="技术文档和 API"
+    )
+]
+
+# 创建子问题引擎
+query_engine = SubQuestionQueryEngine.from_defaults(
+    query_engine_tools=tools
+)
+```
+
+### 路由器查询引擎
+
+自动将查询路由到正确的索引：
+
+```python
+from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.selectors import LLMSingleSelector
+
+query_engine = RouterQueryEngine(
+    selector=LLMSingleSelector.from_defaults(),
+    query_engine_tools=tools
+)
+```
+
+## 生产环境考量
+
+### 向量存储集成
+
+使用生产级向量存储：
+
+```python
+import chromadb
+from llama_index.vector_stores.chroma import ChromaVectorStore
+
+# 设置 Chroma
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_or_create_collection("knowledge_base")
+
+# 使用 Chroma 创建索引
+vector_store = ChromaVectorStore(chroma_collection=collection)
+index = VectorStoreIndex.from_vector_store(vector_store)
+```
+
+### 缓存与性能
+
+```python
+from llama_index.core import Settings
+
+# 启用缓存
+Settings.cache_enabled = True
+
+# 在生产环境中使用更快的嵌入模型
+Settings.embed_model = OpenAIEmbedding(
+    model="text-embedding-3-small",
+    embed_batch_size=100
+)
+```
+
+## 最佳实践
+
+1.  **分块策略**：尝试不同的分块大小（512-1024 个词元）
+2.  **元数据过滤**：添加元数据以提高检索精度
+3.  **混合搜索**：结合向量搜索和关键词搜索
+4.  **评估**：使用 RAGAS 或 LlamaIndex 评估模块
+5.  **可观测性**：与 Phoenix 等追踪工具集成

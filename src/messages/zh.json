@@ -1,0 +1,166 @@
+{
+  "Home": {
+    "title": "掌握 Agentic 未来",
+    "subtitle": "探索自主架构的权威资源库。为下一代 AI 开发者打造的专业工作流。",
+    "searchPlaceholder": "搜索资源库...",
+    "hotTopics": "热门话题",
+    "viewAll": "查看全部",
+    "featuredTutorials": "精选教程",
+    "repositorySegments": "资源库分区",
+    "systemStatus": "系统状态: 运行中",
+    "categories": {
+      "foundation": "基础知识",
+      "workflows": "工作流程",
+      "practice": "实践练习",
+      "showcase": "案例展示",
+      "llms": "大语言模型"
+    }
+  },
+  "Navigation": {
+    "tutorials": "教程",
+    "explore": "探索",
+    "practice": "实践",
+    "showcase": "案例展示",
+    "news": "资讯",
+    "docs": "文档",
+    "signIn": "登录",
+    "createStudio": "创作工作室",
+    "searchPlaceholder": "搜索资源...",
+    "requestTutorial": "请求教程"
+  },
+  "Tutorial": {
+    "difficulty": {
+      "beginner": "入门",
+      "intermediate": "进阶",
+      "advanced": "高级"
+    },
+    "format": {
+      "video": "视频",
+      "text": "文章",
+      "interactive": "交互式"
+    },
+    "relatedTutorials": "相关教程",
+    "nextLesson": "下一课",
+    "prevLesson": "上一课",
+    "tableOfContents": "本页目录",
+    "notFound": "未找到教程",
+    "home": "首页",
+    "tutorials": "教程",
+    "featured": "精选",
+    "previous": "上一篇",
+    "next": "下一篇",
+    "tryItYourself": "亲自试试",
+    "tryItDescription": "启动交互式环境来练习本教程。",
+    "openSandbox": "打开沙盒"
+  },
+  "News": {
+    "title": "资讯动态",
+    "description": "了解 AI 智能体、大语言模型和自主系统的最新发展动态。",
+    "readMore": "阅读更多",
+    "all": "全部",
+    "tech": "科技",
+    "research": "研究",
+    "industry": "行业"
+  },
+  "Explore": {
+    "title": "全部教程",
+    "description": "探索我们全面的 AI 智能体教程合集",
+    "allLanguages": "所有语言",
+    "english": "英文",
+    "chinese": "中文",
+    "japanese": "日文",
+    "allLevels": "所有级别",
+    "beginner": "入门",
+    "intermediate": "进阶",
+    "advanced": "高级",
+    "tutorialsCount": "{count} 篇教程",
+    "noResults": "未找到教程",
+    "noResultsDescription": "请尝试选择其他分类或调整筛选条件。"
+  },
+  "Practice": {
+    "title": "实践实验室",
+    "description": "交互式编程环境，用于构建和测试您的 AI 智能体。启动沙盒，立即开始实验。",
+    "online": "在线",
+    "launchEnvironment": "启动环境",
+    "underMaintenance": "维护中"
+  },
+  "Showcase": {
+    "title": "社区展示",
+    "description": "发现社区构建的精彩 AI 智能体项目。获取灵感，分享您的作品。",
+    "fork": "Fork",
+    "demo": "演示"
+  },
+  "Docs": {
+    "title": "文档",
+    "loading": "正在加载文档...",
+    "searchPlaceholder": "搜索文档...",
+    "home": "首页",
+    "docs": "文档",
+    "editOnGithub": "在 GitHub 上编辑",
+    "lastUpdated": "最后更新: {date}"
+  },
+  "Common": {
+    "loading": "加载中...",
+    "error": "出错了",
+    "notFound": "页面未找到",
+    "backToHome": "返回首页",
+    "readMore": "阅读更多",
+    "viewDetails": "查看详情",
+    "search": "搜索",
+    "filter": "筛选",
+    "all": "全部"
+  },
+  "Footer": {
+    "copyright": "Agent Hub. 保留所有权利。",
+    "platform": "平台",
+    "resources": "资源",
+    "company": "公司",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "tutorials": "教程",
+    "practice": "实践",
+    "legal": "法律",
+    "repoDescription": "高性能自主架构的权威资源库。"
+  },
+  "RequestForm": {
+    "title": "请求教程",
+    "subtitle": "找不到您想要的内容？让我们专业的工程师团队知道您下一步想学什么。",
+    "topic": "教程主题",
+    "topicPlaceholder": "例如：在本地硬件上微调 Mistral 7B",
+    "category": "分类",
+    "categoryPlaceholder": "选择分类",
+    "description": "详细描述",
+    "descriptionPlaceholder": "您想解决什么具体问题？",
+    "email": "您的邮箱（可选）",
+    "emailPlaceholder": "发布后我们会通知您",
+    "submit": "提交请求",
+    "success": "请求提交成功！我们将审核您的建议。",
+    "error": "提交失败，请重试。"
+  },
+  "CreatorStudio": {
+    "title": "创作工作室",
+    "draftLastEdited": "草稿 - 最后编辑 {time}",
+    "autoSaved": "已自动保存",
+    "saveDraft": "保存草稿",
+    "publish": "发布",
+    "properties": "属性",
+    "propertiesDesc": "配置元数据和 SEO",
+    "generalInfo": "常规信息",
+    "localizations": "本地化",
+    "seoSocial": "SEO 和社交",
+    "videoUrl": "视频链接",
+    "videoUrlPlaceholder": "YouTube 或 Loom 链接",
+    "language": "语言",
+    "languagePlaceholder": "选择语言",
+    "tags": "标签",
+    "addTag": "+ 添加",
+    "thumbnail": "缩略图",
+    "thumbnailDesc": "上传或拖拽图片",
+    "titlePlaceholder": "输入文章标题...",
+    "source": "源码",
+    "livePreview": "实时预览",
+    "dashboard": "控制台",
+    "tutorials": "教程",
+    "newPost": "新文章"
+  }
+}

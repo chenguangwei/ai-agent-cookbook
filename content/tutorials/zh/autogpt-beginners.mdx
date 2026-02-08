@@ -1,0 +1,133 @@
+---
+title: "AutoGPT 入门指南"
+slug: "autogpt-beginners"
+locale: "zh"
+description: "一步步教你搭建第一个完全自主的 AI 智能体。"
+category: "Frameworks"
+tags: ["AutoGPT", "Autonomous"]
+techStack: ["AutoGPT", "Docker"]
+difficulty: "Beginner"
+duration: "20 分钟"
+thumbnail: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800"
+featured: false
+date: 2024-05-15
+---
+
+# AutoGPT 入门指南
+
+AutoGPT 是最早实现完全自主 AI 智能体的应用之一。本指南将带您一步步搭建第一个 AutoGPT 实例。
+
+## 什么是 AutoGPT？
+
+AutoGPT 是一个实验性的开源应用，展示了 GPT-4 自主运行的能力。它可以：
+
+- 自我提示和链式思考
+- 访问互联网进行研究
+- 管理文件和执行代码
+- 学习并随时间改进
+
+## 前置条件
+
+- 系统安装了 Docker
+- OpenAI API 密钥
+- 基本的命令行知识
+
+## 安装
+
+### 方式一：Docker（推荐）
+
+```bash
+# 克隆仓库
+git clone https://github.com/Significant-Gravitas/AutoGPT.git
+cd AutoGPT
+
+# 复制环境配置模板
+cp .env.template .env
+
+# 编辑 .env 并添加您的 API 密钥
+nano .env
+```
+
+添加您的 OpenAI API 密钥：
+```
+OPENAI_API_KEY=sk-your-key-here
+```
+
+### 方式二：本地安装
+
+```bash
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 安装依赖
+pip install -r requirements.txt
+```
+
+## 配置
+
+### 设置您的智能体
+
+编辑 `ai_settings.yaml` 文件：
+
+```yaml
+ai_name: 研究机器人
+ai_role: 研究主题并总结发现的 AI 助手
+ai_goals:
+  - 研究量子计算的最新进展
+  - 用清晰易懂的格式总结发现
+  - 将总结保存到 markdown 文件
+```
+
+## 运行 AutoGPT
+
+### 启动智能体
+
+```bash
+# 使用 Docker
+docker-compose up
+
+# 或本地运行
+python -m autogpt
+```
+
+### 交互模式
+
+1. **持续模式**: 智能体无需用户确认即可运行
+   ```bash
+   python -m autogpt --continuous
+   ```
+
+2. **交互模式**（默认）: 每个操作都需要批准
+
+3. **GPT-3.5 模式**: 使用 GPT-3.5-turbo 节省成本
+   ```bash
+   python -m autogpt --gpt3only
+   ```
+
+## 安全特性
+
+AutoGPT 包含多种安全机制：
+
+1. **预算限制**: 设置最大 token 消费
+2. **操作审批**: 执行前审查命令
+3. **工作区隔离**: 文件操作限制在工作区文件夹
+
+```yaml
+# .env 安全设置
+EXECUTE_LOCAL_COMMANDS=False
+RESTRICT_TO_WORKSPACE=True
+```
+
+## 常见用例
+
+- **研究助手**: 收集和总结信息
+- **内容创作**: 生成文章和报告
+- **代码开发**: 编写和调试代码
+- **数据分析**: 处理和可视化数据
+
+## 下一步
+
+- 探索自定义插件和命令
+- 连接外部 API
+- 构建多智能体工作流

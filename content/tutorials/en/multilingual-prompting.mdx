@@ -1,0 +1,207 @@
+---
+title: "Multilingual AI Agent Prompting"
+slug: "multilingual-prompting"
+locale: "en"
+description: "Advanced strategies for cross-cultural context preservation and dynamic linguistic routing."
+category: "Prompting"
+tags: ["Prompt Engineering", "I18n"]
+techStack: ["GPT-4o"]
+difficulty: "Advanced"
+duration: "24 mins"
+thumbnail: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800"
+featured: false
+date: 2024-05-10
+---
+
+# Multilingual AI Agent Prompting
+
+Building AI agents that work seamlessly across languages requires more than translation. This guide covers advanced strategies for maintaining context and cultural nuance.
+
+## The Challenge of Multilingual Agents
+
+Traditional approaches fail because:
+
+- Direct translation loses context and idioms
+- Cultural references don't transfer
+- Formality levels vary by language
+- Technical terms may not have equivalents
+
+## Language Detection and Routing
+
+### Dynamic Language Detection
+
+```python
+from langdetect import detect
+from typing import Literal
+
+def detect_language(text: str) -> str:
+    """Detect the primary language of input text."""
+    try:
+        lang = detect(text)
+        return lang
+    except:
+        return "en"  # Default to English
+
+def route_to_agent(text: str, agents: dict):
+    """Route query to appropriate language-specific agent."""
+    lang = detect_language(text)
+    return agents.get(lang, agents["en"])
+```
+
+### Multi-Language System Prompts
+
+```python
+SYSTEM_PROMPTS = {
+    "en": """You are a helpful assistant. Respond in English.
+    Use professional but friendly language.""",
+
+    "zh": """你是一个有帮助的助手。请用中文回答。
+    使用专业但友好的语言。注意使用恰当的敬语。""",
+
+    "ja": """あなたは親切なアシスタントです。日本語で回答してください。
+    丁寧語を使用し、適切な敬意を示してください。""",
+
+    "es": """Eres un asistente útil. Responde en español.
+    Usa un lenguaje profesional pero amigable."""
+}
+```
+
+## Context Preservation Strategies
+
+### Semantic Anchoring
+
+Preserve meaning across translations:
+
+```python
+def create_semantic_anchor(concept: str, languages: list) -> dict:
+    """Create semantic anchors for consistent cross-language understanding."""
+    anchors = {}
+    for lang in languages:
+        # Generate language-specific explanation
+        anchors[lang] = generate_explanation(concept, lang)
+    return anchors
+
+# Example usage
+technical_terms = {
+    "machine_learning": {
+        "en": "machine learning (ML) - computers learning from data",
+        "zh": "机器学习 (ML) - 计算机从数据中学习",
+        "ja": "機械学習 (ML) - コンピュータがデータから学習すること"
+    }
+}
+```
+
+### Cultural Context Layer
+
+```python
+class CulturalContextManager:
+    def __init__(self):
+        self.cultural_norms = {
+            "en": {
+                "greeting": "Hello",
+                "formality": "casual",
+                "date_format": "MM/DD/YYYY",
+                "currency_symbol": "$"
+            },
+            "zh": {
+                "greeting": "您好",
+                "formality": "formal",
+                "date_format": "YYYY年MM月DD日",
+                "currency_symbol": "¥"
+            },
+            "ja": {
+                "greeting": "こんにちは",
+                "formality": "very_formal",
+                "date_format": "YYYY年MM月DD日",
+                "currency_symbol": "¥"
+            }
+        }
+
+    def adapt_response(self, response: str, source_lang: str, target_lang: str) -> str:
+        """Adapt response for cultural context."""
+        source_norms = self.cultural_norms[source_lang]
+        target_norms = self.cultural_norms[target_lang]
+
+        # Adjust formality, date formats, etc.
+        adapted = self.adjust_formality(response, target_norms["formality"])
+        adapted = self.convert_date_format(adapted, target_norms["date_format"])
+
+        return adapted
+```
+
+## Advanced Prompting Techniques
+
+### Chain-of-Thought in Native Language
+
+```python
+def multilingual_cot_prompt(question: str, lang: str) -> str:
+    """Generate chain-of-thought prompt in target language."""
+    cot_templates = {
+        "en": "Let's think step by step:\n1.",
+        "zh": "让我们一步一步思考：\n1.",
+        "ja": "順番に考えてみましょう：\n1."
+    }
+
+    return f"{question}\n\n{cot_templates.get(lang, cot_templates['en'])}"
+```
+
+### Few-Shot Examples Per Language
+
+```python
+EXAMPLES = {
+    "en": [
+        {"input": "What's the weather?", "output": "I'd be happy to help! Could you tell me your location?"},
+        {"input": "Book a flight", "output": "I can help with that. What's your destination and travel dates?"}
+    ],
+    "zh": [
+        {"input": "天气怎么样？", "output": "我很乐意帮助您！请问您在哪个城市？"},
+        {"input": "订机票", "output": "我可以帮您办理。请问您的目的地和出行日期是？"}
+    ]
+}
+```
+
+## Handling Mixed-Language Input
+
+### Code-Switching Detection
+
+```python
+import re
+
+def detect_code_switching(text: str) -> bool:
+    """Detect if text contains multiple languages (code-switching)."""
+    # Simple heuristic: check for mixed scripts
+    has_latin = bool(re.search(r'[a-zA-Z]', text))
+    has_cjk = bool(re.search(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]', text))
+    has_arabic = bool(re.search(r'[\u0600-\u06ff]', text))
+
+    script_count = sum([has_latin, has_cjk, has_arabic])
+    return script_count > 1
+
+def handle_mixed_input(text: str) -> str:
+    """Handle input with multiple languages."""
+    if detect_code_switching(text):
+        # Respond in the dominant language
+        dominant_lang = get_dominant_language(text)
+        return f"[Responding in {dominant_lang}]"
+    return text
+```
+
+## Best Practices
+
+1. **Native Prompts**: Write system prompts in target language, not translated
+2. **Cultural Sensitivity**: Adapt formality, honorifics, and expressions
+3. **Consistent Terminology**: Maintain glossaries for technical terms
+4. **User Preference**: Allow users to set language preferences
+5. **Fallback Strategy**: Gracefully handle unsupported languages
+
+## Testing Multilingual Agents
+
+```python
+def test_language_consistency(agent, test_cases: dict):
+    """Test agent responds in the correct language."""
+    for lang, queries in test_cases.items():
+        for query in queries:
+            response = agent.chat(query)
+            detected = detect_language(response)
+            assert detected == lang, f"Expected {lang}, got {detected}"
+```

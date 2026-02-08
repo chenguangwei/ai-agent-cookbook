@@ -1,0 +1,28 @@
+---
+title: 'API Reference'
+slug: 'api-reference'
+locale: 'en'
+category: 'API'
+order: 3
+lastUpdated: '2024-05-15T00:00:00.000Z'
+---
+
+# API Reference
+
+The Agent Hub API is organized around REST. Our API has predictable resource-oriented URLs, accepts form-encoded request bodies, returns JSON-encoded responses.
+
+## Endpoints
+
+### Tutorials
+
+- `GET /api/search-index` — Returns all indexed content for search
+- `POST /api/tutorials` — Create or publish a tutorial
+- `POST /api/request` — Submit a tutorial request
+
+## Authentication
+
+Currently the API does not require authentication. This will be added in a future release.
+
+## Rate Limiting
+
+API endpoints are rate-limited to 100 requests per minute per IP address.

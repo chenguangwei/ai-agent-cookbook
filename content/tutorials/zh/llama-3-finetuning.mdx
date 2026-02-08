@@ -1,0 +1,287 @@
+---
+title: "为智能体微调 Llama 3"
+slug: "llama-3-finetuning"
+locale: "zh"
+description: "关于在自定义函数调用数据集上微调 Llama 3 70B 的完整指南。"
+category: "LLM 模型"
+tags: ["Llama 3", "Meta", "微调"]
+techStack: ["Llama 3", "PyTorch"]
+difficulty: "高级"
+duration: "55 分钟"
+thumbnail: "https://images.unsplash.com/photo-1558494949-ef526bca4852?w=800"
+featured: false
+date: 2024-05-05
+---
+
+# 为智能体微调 Llama 3
+
+学习如何使用高效的训练技术，为函数调用和智能体任务微调 Llama 3 70B。
+
+## 为何要为智能体进行微调？
+
+基础的 Llama 3 模型擅长通用任务，但需要微调才能：
+
+- 遵循特定的函数调用格式
+- 可靠地处理工具使用
+- 保持一致的输出模式
+- 减少幻觉性的工具调用
+
+## 先决条件
+
+- 具备 24GB+ 显存的 GPU（推荐 A100 40GB）
+- Python 3.10+
+- 拥有 Llama 3 访问权限的 Hugging Face 账户
+
+## 环境设置
+
+```bash
+pip install torch transformers accelerate peft trl
+pip install bitsandbytes datasets wandb
+```
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from trl import SFTTrainer
+
+# 检查 GPU
+print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"GPU: {torch.cuda.get_device_name(0)}")
+```
+
+## 数据集准备
+
+### 函数调用格式
+
+```python
+FUNCTION_CALLING_TEMPLATE = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+你是一个有帮助的助手，可以访问以下工具：
+
+{tools}
+
+当你需要使用工具时，请用以下格式响应：
+<tool_call>
+{{"name": "tool_name", "arguments": {{"arg1": "value1"}}}}
+</tool_call>
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+{assistant_response}<|eot_id|>"""
+```
+
+### 创建训练数据
+
+```python
+def create_training_example(tools: list, user_msg: str, assistant_response: str) -> dict:
+    """以函数调用格式创建训练示例。"""
+    tools_str = "\n".join([
+        f"- {t['name']}: {t['description']}\n  参数: {t['parameters']}"
+        for t in tools
+    ])
+
+    text = FUNCTION_CALLING_TEMPLATE.format(
+        tools=tools_str,
+        user_message=user_msg,
+        assistant_response=assistant_response
+    )
+
+    return {"text": text}
+
+# 示例数据集
+training_data = [
+    create_training_example(
+        tools=[{
+            "name": "get_weather",
+            "description": "获取指定位置的当前天气",
+            "parameters": {"location": "string", "unit": "celsius|fahrenheit"}
+        }],
+        user_msg="东京的天气怎么样？",
+        assistant_response="""<tool_call>
+{"name": "get_weather", "arguments": {"location": "Tokyo", "unit": "celsius"}}
+</tool_call>"""
+    )
+]
+```
+
+## 使用 QLoRA 加载模型
+
+```python
+from transformers import BitsAndBytesConfig
+
+# 4位量化配置
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
+)
+
+# 加载模型
+model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=bnb_config,
+    device_map="auto",
+    trust_remote_code=True,
+)
+
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "right"
+```
+
+## LoRA 配置
+
+```python
+# 准备模型进行训练
+model = prepare_model_for_kbit_training(model)
+
+# 用于函数调用的 LoRA 配置
+lora_config = LoraConfig(
+    r=64,  # 秩 - 复杂任务使用更高值
+    lora_alpha=128,
+    lora_dropout=0.05,
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+    ],
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+
+# 应用 LoRA
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()
+```
+
+## 训练
+
+```python
+from transformers import TrainingArguments
+from datasets import Dataset
+
+# 创建数据集
+dataset = Dataset.from_list(training_data)
+
+# 训练参数
+training_args = TrainingArguments(
+    output_dir="./llama3-agent-ft",
+    num_train_epochs=3,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=16,
+    learning_rate=2e-4,
+    weight_decay=0.01,
+    warmup_ratio=0.03,
+    lr_scheduler_type="cosine",
+    logging_steps=10,
+    save_strategy="epoch",
+    bf16=True,
+    gradient_checkpointing=True,
+    optim="paged_adamw_32bit",
+    report_to="wandb",
+)
+
+# 初始化训练器
+trainer = SFTTrainer(
+    model=model,
+    train_dataset=dataset,
+    args=training_args,
+    tokenizer=tokenizer,
+    max_seq_length=2048,
+    dataset_text_field="text",
+    packing=True,  # 将短示例打包在一起
+)
+
+# 训练
+trainer.train()
+```
+
+## 保存与加载
+
+```python
+# 保存 LoRA 权重
+model.save_pretrained("./llama3-agent-lora")
+tokenizer.save_pretrained("./llama3-agent-lora")
+
+# 合并并保存完整模型（可选）
+merged_model = model.merge_and_unload()
+merged_model.save_pretrained("./llama3-agent-merged")
+```
+
+## 推理
+
+```python
+from peft import PeftModel
+
+# 加载微调后的模型
+base_model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=bnb_config,
+    device_map="auto",
+)
+model = PeftModel.from_pretrained(base_model, "./llama3-agent-lora")
+
+def generate_tool_call(user_message: str, tools: list) -> str:
+    """生成工具调用响应。"""
+    prompt = FUNCTION_CALLING_TEMPLATE.format(
+        tools=format_tools(tools),
+        user_message=user_message,
+        assistant_response=""
+    ).rsplit("<|start_header_id|>assistant<|end_header_id|>", 1)[0]
+    prompt += "<|start_header_id|>assistant<|end_header_id|>\n\n"
+
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=256,
+        temperature=0.1,
+        do_sample=True,
+        pad_token_id=tokenizer.eos_token_id,
+    )
+
+    response = tokenizer.decode(outputs[0], skip_special_tokens=False)
+    return extract_assistant_response(response)
+```
+
+## 评估
+
+```python
+def evaluate_function_calling(model, test_cases: list) -> dict:
+    """评估函数调用准确性。"""
+    results = {
+        "correct_tool": 0,
+        "correct_args": 0,
+        "valid_json": 0,
+        "total": len(test_cases)
+    }
+
+    for case in test_cases:
+        response = generate_tool_call(case["input"], case["tools"])
+
+        try:
+            parsed = parse_tool_call(response)
+            results["valid_json"] += 1
+
+            if parsed["name"] == case["expected_tool"]:
+                results["correct_tool"] += 1
+
+            if parsed["arguments"] == case["expected_args"]:
+                results["correct_args"] += 1
+        except:
+            pass
+
+    return {k: v/results["total"] for k, v in results.items() if k != "total"}
+```
+
+## 最佳实践
+
+1.  **多样化的训练数据**：包含各种工具组合和边缘情况
+2.  **一致的格式**：训练和推理使用完全相同的格式
+3.  **负样本**：包含不应调用工具的例子
+4.  **验证**：在解析前始终验证 JSON 输出
+5.  **温度**：使用较低的温度（0.1-0.3）以获得可靠的工具调用

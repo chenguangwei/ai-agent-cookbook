@@ -1,0 +1,83 @@
+fragment TutorialParts on Tutorial {
+  __typename
+  title
+  slug
+  locale
+  description
+  category
+  tags
+  techStack
+  difficulty
+  duration
+  videoUrl
+  thumbnail
+  featured
+  date
+  body
+}
+
+fragment DocParts on Doc {
+  __typename
+  title
+  slug
+  locale
+  category
+  order
+  lastUpdated
+  body
+}
+
+fragment NewsParts on News {
+  __typename
+  title
+  slug
+  locale
+  summary
+  source
+  sourceUrl
+  author
+  imageUrl
+  publishedAt
+  category
+  readTime
+  body
+}
+
+fragment PracticeLabParts on PracticeLab {
+  __typename
+  title
+  locale
+  description
+  environment
+  difficulty
+  status
+  usersOnline
+  thumbnail
+}
+
+fragment ShowcaseParts on Showcase {
+  __typename
+  title
+  locale
+  author {
+    __typename
+    name
+    avatar
+  }
+  description
+  tags
+  stars
+  demoUrl
+  repoUrl
+  thumbnail
+}
+
+fragment RequestParts on Request {
+  __typename
+  topic
+  category
+  description
+  email
+  status
+  submittedAt
+}

@@ -1,0 +1,14 @@
+{
+  "title": "MediAssist",
+  "locale": "en",
+  "author": {
+    "name": "Dr. Emily Wu",
+    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704e"
+  },
+  "description": "HIPAA-compliant assistant for summarizing patient history from unstructured notes.",
+  "tags": ["Healthcare", "Privacy", "NLP"],
+  "stars": 567,
+  "demoUrl": "#",
+  "repoUrl": "#",
+  "thumbnail": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+}

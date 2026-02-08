@@ -1,0 +1,282 @@
+---
+title: "实现 ReAct 模式"
+slug: "react-pattern-explained"
+locale: "zh"
+description: "推理与行动：让大语言模型能够与外部工具交互的基础模式。"
+category: "智能体工作流"
+tags: ["ReAct", "推理"]
+techStack: ["LangChain", "OpenAI"]
+difficulty: "初级"
+duration: "12 分钟阅读"
+thumbnail: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800"
+featured: false
+date: 2024-05-01
+---
+
+# 实现 ReAct 模式
+
+ReAct（推理与行动）是一种基础模式，它使大语言模型能够通过交替进行推理轨迹和行动执行来解决复杂问题。
+
+## 什么是 ReAct？
+
+ReAct 结合了：
+- **推理**：模型逐步思考问题
+- **行动**：模型使用外部工具执行操作
+- **观察**：模型将工具输出纳入其推理过程
+
+这个循环会持续进行，直到模型得出最终答案。
+
+## ReAct 循环
+
+```
+Thought: 我需要查找关于 X 的信息
+Action: search[X]
+Observation: [搜索结果]
+Thought: 根据结果，我现在知道了 Y。我需要计算 Z。
+Action: calculate[Z 公式]
+Observation: [计算结果]
+Thought: 我已经掌握了所有需要的信息。
+Action: finish[最终答案]
+```
+
+## 基础实现
+
+### 设置工具
+
+```python
+from typing import Callable, Dict
+
+# 定义可用工具
+tools: Dict[str, Callable] = {
+    "search": lambda query: search_web(query),
+    "calculate": lambda expr: eval_math(expr),
+    "lookup": lambda term: lookup_wikipedia(term),
+}
+
+def execute_action(action: str, input: str) -> str:
+    """使用适当的工具执行一个动作。"""
+    if action in tools:
+        return tools[action](input)
+    return f"Unknown action: {action}"
+```
+
+### ReAct 提示词
+
+```python
+REACT_PROMPT = """使用可用工具回答以下问题。
+
+可用工具：
+- search[query]: 在网络上搜索信息
+- calculate[expression]: 计算数学表达式
+- lookup[term]: 在维基百科中查找术语
+- finish[answer]: 提供最终答案
+
+始终使用以下格式：
+Thought: <你关于下一步做什么的推理>
+Action: <工具名称>[<输入>]
+
+收到观察结果后，继续下一个 Thought/Action 或结束。
+
+问题：{question}
+
+{history}
+Thought:"""
+```
+
+### ReAct 智能体
+
+```python
+from openai import OpenAI
+import re
+
+client = OpenAI()
+
+def parse_action(response: str) -> tuple:
+    """从模型响应中解析动作和输入。"""
+    match = re.search(r'Action:\s*(\w+)\[(.*?)\]', response)
+    if match:
+        return match.group(1), match.group(2)
+    return None, None
+
+def react_agent(question: str, max_steps: int = 10) -> str:
+    """运行 ReAct 循环直到完成。"""
+    history = ""
+
+    for step in range(max_steps):
+        # 生成下一个思考和动作
+        prompt = REACT_PROMPT.format(question=question, history=history)
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            stop=["Observation:"]
+        )
+
+        output = response.choices[0].message.content
+        history += output + "\n"
+
+        # 解析并执行动作
+        action, action_input = parse_action(output)
+
+        if action == "finish":
+            return action_input
+
+        if action:
+            observation = execute_action(action, action_input)
+            history += f"Observation: {observation}\n"
+        else:
+            history += "Observation: 无法解析动作。请重试。\n"
+
+    return "达到最大步数仍未得出结论"
+```
+
+## 使用 LangChain
+
+LangChain 提供了内置的 ReAct 支持：
+
+```python
+from langchain.agents import create_react_agent, AgentExecutor
+from langchain.tools import Tool
+from langchain_openai import ChatOpenAI
+from langchain import hub
+
+# 定义工具
+tools = [
+    Tool(
+        name="Search",
+        func=search_web,
+        description="搜索网络获取最新信息"
+    ),
+    Tool(
+        name="Calculator",
+        func=eval_math,
+        description="用于数学计算"
+    ),
+]
+
+# 从 hub 获取 ReAct 提示词
+prompt = hub.pull("hwchase17/react")
+
+# 创建智能体
+llm = ChatOpenAI(model="gpt-4", temperature=0)
+agent = create_react_agent(llm, tools, prompt)
+
+# 创建执行器
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,
+    max_iterations=10,
+    handle_parsing_errors=True
+)
+
+# 运行
+result = agent_executor.invoke({"input": "东京的人口乘以 2 是多少？"})
+print(result["output"])
+```
+
+## 增强 ReAct
+
+### 添加记忆
+
+```python
+from langchain.memory import ConversationBufferMemory
+
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True
+)
+
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    memory=memory,
+    verbose=True
+)
+```
+
+### 错误恢复
+
+```python
+def react_with_recovery(question: str) -> str:
+    """带有错误恢复功能的 ReAct 智能体。"""
+    history = ""
+    errors = 0
+    max_errors = 3
+
+    for step in range(max_steps):
+        try:
+            # ... 正常的 ReAct 循环
+            pass
+        except Exception as e:
+            errors += 1
+            history += f"Observation: 发生错误：{str(e)}。尝试替代方法。\n"
+
+            if errors >= max_errors:
+                return "错误过多，无法完成任务"
+
+    return result
+```
+
+### 结构化输出
+
+```python
+from pydantic import BaseModel
+
+class ReActStep(BaseModel):
+    thought: str
+    action: str
+    action_input: str
+    observation: str | None = None
+
+class ReActTrace(BaseModel):
+    question: str
+    steps: list[ReActStep]
+    final_answer: str
+```
+
+## 常见模式
+
+### 搜索 → 总结
+
+```
+Thought: 我需要查找关于 AI 的最新新闻
+Action: search[2024 年最新 AI 新闻]
+Observation: [多篇文章...]
+Thought: 我找到了几篇文章。让我总结一下关键点。
+Action: finish[总结：1. OpenAI 发布了... 2. Google 宣布了...]
+```
+
+### 计算 → 验证
+
+```
+Thought: 我需要计算复利
+Action: calculate[1000 * (1 + 0.05) ** 10]
+Observation: 1628.89
+Thought: 让我通过逐步计算来验证
+Action: calculate[1000 * 1.05 ** 10]
+Observation: 1628.89
+Thought: 两次计算结果一致
+Action: finish[复利结果为 $1,628.89]
+```
+
+## 最佳实践
+
+1.  **清晰的工具描述**：使工具用途明确无误
+2.  **限制工具数量**：3-5 个工具效果最佳；过多会导致混淆
+3.  **优雅地处理错误**：在你的循环中包含错误恢复机制
+4.  **设置最大迭代次数**：防止无限循环
+5.  **记录轨迹**：保留完整的轨迹用于调试和改进
+
+## 何时使用 ReAct
+
+**适用于：**
+- 多步骤研究任务
+- 需要查找信息的计算
+- 需要实时数据的任务
+
+**不适用于：**
+- 简单的问答
+- 创意写作
+- 不需要外部工具的任务

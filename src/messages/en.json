@@ -1,0 +1,166 @@
+{
+  "Home": {
+    "title": "Master the Agentic Future",
+    "subtitle": "The definitive repository for autonomous architectures. Professional workflows built for the next generation of AI developers.",
+    "searchPlaceholder": "Search repository...",
+    "hotTopics": "Hot Topics",
+    "viewAll": "View All",
+    "featuredTutorials": "Featured Tutorials",
+    "repositorySegments": "Repository Segments",
+    "systemStatus": "System Status: Operational",
+    "categories": {
+      "foundation": "Foundation",
+      "workflows": "Workflows",
+      "practice": "Practice",
+      "showcase": "Showcase",
+      "llms": "LLMs"
+    }
+  },
+  "Navigation": {
+    "tutorials": "Tutorials",
+    "explore": "Explore",
+    "practice": "Practice",
+    "showcase": "Showcase",
+    "news": "News",
+    "docs": "Docs",
+    "signIn": "Sign In",
+    "createStudio": "Creator Studio",
+    "searchPlaceholder": "Search resources...",
+    "requestTutorial": "Request Tutorial"
+  },
+  "Tutorial": {
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "format": {
+      "video": "Video",
+      "text": "Text",
+      "interactive": "Interactive"
+    },
+    "relatedTutorials": "Related Tutorials",
+    "nextLesson": "Next Lesson",
+    "prevLesson": "Previous Lesson",
+    "tableOfContents": "On this page",
+    "notFound": "Tutorial Not Found",
+    "home": "Home",
+    "tutorials": "Tutorials",
+    "featured": "Featured",
+    "previous": "Previous",
+    "next": "Next",
+    "tryItYourself": "Try it yourself",
+    "tryItDescription": "Launch an interactive environment to practice this tutorial.",
+    "openSandbox": "Open Sandbox"
+  },
+  "News": {
+    "title": "News & Updates",
+    "description": "Stay up to date with the latest developments in AI agents, LLMs, and autonomous systems.",
+    "readMore": "Read more",
+    "all": "All",
+    "tech": "Tech",
+    "research": "Research",
+    "industry": "Industry"
+  },
+  "Explore": {
+    "title": "All Tutorials",
+    "description": "Explore our comprehensive collection of AI agent tutorials",
+    "allLanguages": "All Languages",
+    "english": "English",
+    "chinese": "Chinese",
+    "japanese": "Japanese",
+    "allLevels": "All Levels",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "tutorialsCount": "{count} tutorials",
+    "noResults": "No tutorials found",
+    "noResultsDescription": "Try selecting a different category or adjusting your filters."
+  },
+  "Practice": {
+    "title": "Practice Labs",
+    "description": "Interactive coding environments to build and test your AI agents. Launch a sandbox and start experimenting in seconds.",
+    "online": "online",
+    "launchEnvironment": "Launch Environment",
+    "underMaintenance": "Under Maintenance"
+  },
+  "Showcase": {
+    "title": "Community Showcase",
+    "description": "Discover incredible AI agent projects built by our community. Get inspired and share your own creations.",
+    "fork": "Fork",
+    "demo": "Demo"
+  },
+  "Docs": {
+    "title": "Documentation",
+    "loading": "Loading documentation...",
+    "searchPlaceholder": "Search docs...",
+    "home": "Home",
+    "docs": "Docs",
+    "editOnGithub": "Edit on GitHub",
+    "lastUpdated": "Last updated: {date}"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "notFound": "Page not found",
+    "backToHome": "Back to Home",
+    "readMore": "Read More",
+    "viewDetails": "View Details",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All"
+  },
+  "Footer": {
+    "copyright": "Agent Hub. All rights reserved.",
+    "platform": "Platform",
+    "resources": "Resources",
+    "company": "Company",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "tutorials": "Tutorials",
+    "practice": "Practice",
+    "legal": "Legal",
+    "repoDescription": "The definitive repository for high-performance autonomous architectures."
+  },
+  "RequestForm": {
+    "title": "Request a Tutorial",
+    "subtitle": "Can't find what you're looking for? Let our team of expert engineers know what you want to learn next.",
+    "topic": "Tutorial Topic",
+    "topicPlaceholder": "e.g. Fine-tuning Mistral 7B on local hardware",
+    "category": "Category",
+    "categoryPlaceholder": "Select a category",
+    "description": "Detailed Description",
+    "descriptionPlaceholder": "What specific problems are you trying to solve?",
+    "email": "Your Email (Optional)",
+    "emailPlaceholder": "We'll notify you when it's published",
+    "submit": "Submit Request",
+    "success": "Request submitted successfully! We'll review your suggestion.",
+    "error": "Failed to submit request. Please try again."
+  },
+  "CreatorStudio": {
+    "title": "Creator Studio",
+    "draftLastEdited": "Draft - Last edited {time}",
+    "autoSaved": "Auto-saved",
+    "saveDraft": "Save Draft",
+    "publish": "Publish",
+    "properties": "Properties",
+    "propertiesDesc": "Configure metadata and SEO",
+    "generalInfo": "General Info",
+    "localizations": "Localizations",
+    "seoSocial": "SEO & Social",
+    "videoUrl": "Video URL",
+    "videoUrlPlaceholder": "YouTube or Loom URL",
+    "language": "Language",
+    "languagePlaceholder": "Select language",
+    "tags": "Tags",
+    "addTag": "+ Add",
+    "thumbnail": "Thumbnail",
+    "thumbnailDesc": "Upload or drag image",
+    "titlePlaceholder": "Enter post title...",
+    "source": "Source",
+    "livePreview": "Live Preview",
+    "dashboard": "Dashboard",
+    "tutorials": "Tutorials",
+    "newPost": "New Post"
+  }
+}

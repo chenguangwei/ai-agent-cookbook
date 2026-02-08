@@ -1,0 +1,339 @@
+---
+title: "构建自反思智能体"
+slug: "self-reflecting-agent"
+locale: "zh"
+description: "通过实现批判与优化循环来提升智能体的可靠性。"
+category: "智能体工作流"
+tags: ["反思", "可靠性"]
+techStack: ["LangGraph"]
+difficulty: "中级"
+duration: "30 分钟"
+thumbnail: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800"
+featured: false
+date: 2024-04-28
+---
+
+# 构建自反思智能体
+
+自反思使智能体能够批判自己的输出并迭代改进。这种模式能显著提高可靠性和输出质量。
+
+## 为何需要自反思？
+
+标准智能体输出通常包含：
+- 不完整的推理
+- 事实性错误
+- 遗漏的边缘情况
+- 次优的解决方案
+
+自反思通过让智能体执行以下步骤来解决这些问题：
+1. 生成初始响应
+2. 批判该响应
+3. 基于批评进行优化
+4. 重复直到满意
+
+## 反思模式
+
+```
+初始响应 → 批判 → 优化 → 批判 → ... → 最终输出
+```
+
+## 基础实现
+
+### 反思提示词
+
+```python
+CRITIQUE_PROMPT = """请审阅以下响应并找出任何问题：
+
+原始问题：{question}
+响应：{response}
+
+请考虑：
+1. 事实准确性 - 所有陈述是否正确？
+2. 完整性 - 是否完全回答了问题？
+3. 逻辑性 - 推理是否合理？
+4. 清晰度 - 解释是否清晰？
+
+提供具体、可操作的改进反馈。
+如果响应令人满意，请回复“APPROVED”。
+
+批判意见："""
+
+REFINE_PROMPT = """根据批判意见改进以下响应：
+
+原始问题：{question}
+当前响应：{response}
+批判意见：{critique}
+
+提供一个改进后的响应，解决所有反馈意见。
+
+改进后的响应："""
+```
+
+### 简单反思循环
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+def generate(prompt: str) -> str:
+    """从模型生成响应。"""
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content
+
+def reflect_and_refine(question: str, max_iterations: int = 3) -> str:
+    """通过自反思生成响应。"""
+
+    # 初始生成
+    response = generate(f"回答这个问题：{question}")
+
+    for i in range(max_iterations):
+        # 批判响应
+        critique = generate(CRITIQUE_PROMPT.format(
+            question=question,
+            response=response
+        ))
+
+        # 检查是否通过
+        if "APPROVED" in critique.upper():
+            print(f"经过 {i+1} 次迭代后通过")
+            return response
+
+        # 基于批判进行优化
+        response = generate(REFINE_PROMPT.format(
+            question=question,
+            response=response,
+            critique=critique
+        ))
+
+    return response
+```
+
+## LangGraph 实现
+
+使用 LangGraph 进行更复杂的实现：
+
+```python
+from typing import TypedDict, Annotated, Literal
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+
+class ReflectionState(TypedDict):
+    question: str
+    response: str
+    critique: str
+    iteration: int
+    approved: bool
+
+llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+critic_llm = ChatOpenAI(model="gpt-4", temperature=0)  # 批判使用较低温度
+
+def generate_node(state: ReflectionState) -> ReflectionState:
+    """生成或优化响应。"""
+    if state["iteration"] == 0:
+        # 初始生成
+        response = llm.invoke(f"回答：{state['question']}")
+    else:
+        # 优化
+        prompt = REFINE_PROMPT.format(
+            question=state["question"],
+            response=state["response"],
+            critique=state["critique"]
+        )
+        response = llm.invoke(prompt)
+
+    return {
+        **state,
+        "response": response.content,
+        "iteration": state["iteration"] + 1
+    }
+
+def critique_node(state: ReflectionState) -> ReflectionState:
+    """批判当前响应。"""
+    critique = critic_llm.invoke(CRITIQUE_PROMPT.format(
+        question=state["question"],
+        response=state["response"]
+    ))
+
+    approved = "APPROVED" in critique.content.upper()
+
+    return {
+        **state,
+        "critique": critique.content,
+        "approved": approved
+    }
+
+def should_continue(state: ReflectionState) -> Literal["generate", "end"]:
+    """决定是否继续优化。"""
+    if state["approved"] or state["iteration"] >= 3:
+        return "end"
+    return "generate"
+
+# 构建图
+workflow = StateGraph(ReflectionState)
+
+workflow.add_node("generate", generate_node)
+workflow.add_node("critique", critique_node)
+
+workflow.set_entry_point("generate")
+workflow.add_edge("generate", "critique")
+workflow.add_conditional_edges(
+    "critique",
+    should_continue,
+    {"generate": "generate", "end": END}
+)
+
+app = workflow.compile()
+```
+
+## 高级模式
+
+### 多维度批判
+
+分别评估不同维度：
+
+```python
+ASPECTS = {
+    "accuracy": "所有事实性主张是否正确且可验证？",
+    "completeness": "响应是否完全解决了问题的所有部分？",
+    "clarity": "响应是否组织良好且易于理解？",
+    "relevance": "响应是否专注于问题本身？",
+}
+
+def multi_aspect_critique(question: str, response: str) -> dict:
+    """从多个维度批判响应。"""
+    critiques = {}
+
+    for aspect, prompt in ASPECTS.items():
+        critique = generate(f"""
+        问题：{question}
+        响应：{response}
+
+        评估：{prompt}
+        评分（1-5）并解释：
+        """)
+        critiques[aspect] = critique
+
+    return critiques
+```
+
+### 集成反思
+
+使用多个批判者：
+
+```python
+def ensemble_critique(question: str, response: str, num_critics: int = 3) -> str:
+    """从多个视角获取批判意见并综合。"""
+    critiques = []
+
+    personas = [
+        "领域专家",
+        "持怀疑态度的审阅者",
+        "注重清晰度的编辑"
+    ]
+
+    for persona in personas[:num_critics]:
+        critique = generate(f"""
+        作为{persona}，批判此响应：
+
+        问题：{question}
+        响应：{response}
+
+        您的批判意见：
+        """)
+        critiques.append(critique)
+
+    # 综合批判意见
+    synthesis = generate(f"""
+    将这些批判意见综合为可操作的反馈：
+
+    {chr(10).join(f'批判意见 {i+1}：{c}' for i, c in enumerate(critiques))}
+
+    综合反馈：
+    """)
+
+    return synthesis
+```
+
+### 宪法式 AI 风格反思
+
+应用伦理和安全检查：
+
+```python
+CONSTITUTIONAL_PRINCIPLES = [
+    "响应不应包含有害或危险信息",
+    "响应应真实且不具误导性",
+    "响应应尊重隐私，不泄露个人信息",
+    "响应应公平且无偏见",
+]
+
+def constitutional_check(response: str) -> tuple[bool, str]:
+    """根据宪法原则检查响应。"""
+    violations = []
+
+    for principle in CONSTITUTIONAL_PRINCIPLES:
+        check = generate(f"""
+        原则：{principle}
+        响应：{response}
+
+        此响应是否违反该原则？（是/否）
+        如果是，请解释如何违反：
+        """)
+
+        if "是" in check.upper():
+            violations.append(check)
+
+    if violations:
+        return False, "\n".join(violations)
+    return True, "所有原则均满足"
+```
+
+## 可视化
+
+跟踪反思过程：
+
+```python
+class ReflectionTracer:
+    def __init__(self):
+        self.history = []
+
+    def log(self, iteration: int, response: str, critique: str, approved: bool):
+        self.history.append({
+            "iteration": iteration,
+            "response": response,
+            "critique": critique,
+            "approved": approved
+        })
+
+    def visualize(self):
+        for entry in self.history:
+            print(f"\n=== 迭代 {entry['iteration']} ===")
+            print(f"响应：{entry['response'][:200]}...")
+            print(f"批判意见：{entry['critique'][:200]}...")
+            print(f"状态：{'✓ 已通过' if entry['approved'] else '→ 优化中'}")
+```
+
+## 最佳实践
+
+1. **生成与批判使用不同模型**：批判使用更具分析性的模型
+2. **温度设置**：批判使用较低温度，创意生成使用较高温度
+3. **迭代限制**：始终设置最大值以防止无限循环
+4. **明确标准**：定义具体、可衡量的批判标准
+5. **跟踪日志**：保留完整跟踪记录用于调试和分析
+
+## 何时使用自反思
+
+**适用于：**
+- 高风险输出（法律、医疗、金融）
+- 复杂推理任务
+- 需要准确性的内容
+- 面向用户的文本生成
+
+**可能过度：**
+- 简单的事实查询
+- 时间敏感型应用
+- 低风险的内部任务

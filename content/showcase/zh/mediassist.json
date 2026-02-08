@@ -1,0 +1,14 @@
+{
+  "title": "医疗助手",
+  "locale": "zh",
+  "author": {
+    "name": "吴艾米丽博士",
+    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704e"
+  },
+  "description": "符合HIPAA标准的助手，用于从非结构化笔记中总结患者病史。",
+  "tags": ["医疗保健", "隐私保护", "自然语言处理"],
+  "stars": 567,
+  "demoUrl": "#",
+  "repoUrl": "#",
+  "thumbnail": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+}

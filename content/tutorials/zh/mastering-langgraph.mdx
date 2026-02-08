@@ -1,0 +1,122 @@
+---
+title: "精通 LangGraph"
+slug: "mastering-langgraph"
+locale: "zh"
+description: "学习使用 LangChain 最新的编排引擎为生产环境构建有状态的多智能体图。"
+category: "Frameworks"
+tags: ["LangChain", "Graph", "Python"]
+techStack: ["LangGraph", "GPT-4"]
+difficulty: "Intermediate"
+duration: "45 分钟"
+thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
+featured: true
+date: 2024-05-20
+---
+
+# 精通 LangGraph
+
+LangGraph 是一个强大的库，用于构建有状态的多参与者 LLM 应用程序。本教程将带您从基础到高级生产模式。
+
+## 前置条件
+
+在开始之前，请确保您已：
+- 安装 Python 3.9+
+- 基本了解 LangChain
+- 拥有 OpenAI API 密钥
+
+## 环境设置
+
+```bash
+pip install langgraph langchain openai
+```
+
+## 核心概念
+
+### 理解图结构
+
+LangGraph 使用有向图，其中：
+
+- **节点** 代表单独的计算步骤或智能体操作
+- **边** 定义条件或无条件转换
+- **状态** 是在节点之间传递的类型化字典
+
+### 创建您的第一个图
+
+```python
+from typing import TypedDict, List
+from langgraph.graph import StateGraph, END
+
+class AgentState(TypedDict):
+    messages: List[str]
+    current_step: str
+    completed: bool
+
+# 初始化图
+workflow = StateGraph(AgentState)
+
+# 定义节点
+def research_node(state: AgentState) -> AgentState:
+    # 执行研究
+    state["messages"].append("研究完成")
+    return state
+
+def analysis_node(state: AgentState) -> AgentState:
+    # 分析发现
+    state["messages"].append("分析完成")
+    return state
+
+# 添加节点到图
+workflow.add_node("research", research_node)
+workflow.add_node("analysis", analysis_node)
+
+# 定义边
+workflow.add_edge("research", "analysis")
+workflow.add_edge("analysis", END)
+
+# 设置入口点
+workflow.set_entry_point("research")
+
+# 编译图
+app = workflow.compile()
+```
+
+## 高级模式
+
+### 条件路由
+
+```python
+def should_continue(state: AgentState) -> str:
+    if state["completed"]:
+        return "end"
+    return "continue"
+
+workflow.add_conditional_edges(
+    "analysis",
+    should_continue,
+    {"continue": "research", "end": END}
+)
+```
+
+### 人机协作
+
+LangGraph 支持人工干预断点：
+
+```python
+app = workflow.compile(
+    checkpointer=memory,
+    interrupt_before=["analysis"]
+)
+```
+
+## 生产最佳实践
+
+1. **状态持久化**: 使用 Redis 或 PostgreSQL 进行检查点
+2. **错误处理**: 实现带指数退避的重试逻辑
+3. **可观测性**: 与 LangSmith 集成进行追踪
+4. **测试**: 为单个节点编写单元测试
+
+## 下一步
+
+- 探索多智能体协作模式
+- 学习流式响应
+- 在图中实现工具调用

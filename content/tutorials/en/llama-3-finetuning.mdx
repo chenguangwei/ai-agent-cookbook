@@ -1,0 +1,287 @@
+---
+title: "Fine-tuning Llama 3 for Agents"
+slug: "llama-3-finetuning"
+locale: "en"
+description: "A comprehensive guide to fine-tuning Llama 3 70B on custom function-calling datasets."
+category: "LLM Models"
+tags: ["Llama 3", "Meta", "Fine-tuning"]
+techStack: ["Llama 3", "PyTorch"]
+difficulty: "Advanced"
+duration: "55 mins"
+thumbnail: "https://images.unsplash.com/photo-1558494949-ef526bca4852?w=800"
+featured: false
+date: 2024-05-05
+---
+
+# Fine-tuning Llama 3 for Agents
+
+Learn how to fine-tune Llama 3 70B for function calling and agent tasks using efficient training techniques.
+
+## Why Fine-tune for Agents?
+
+Base Llama 3 models excel at general tasks but need fine-tuning to:
+
+- Follow specific function-calling formats
+- Handle tool use reliably
+- Maintain consistent output schemas
+- Reduce hallucinated tool calls
+
+## Prerequisites
+
+- GPU with 24GB+ VRAM (A100 40GB recommended)
+- Python 3.10+
+- Hugging Face account with Llama 3 access
+
+## Environment Setup
+
+```bash
+pip install torch transformers accelerate peft trl
+pip install bitsandbytes datasets wandb
+```
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from trl import SFTTrainer
+
+# Check GPU
+print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"GPU: {torch.cuda.get_device_name(0)}")
+```
+
+## Dataset Preparation
+
+### Function Calling Format
+
+```python
+FUNCTION_CALLING_TEMPLATE = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful assistant with access to the following tools:
+
+{tools}
+
+When you need to use a tool, respond with:
+<tool_call>
+{{"name": "tool_name", "arguments": {{"arg1": "value1"}}}}
+</tool_call>
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+{assistant_response}<|eot_id|>"""
+```
+
+### Creating Training Data
+
+```python
+def create_training_example(tools: list, user_msg: str, assistant_response: str) -> dict:
+    """Create a training example in the function calling format."""
+    tools_str = "\n".join([
+        f"- {t['name']}: {t['description']}\n  Parameters: {t['parameters']}"
+        for t in tools
+    ])
+
+    text = FUNCTION_CALLING_TEMPLATE.format(
+        tools=tools_str,
+        user_message=user_msg,
+        assistant_response=assistant_response
+    )
+
+    return {"text": text}
+
+# Example dataset
+training_data = [
+    create_training_example(
+        tools=[{
+            "name": "get_weather",
+            "description": "Get current weather for a location",
+            "parameters": {"location": "string", "unit": "celsius|fahrenheit"}
+        }],
+        user_msg="What's the weather in Tokyo?",
+        assistant_response="""<tool_call>
+{"name": "get_weather", "arguments": {"location": "Tokyo", "unit": "celsius"}}
+</tool_call>"""
+    )
+]
+```
+
+## Model Loading with QLoRA
+
+```python
+from transformers import BitsAndBytesConfig
+
+# 4-bit quantization config
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
+)
+
+# Load model
+model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=bnb_config,
+    device_map="auto",
+    trust_remote_code=True,
+)
+
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "right"
+```
+
+## LoRA Configuration
+
+```python
+# Prepare model for training
+model = prepare_model_for_kbit_training(model)
+
+# LoRA config for function calling
+lora_config = LoraConfig(
+    r=64,  # Rank - higher for complex tasks
+    lora_alpha=128,
+    lora_dropout=0.05,
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+    ],
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+
+# Apply LoRA
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()
+```
+
+## Training
+
+```python
+from transformers import TrainingArguments
+from datasets import Dataset
+
+# Create dataset
+dataset = Dataset.from_list(training_data)
+
+# Training arguments
+training_args = TrainingArguments(
+    output_dir="./llama3-agent-ft",
+    num_train_epochs=3,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=16,
+    learning_rate=2e-4,
+    weight_decay=0.01,
+    warmup_ratio=0.03,
+    lr_scheduler_type="cosine",
+    logging_steps=10,
+    save_strategy="epoch",
+    bf16=True,
+    gradient_checkpointing=True,
+    optim="paged_adamw_32bit",
+    report_to="wandb",
+)
+
+# Initialize trainer
+trainer = SFTTrainer(
+    model=model,
+    train_dataset=dataset,
+    args=training_args,
+    tokenizer=tokenizer,
+    max_seq_length=2048,
+    dataset_text_field="text",
+    packing=True,  # Pack short examples together
+)
+
+# Train
+trainer.train()
+```
+
+## Saving and Loading
+
+```python
+# Save LoRA weights
+model.save_pretrained("./llama3-agent-lora")
+tokenizer.save_pretrained("./llama3-agent-lora")
+
+# Merge and save full model (optional)
+merged_model = model.merge_and_unload()
+merged_model.save_pretrained("./llama3-agent-merged")
+```
+
+## Inference
+
+```python
+from peft import PeftModel
+
+# Load fine-tuned model
+base_model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=bnb_config,
+    device_map="auto",
+)
+model = PeftModel.from_pretrained(base_model, "./llama3-agent-lora")
+
+def generate_tool_call(user_message: str, tools: list) -> str:
+    """Generate a tool call response."""
+    prompt = FUNCTION_CALLING_TEMPLATE.format(
+        tools=format_tools(tools),
+        user_message=user_message,
+        assistant_response=""
+    ).rsplit("<|start_header_id|>assistant<|end_header_id|>", 1)[0]
+    prompt += "<|start_header_id|>assistant<|end_header_id|>\n\n"
+
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=256,
+        temperature=0.1,
+        do_sample=True,
+        pad_token_id=tokenizer.eos_token_id,
+    )
+
+    response = tokenizer.decode(outputs[0], skip_special_tokens=False)
+    return extract_assistant_response(response)
+```
+
+## Evaluation
+
+```python
+def evaluate_function_calling(model, test_cases: list) -> dict:
+    """Evaluate function calling accuracy."""
+    results = {
+        "correct_tool": 0,
+        "correct_args": 0,
+        "valid_json": 0,
+        "total": len(test_cases)
+    }
+
+    for case in test_cases:
+        response = generate_tool_call(case["input"], case["tools"])
+
+        try:
+            parsed = parse_tool_call(response)
+            results["valid_json"] += 1
+
+            if parsed["name"] == case["expected_tool"]:
+                results["correct_tool"] += 1
+
+            if parsed["arguments"] == case["expected_args"]:
+                results["correct_args"] += 1
+        except:
+            pass
+
+    return {k: v/results["total"] for k, v in results.items() if k != "total"}
+```
+
+## Best Practices
+
+1. **Diverse Training Data**: Include varied tool combinations and edge cases
+2. **Consistent Formatting**: Use exact same format for training and inference
+3. **Negative Examples**: Include examples where no tool should be called
+4. **Validation**: Always validate JSON output before parsing
+5. **Temperature**: Use low temperature (0.1-0.3) for reliable tool calling

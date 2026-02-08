@@ -1,0 +1,30 @@
+---
+title: 'Architecture Overview'
+slug: 'architecture'
+locale: 'zh'
+category: 'Core Concepts'
+order: 2
+lastUpdated: '2024-05-18T00:00:00.000Z'
+---
+
+# Architecture Overview
+
+Agent Hub follows a modular architecture designed for scalability and flexibility. At its core, it leverages a microservices approach to handle different aspects of agent management.
+
+## System Components
+
+### Content Layer
+All tutorials and documentation are stored as MDX files, managed through TinaCMS for easy editing and version control.
+
+### Frontend
+Built with Next.js App Router, featuring server-side rendering for SEO and client-side interactivity for a smooth user experience.
+
+### Search
+Powered by Orama, a full-text search engine that runs entirely in the browser for instant results.
+
+## Data Flow
+
+1. Content is authored via the CMS admin interface
+2. MDX files are stored in the Git repository
+3. Next.js renders pages at build time or on request
+4. Client-side search indexes content for instant lookup

@@ -1,0 +1,282 @@
+---
+title: "Implementing the ReAct Pattern"
+slug: "react-pattern-explained"
+locale: "en"
+description: "Reasoning and Acting: The foundational pattern that allows LLMs to interact with external tools."
+category: "Agentic Workflows"
+tags: ["ReAct", "Reasoning"]
+techStack: ["LangChain", "OpenAI"]
+difficulty: "Beginner"
+duration: "12 min read"
+thumbnail: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800"
+featured: false
+date: 2024-05-01
+---
+
+# Implementing the ReAct Pattern
+
+ReAct (Reasoning and Acting) is a foundational pattern that enables LLMs to solve complex problems by interleaving reasoning traces with action execution.
+
+## What is ReAct?
+
+ReAct combines:
+- **Reasoning**: The model thinks through the problem step-by-step
+- **Acting**: The model takes actions using external tools
+- **Observation**: The model incorporates tool outputs into its reasoning
+
+This loop continues until the model reaches a final answer.
+
+## The ReAct Loop
+
+```
+Thought: I need to find information about X
+Action: search[X]
+Observation: [search results]
+Thought: Based on the results, I now know Y. I need to calculate Z.
+Action: calculate[Z formula]
+Observation: [calculation result]
+Thought: I have all the information needed.
+Action: finish[final answer]
+```
+
+## Basic Implementation
+
+### Setting Up Tools
+
+```python
+from typing import Callable, Dict
+
+# Define available tools
+tools: Dict[str, Callable] = {
+    "search": lambda query: search_web(query),
+    "calculate": lambda expr: eval_math(expr),
+    "lookup": lambda term: lookup_wikipedia(term),
+}
+
+def execute_action(action: str, input: str) -> str:
+    """Execute an action using the appropriate tool."""
+    if action in tools:
+        return tools[action](input)
+    return f"Unknown action: {action}"
+```
+
+### The ReAct Prompt
+
+```python
+REACT_PROMPT = """Answer the following question using the available tools.
+
+Available tools:
+- search[query]: Search the web for information
+- calculate[expression]: Evaluate a mathematical expression
+- lookup[term]: Look up a term in Wikipedia
+- finish[answer]: Provide the final answer
+
+Always use this format:
+Thought: <your reasoning about what to do next>
+Action: <tool_name>[<input>]
+
+After receiving an observation, continue with another Thought/Action or finish.
+
+Question: {question}
+
+{history}
+Thought:"""
+```
+
+### The ReAct Agent
+
+```python
+from openai import OpenAI
+import re
+
+client = OpenAI()
+
+def parse_action(response: str) -> tuple:
+    """Parse action and input from model response."""
+    match = re.search(r'Action:\s*(\w+)\[(.*?)\]', response)
+    if match:
+        return match.group(1), match.group(2)
+    return None, None
+
+def react_agent(question: str, max_steps: int = 10) -> str:
+    """Run the ReAct loop until completion."""
+    history = ""
+
+    for step in range(max_steps):
+        # Generate next thought and action
+        prompt = REACT_PROMPT.format(question=question, history=history)
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            stop=["Observation:"]
+        )
+
+        output = response.choices[0].message.content
+        history += output + "\n"
+
+        # Parse and execute action
+        action, action_input = parse_action(output)
+
+        if action == "finish":
+            return action_input
+
+        if action:
+            observation = execute_action(action, action_input)
+            history += f"Observation: {observation}\n"
+        else:
+            history += "Observation: Could not parse action. Try again.\n"
+
+    return "Max steps reached without conclusion"
+```
+
+## Using LangChain
+
+LangChain provides built-in ReAct support:
+
+```python
+from langchain.agents import create_react_agent, AgentExecutor
+from langchain.tools import Tool
+from langchain_openai import ChatOpenAI
+from langchain import hub
+
+# Define tools
+tools = [
+    Tool(
+        name="Search",
+        func=search_web,
+        description="Search the web for current information"
+    ),
+    Tool(
+        name="Calculator",
+        func=eval_math,
+        description="Useful for math calculations"
+    ),
+]
+
+# Get the ReAct prompt from hub
+prompt = hub.pull("hwchase17/react")
+
+# Create the agent
+llm = ChatOpenAI(model="gpt-4", temperature=0)
+agent = create_react_agent(llm, tools, prompt)
+
+# Create executor
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,
+    max_iterations=10,
+    handle_parsing_errors=True
+)
+
+# Run
+result = agent_executor.invoke({"input": "What is the population of Tokyo times 2?"})
+print(result["output"])
+```
+
+## Enhancing ReAct
+
+### Adding Memory
+
+```python
+from langchain.memory import ConversationBufferMemory
+
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True
+)
+
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    memory=memory,
+    verbose=True
+)
+```
+
+### Error Recovery
+
+```python
+def react_with_recovery(question: str) -> str:
+    """ReAct agent with error recovery."""
+    history = ""
+    errors = 0
+    max_errors = 3
+
+    for step in range(max_steps):
+        try:
+            # ... normal ReAct loop
+            pass
+        except Exception as e:
+            errors += 1
+            history += f"Observation: Error occurred: {str(e)}. Trying alternative approach.\n"
+
+            if errors >= max_errors:
+                return "Too many errors, unable to complete task"
+
+    return result
+```
+
+### Structured Output
+
+```python
+from pydantic import BaseModel
+
+class ReActStep(BaseModel):
+    thought: str
+    action: str
+    action_input: str
+    observation: str | None = None
+
+class ReActTrace(BaseModel):
+    question: str
+    steps: list[ReActStep]
+    final_answer: str
+```
+
+## Common Patterns
+
+### Search → Summarize
+
+```
+Thought: I need to find recent news about AI
+Action: search[latest AI news 2024]
+Observation: [multiple articles...]
+Thought: I found several articles. Let me summarize the key points.
+Action: finish[Summary: 1. OpenAI released... 2. Google announced...]
+```
+
+### Calculate → Verify
+
+```
+Thought: I need to calculate the compound interest
+Action: calculate[1000 * (1 + 0.05) ** 10]
+Observation: 1628.89
+Thought: Let me verify by calculating step by step
+Action: calculate[1000 * 1.05 ** 10]
+Observation: 1628.89
+Thought: Both calculations match
+Action: finish[The compound interest result is $1,628.89]
+```
+
+## Best Practices
+
+1. **Clear Tool Descriptions**: Make tool purposes unambiguous
+2. **Limit Tool Count**: 3-5 tools works best; more causes confusion
+3. **Handle Errors Gracefully**: Include error recovery in your loop
+4. **Set Max Iterations**: Prevent infinite loops
+5. **Log Traces**: Keep full traces for debugging and improvement
+
+## When to Use ReAct
+
+**Good for:**
+- Multi-step research tasks
+- Calculations with lookups
+- Tasks requiring real-time data
+
+**Not ideal for:**
+- Simple Q&A
+- Creative writing
+- Tasks with no external tools needed

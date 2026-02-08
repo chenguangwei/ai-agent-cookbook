@@ -1,0 +1,14 @@
+{
+  "title": "CodeFixer Bot",
+  "locale": "en",
+  "author": {
+    "name": "Alex Rivera",
+    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704d"
+  },
+  "description": "Monitors GitHub PRs and automatically suggests fixes for failed CI/CD pipelines.",
+  "tags": ["DevOps", "GitHub", "Coding"],
+  "stars": 892,
+  "demoUrl": "#",
+  "repoUrl": "#",
+  "thumbnail": "https://images.unsplash.com/photo-1607799275518-d58665d099db?w=800"
+}

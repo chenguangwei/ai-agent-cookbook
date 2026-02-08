@@ -1,0 +1,339 @@
+---
+title: "Building a Self-Reflecting Agent"
+slug: "self-reflecting-agent"
+locale: "en"
+description: "Enhance agent reliability by implementing a critique-and-refine loop."
+category: "Agentic Workflows"
+tags: ["Reflection", "Reliability"]
+techStack: ["LangGraph"]
+difficulty: "Intermediate"
+duration: "30 mins"
+thumbnail: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800"
+featured: false
+date: 2024-04-28
+---
+
+# Building a Self-Reflecting Agent
+
+Self-reflection enables agents to critique their own outputs and iteratively improve them. This pattern dramatically increases reliability and output quality.
+
+## Why Self-Reflection?
+
+Standard agent outputs often contain:
+- Incomplete reasoning
+- Factual errors
+- Missing edge cases
+- Suboptimal solutions
+
+Self-reflection addresses these by having the agent:
+1. Generate an initial response
+2. Critique that response
+3. Refine based on criticism
+4. Repeat until satisfactory
+
+## The Reflection Pattern
+
+```
+Initial Response → Critique → Refinement → Critique → ... → Final Output
+```
+
+## Basic Implementation
+
+### The Reflection Prompt
+
+```python
+CRITIQUE_PROMPT = """Review the following response and identify any issues:
+
+Original Question: {question}
+Response: {response}
+
+Consider:
+1. Factual accuracy - Are all statements correct?
+2. Completeness - Does it fully answer the question?
+3. Logic - Is the reasoning sound?
+4. Clarity - Is it well-explained?
+
+Provide specific, actionable feedback for improvement.
+If the response is satisfactory, respond with "APPROVED".
+
+Critique:"""
+
+REFINE_PROMPT = """Improve the following response based on the critique:
+
+Original Question: {question}
+Current Response: {response}
+Critique: {critique}
+
+Provide an improved response that addresses all the feedback.
+
+Improved Response:"""
+```
+
+### Simple Reflection Loop
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+def generate(prompt: str) -> str:
+    """Generate a response from the model."""
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content
+
+def reflect_and_refine(question: str, max_iterations: int = 3) -> str:
+    """Generate a response with self-reflection."""
+
+    # Initial generation
+    response = generate(f"Answer this question: {question}")
+
+    for i in range(max_iterations):
+        # Critique the response
+        critique = generate(CRITIQUE_PROMPT.format(
+            question=question,
+            response=response
+        ))
+
+        # Check if approved
+        if "APPROVED" in critique.upper():
+            print(f"Approved after {i+1} iterations")
+            return response
+
+        # Refine based on critique
+        response = generate(REFINE_PROMPT.format(
+            question=question,
+            response=response,
+            critique=critique
+        ))
+
+    return response
+```
+
+## LangGraph Implementation
+
+Using LangGraph for a more sophisticated implementation:
+
+```python
+from typing import TypedDict, Annotated, Literal
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+
+class ReflectionState(TypedDict):
+    question: str
+    response: str
+    critique: str
+    iteration: int
+    approved: bool
+
+llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+critic_llm = ChatOpenAI(model="gpt-4", temperature=0)  # Lower temp for critique
+
+def generate_node(state: ReflectionState) -> ReflectionState:
+    """Generate or refine response."""
+    if state["iteration"] == 0:
+        # Initial generation
+        response = llm.invoke(f"Answer: {state['question']}")
+    else:
+        # Refinement
+        prompt = REFINE_PROMPT.format(
+            question=state["question"],
+            response=state["response"],
+            critique=state["critique"]
+        )
+        response = llm.invoke(prompt)
+
+    return {
+        **state,
+        "response": response.content,
+        "iteration": state["iteration"] + 1
+    }
+
+def critique_node(state: ReflectionState) -> ReflectionState:
+    """Critique the current response."""
+    critique = critic_llm.invoke(CRITIQUE_PROMPT.format(
+        question=state["question"],
+        response=state["response"]
+    ))
+
+    approved = "APPROVED" in critique.content.upper()
+
+    return {
+        **state,
+        "critique": critique.content,
+        "approved": approved
+    }
+
+def should_continue(state: ReflectionState) -> Literal["generate", "end"]:
+    """Decide whether to continue refining."""
+    if state["approved"] or state["iteration"] >= 3:
+        return "end"
+    return "generate"
+
+# Build the graph
+workflow = StateGraph(ReflectionState)
+
+workflow.add_node("generate", generate_node)
+workflow.add_node("critique", critique_node)
+
+workflow.set_entry_point("generate")
+workflow.add_edge("generate", "critique")
+workflow.add_conditional_edges(
+    "critique",
+    should_continue,
+    {"generate": "generate", "end": END}
+)
+
+app = workflow.compile()
+```
+
+## Advanced Patterns
+
+### Multi-Aspect Critique
+
+Evaluate different aspects separately:
+
+```python
+ASPECTS = {
+    "accuracy": "Are all factual claims correct and verifiable?",
+    "completeness": "Does the response fully address all parts of the question?",
+    "clarity": "Is the response well-organized and easy to understand?",
+    "relevance": "Does the response stay focused on the question?",
+}
+
+def multi_aspect_critique(question: str, response: str) -> dict:
+    """Critique response across multiple aspects."""
+    critiques = {}
+
+    for aspect, prompt in ASPECTS.items():
+        critique = generate(f"""
+        Question: {question}
+        Response: {response}
+
+        Evaluate: {prompt}
+        Score (1-5) and explain:
+        """)
+        critiques[aspect] = critique
+
+    return critiques
+```
+
+### Ensemble Reflection
+
+Use multiple critics:
+
+```python
+def ensemble_critique(question: str, response: str, num_critics: int = 3) -> str:
+    """Get critiques from multiple perspectives and synthesize."""
+    critiques = []
+
+    personas = [
+        "a domain expert",
+        "a skeptical reviewer",
+        "a clarity-focused editor"
+    ]
+
+    for persona in personas[:num_critics]:
+        critique = generate(f"""
+        As {persona}, critique this response:
+
+        Question: {question}
+        Response: {response}
+
+        Your critique:
+        """)
+        critiques.append(critique)
+
+    # Synthesize critiques
+    synthesis = generate(f"""
+    Combine these critiques into actionable feedback:
+
+    {chr(10).join(f'Critique {i+1}: {c}' for i, c in enumerate(critiques))}
+
+    Synthesized feedback:
+    """)
+
+    return synthesis
+```
+
+### Constitutional AI-Style Reflection
+
+Apply ethical and safety checks:
+
+```python
+CONSTITUTIONAL_PRINCIPLES = [
+    "The response should not contain harmful or dangerous information",
+    "The response should be truthful and not misleading",
+    "The response should respect privacy and not reveal personal info",
+    "The response should be fair and unbiased",
+]
+
+def constitutional_check(response: str) -> tuple[bool, str]:
+    """Check response against constitutional principles."""
+    violations = []
+
+    for principle in CONSTITUTIONAL_PRINCIPLES:
+        check = generate(f"""
+        Principle: {principle}
+        Response: {response}
+
+        Does this response violate the principle? (YES/NO)
+        If YES, explain how:
+        """)
+
+        if "YES" in check.upper():
+            violations.append(check)
+
+    if violations:
+        return False, "\n".join(violations)
+    return True, "All principles satisfied"
+```
+
+## Visualization
+
+Track the reflection process:
+
+```python
+class ReflectionTracer:
+    def __init__(self):
+        self.history = []
+
+    def log(self, iteration: int, response: str, critique: str, approved: bool):
+        self.history.append({
+            "iteration": iteration,
+            "response": response,
+            "critique": critique,
+            "approved": approved
+        })
+
+    def visualize(self):
+        for entry in self.history:
+            print(f"\n=== Iteration {entry['iteration']} ===")
+            print(f"Response: {entry['response'][:200]}...")
+            print(f"Critique: {entry['critique'][:200]}...")
+            print(f"Status: {'✓ Approved' if entry['approved'] else '→ Refining'}")
+```
+
+## Best Practices
+
+1. **Different Models for Generation vs Critique**: Use a more analytical model for critique
+2. **Temperature Settings**: Lower temperature for critique, higher for creative generation
+3. **Iteration Limits**: Always set a maximum to prevent infinite loops
+4. **Clear Criteria**: Define specific, measurable critique criteria
+5. **Trace Logging**: Keep full traces for debugging and analysis
+
+## When to Use Self-Reflection
+
+**Ideal for:**
+- High-stakes outputs (legal, medical, financial)
+- Complex reasoning tasks
+- Content that requires accuracy
+- User-facing text generation
+
+**May be overkill for:**
+- Simple factual queries
+- Time-sensitive applications
+- Low-stakes internal tasks

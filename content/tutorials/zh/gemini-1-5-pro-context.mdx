@@ -1,0 +1,242 @@
+---
+title: "利用 Gemini 1.5 Pro 优化上下文处理"
+slug: "gemini-1-5-pro-context"
+locale: "zh"
+description: "学习如何有效利用超过100万tokens的上下文窗口进行大规模文档分析。"
+category: "LLM 模型"
+tags: ["Gemini", "Google", "上下文"]
+techStack: ["Gemini 1.5 Pro"]
+difficulty: "中级"
+duration: "18 分钟阅读"
+thumbnail: "https://images.unsplash.com/photo-1617791160505-6f00504e3caf?w=800"
+featured: false
+date: "2024-05-08"
+---
+
+# 利用 Gemini 1.5 Pro 优化上下文处理
+
+Gemini 1.5 Pro 提供了革命性的超过100万tokens的上下文窗口，为文档分析和检索开启了新的可能性。
+
+## 理解长上下文的优势
+
+传统的大型语言模型通常限制在4K到128K tokens之间。Gemini 1.5 Pro 的100万+上下文意味着你可以：
+
+- 一次性处理整个代码库
+- 分析冗长的法律文件
+- 审阅完整的书籍手稿
+- 同时比较多个文档
+
+## 快速开始
+
+### 环境设置
+
+```python
+import google.generativeai as genai
+
+genai.configure(api_key="YOUR_API_KEY")
+
+model = genai.GenerativeModel('gemini-1.5-pro')
+```
+
+### 基础长上下文查询
+
+```python
+def analyze_large_document(document_path: str, query: str) -> str:
+    """使用特定查询分析大型文档。"""
+    with open(document_path, 'r') as f:
+        content = f.read()
+
+    prompt = f"""
+    Document:
+    {content}
+
+    Query: {query}
+
+    Please analyze the document and answer the query comprehensively.
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## 上下文窗口策略
+
+### 结构化上下文加载
+
+组织你的上下文以获得更好的结果：
+
+```python
+def create_structured_context(documents: list) -> str:
+    """从多个文档创建结构化上下文。"""
+    context_parts = []
+
+    for i, doc in enumerate(documents):
+        context_parts.append(f"""
+=== DOCUMENT {i+1}: {doc['title']} ===
+Source: {doc['source']}
+Date: {doc['date']}
+Content:
+{doc['content']}
+=== END DOCUMENT {i+1} ===
+""")
+
+    return "\n\n".join(context_parts)
+```
+
+### 分层上下文组织
+
+```python
+def build_hierarchical_context(data: dict) -> str:
+    """为复杂数据结构构建分层上下文。"""
+    template = """
+# Project Overview
+{overview}
+
+## Architecture
+{architecture}
+
+## Components
+{components}
+
+## Dependencies
+{dependencies}
+
+## Recent Changes
+{changes}
+"""
+    return template.format(**data)
+```
+
+## 高效的 Token 使用
+
+### Token 计数
+
+```python
+def count_tokens(text: str) -> int:
+    """使用 Gemini 的分词器计算文本中的 tokens 数量。"""
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    return model.count_tokens(text).total_tokens
+
+def check_context_fit(documents: list, max_tokens: int = 1000000) -> bool:
+    """检查文档是否在上下文窗口限制内。"""
+    total = sum(count_tokens(doc) for doc in documents)
+    return total < max_tokens
+```
+
+### 上下文压缩
+
+当接近限制时，进行策略性压缩：
+
+```python
+def compress_context(content: str, target_ratio: float = 0.5) -> str:
+    """压缩内容，同时保留关键信息。"""
+    prompt = f"""
+    Summarize the following content, preserving:
+    - Key facts and figures
+    - Important decisions and conclusions
+    - Technical specifications
+    - Action items
+
+    Target compression: {int(target_ratio * 100)}% of original
+
+    Content:
+    {content}
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## 高级用例
+
+### 代码库分析
+
+```python
+def analyze_codebase(repo_path: str) -> str:
+    """一次性分析整个代码库。"""
+    files = collect_code_files(repo_path)
+
+    context = "# CODEBASE ANALYSIS\n\n"
+    for file_path, content in files.items():
+        context += f"## File: {file_path}\n```\n{content}\n```\n\n"
+
+    prompt = f"""
+    {context}
+
+    Analyze this codebase and provide:
+    1. Architecture overview
+    2. Main components and their responsibilities
+    3. Code quality assessment
+    4. Potential improvements
+    5. Security considerations
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+### 多文档比较
+
+```python
+def compare_documents(docs: list, comparison_criteria: list) -> str:
+    """根据指定标准比较多个文档。"""
+    context = create_structured_context(docs)
+
+    criteria_str = "\n".join(f"- {c}" for c in comparison_criteria)
+
+    prompt = f"""
+    {context}
+
+    Compare all documents above based on these criteria:
+    {criteria_str}
+
+    Provide a detailed comparison table and analysis.
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## 性能优化
+
+### 缓存策略
+
+```python
+import hashlib
+from functools import lru_cache
+
+@lru_cache(maxsize=100)
+def cached_analysis(content_hash: str, query: str) -> str:
+    """基于内容哈希缓存分析结果。"""
+    # 通过哈希检索内容并分析
+    pass
+
+def analyze_with_cache(content: str, query: str) -> str:
+    """使用缓存分析内容。"""
+    content_hash = hashlib.md5(content.encode()).hexdigest()
+    return cached_analysis(content_hash, query)
+```
+
+### 长输出的流式处理
+
+```python
+def stream_analysis(context: str, query: str):
+    """为长输出流式传输分析结果。"""
+    prompt = f"{context}\n\nQuery: {query}"
+
+    response = model.generate_content(
+        prompt,
+        stream=True
+    )
+
+    for chunk in response:
+        yield chunk.text
+```
+
+## 最佳实践
+
+1.  **结构化你的上下文**：使用清晰的分隔符和标题
+2.  **前置重要信息**：将关键信息放在前面
+3.  **使用显式引用**：通过名称引用特定部分
+4.  **监控 Token 使用**：跟踪消耗以避免截断
+5.  **实现回退策略**：为超大的上下文准备应对方案
