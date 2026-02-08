@@ -111,7 +111,13 @@
   "Sidebar": {
     "categories": "分类",
     "explore": "探索智能体 AI 领域",
-    "requestTutorial": "请求教程"
+    "requestTutorial": "请求教程",
+    "environment": "运行环境",
+    "browseByEnv": "按运行时筛选实验室",
+    "difficulty": "难度",
+    "browseByDifficulty": "按级别筛选实验室",
+    "tags": "标签",
+    "browseByTag": "按标签浏览项目"
   },
   "Common": {
     "loading": "加载中...",

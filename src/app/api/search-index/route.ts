@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getAllTutorials, getAllDocs, getAllNews } from '@/lib/tina';
+import { getAllTutorials, getAllDocs, getAllNews, getAllPracticeLabs, getAllShowcaseProjects } from '@/lib/tina';
 
 export async function GET() {
   try {
-    const [tutorials, docs, news] = await Promise.all([
+    const [tutorials, docs, news, labs, showcases] = await Promise.all([
       getAllTutorials(),
       getAllDocs(),
       getAllNews(),
+      getAllPracticeLabs(),
+      getAllShowcaseProjects(),
     ]);
 
     const documents = [
@@ -42,6 +44,30 @@ export async function GET() {
         category: n?.category,
         tags: [] as string[],
         locale: 'en',
+      })),
+      ...labs.map(l => ({
+        id: l?.id || '',
+        title: l?.title || '',
+        description: l?.description || '',
+        content: '',
+        url: `/practice`,
+        type: 'lab' as const,
+        category: l?.environment || '',
+        tags: [] as string[],
+        locale: l?.locale || 'en',
+        environment: l?.environment || '',
+        difficulty: l?.difficulty || '',
+      })),
+      ...showcases.map(s => ({
+        id: s?.id || '',
+        title: s?.title || '',
+        description: s?.description || '',
+        content: '',
+        url: `/showcase`,
+        type: 'showcase' as const,
+        category: '',
+        tags: (s?.tags || []).filter((tag): tag is string => tag !== null),
+        locale: s?.locale || 'en',
       })),
     ];
 

@@ -1,0 +1,339 @@
+---
+title: "自己内省エージェントの構築"
+slug: "self-reflecting-agent"
+locale: "ja"
+description: "批判と改善のループを実装して、エージェントの信頼性を高めます。"
+category: "エージェントワークフロー"
+tags: ["リフレクション", "信頼性"]
+techStack: ["LangGraph"]
+difficulty: "中級"
+duration: "30分"
+thumbnail: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800"
+featured: false
+date: 2024-04-28
+---
+
+# 自己内省エージェントの構築
+
+自己内省により、エージェントは自身の出力を批判し、反復的に改善することができます。このパターンは信頼性と出力品質を劇的に向上させます。
+
+## なぜ自己内省が必要か？
+
+標準的なエージェントの出力には、しばしば以下が含まれます：
+- 不完全な推論
+- 事実誤認
+- 考慮漏れのエッジケース
+- 最適ではない解決策
+
+自己内省は、エージェントに以下を行わせることでこれらに対処します：
+1. 初期応答を生成する
+2. その応答を批判する
+3. 批判に基づいて改善する
+4. 満足いくまで繰り返す
+
+## リフレクションパターン
+
+```
+初期応答 → 批判 → 改善 → 批判 → ... → 最終出力
+```
+
+## 基本的な実装
+
+### リフレクションプロンプト
+
+```python
+CRITIQUE_PROMPT = """以下の応答をレビューし、問題点を特定してください：
+
+元の質問: {question}
+応答: {response}
+
+以下を考慮してください：
+1. 事実の正確性 - すべての記述は正しいか？
+2. 完全性 - 質問に完全に答えているか？
+3. 論理性 - 推論は筋が通っているか？
+4. 明確性 - 十分に説明されているか？
+
+改善のための具体的で実行可能なフィードバックを提供してください。
+応答が満足できるものであれば、「APPROVED」と応答してください。
+
+批判："""
+
+REFINE_PROMPT = """以下の批判に基づいて応答を改善してください：
+
+元の質問: {question}
+現在の応答: {response}
+批判: {critique}
+
+フィードバックのすべてに対処した改善された応答を提供してください。
+
+改善された応答："""
+```
+
+### シンプルなリフレクションループ
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+def generate(prompt: str) -> str:
+    """モデルから応答を生成します。"""
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content
+
+def reflect_and_refine(question: str, max_iterations: int = 3) -> str:
+    """自己内省を用いて応答を生成します。"""
+
+    # 初期生成
+    response = generate(f"この質問に答えてください: {question}")
+
+    for i in range(max_iterations):
+        # 応答を批判
+        critique = generate(CRITIQUE_PROMPT.format(
+            question=question,
+            response=response
+        ))
+
+        # 承認されたか確認
+        if "APPROVED" in critique.upper():
+            print(f"{i+1}回の反復後に承認されました")
+            return response
+
+        # 批判に基づいて改善
+        response = generate(REFINE_PROMPT.format(
+            question=question,
+            response=response,
+            critique=critique
+        ))
+
+    return response
+```
+
+## LangGraphによる実装
+
+より洗練された実装のためにLangGraphを使用：
+
+```python
+from typing import TypedDict, Annotated, Literal
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+
+class ReflectionState(TypedDict):
+    question: str
+    response: str
+    critique: str
+    iteration: int
+    approved: bool
+
+llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+critic_llm = ChatOpenAI(model="gpt-4", temperature=0)  # 批判には低い温度
+
+def generate_node(state: ReflectionState) -> ReflectionState:
+    """応答を生成または改善します。"""
+    if state["iteration"] == 0:
+        # 初期生成
+        response = llm.invoke(f"答えてください: {state['question']}")
+    else:
+        # 改善
+        prompt = REFINE_PROMPT.format(
+            question=state["question"],
+            response=state["response"],
+            critique=state["critique"]
+        )
+        response = llm.invoke(prompt)
+
+    return {
+        **state,
+        "response": response.content,
+        "iteration": state["iteration"] + 1
+    }
+
+def critique_node(state: ReflectionState) -> ReflectionState:
+    """現在の応答を批判します。"""
+    critique = critic_llm.invoke(CRITIQUE_PROMPT.format(
+        question=state["question"],
+        response=state["response"]
+    ))
+
+    approved = "APPROVED" in critique.content.upper()
+
+    return {
+        **state,
+        "critique": critique.content,
+        "approved": approved
+    }
+
+def should_continue(state: ReflectionState) -> Literal["generate", "end"]:
+    """改善を続けるかどうかを決定します。"""
+    if state["approved"] or state["iteration"] >= 3:
+        return "end"
+    return "generate"
+
+# グラフを構築
+workflow = StateGraph(ReflectionState)
+
+workflow.add_node("generate", generate_node)
+workflow.add_node("critique", critique_node)
+
+workflow.set_entry_point("generate")
+workflow.add_edge("generate", "critique")
+workflow.add_conditional_edges(
+    "critique",
+    should_continue,
+    {"generate": "generate", "end": END}
+)
+
+app = workflow.compile()
+```
+
+## 高度なパターン
+
+### 多面的批判
+
+異なる側面を個別に評価：
+
+```python
+ASPECTS = {
+    "accuracy": "すべての事実主張は正しく検証可能か？",
+    "completeness": "応答は質問のすべての部分に完全に対処しているか？",
+    "clarity": "応答は整理されており、理解しやすいか？",
+    "relevance": "応答は質問に焦点を当て続けているか？",
+}
+
+def multi_aspect_critique(question: str, response: str) -> dict:
+    """複数の側面で応答を批判します。"""
+    critiques = {}
+
+    for aspect, prompt in ASPECTS.items():
+        critique = generate(f"""
+        質問: {question}
+        応答: {response}
+
+        評価: {prompt}
+        スコア（1-5）と説明：
+        """)
+        critiques[aspect] = critique
+
+    return critiques
+```
+
+### アンサンブルリフレクション
+
+複数の批評家を使用：
+
+```python
+def ensemble_critique(question: str, response: str, num_critics: int = 3) -> str:
+    """複数の視点から批判を得て統合します。"""
+    critiques = []
+
+    personas = [
+        "ドメインエキスパート",
+        "懐疑的なレビュアー",
+        "明確性重視の編集者"
+    ]
+
+    for persona in personas[:num_critics]:
+        critique = generate(f"""
+        {persona}として、この応答を批判してください：
+
+        質問: {question}
+        応答: {response}
+
+        あなたの批判：
+        """)
+        critiques.append(critique)
+
+    # 批判を統合
+    synthesis = generate(f"""
+    これらの批判を実行可能なフィードバックに統合してください：
+
+    {chr(10).join(f'批判 {i+1}: {c}' for i, c in enumerate(critiques))}
+
+    統合されたフィードバック：
+    """)
+
+    return synthesis
+```
+
+### Constitutional AIスタイルのリフレクション
+
+倫理的および安全性チェックを適用：
+
+```python
+CONSTITUTIONAL_PRINCIPLES = [
+    "応答には有害または危険な情報を含めてはならない",
+    "応答は真実であり、誤解を招くものであってはならない",
+    "応答はプライバシーを尊重し、個人情報を開示してはならない",
+    "応答は公平で偏りがあってはならない",
+]
+
+def constitutional_check(response: str) -> tuple[bool, str]:
+    """憲法的原則に対して応答をチェックします。"""
+    violations = []
+
+    for principle in CONSTITUTIONAL_PRINCIPLES:
+        check = generate(f"""
+        原則: {principle}
+        応答: {response}
+
+        この応答は原則に違反するか？（YES/NO）
+        YESの場合、どのように違反するか説明してください：
+        """)
+
+        if "YES" in check.upper():
+            violations.append(check)
+
+    if violations:
+        return False, "\n".join(violations)
+    return True, "すべての原則を満たしています"
+```
+
+## 可視化
+
+リフレクション過程を追跡：
+
+```python
+class ReflectionTracer:
+    def __init__(self):
+        self.history = []
+
+    def log(self, iteration: int, response: str, critique: str, approved: bool):
+        self.history.append({
+            "iteration": iteration,
+            "response": response,
+            "critique": critique,
+            "approved": approved
+        })
+
+    def visualize(self):
+        for entry in self.history:
+            print(f"\n=== 反復 {entry['iteration']} ===")
+            print(f"応答: {entry['response'][:200]}...")
+            print(f"批判: {entry['critique'][:200]}...")
+            print(f"ステータス: {'✓ 承認済み' if entry['approved'] else '→ 改善中'}")
+```
+
+## ベストプラクティス
+
+1.  **生成と批判で異なるモデルを使用**: 批判にはより分析的なモデルを使用
+2.  **温度設定**: 批判には低い温度、創造的な生成には高い温度
+3.  **反復制限**: 無限ループを防ぐために常に最大値を設定
+4.  **明確な基準**: 具体的で測定可能な批判基準を定義
+5.  **トレースロギング**: デバッグと分析のために完全なトレースを保持
+
+## 自己内省を使用すべき場面
+
+**理想的に適しているもの：**
+- 高リスクの出力（法的、医療、金融）
+- 複雑な推論タスク
+- 正確性が求められるコンテンツ
+- ユーザー向けのテキスト生成
+
+**過剰になる可能性があるもの：**
+- 単純な事実質問
+- 時間制約の厳しいアプリケーション
+- リスクの低い内部タスク

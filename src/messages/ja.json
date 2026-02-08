@@ -111,7 +111,13 @@
   "Sidebar": {
     "categories": "カテゴリー",
     "explore": "エージェントAIの世界を探索",
-    "requestTutorial": "チュートリアルをリクエスト"
+    "requestTutorial": "チュートリアルをリクエスト",
+    "environment": "実行環境",
+    "browseByEnv": "ランタイムでラボを絞り込む",
+    "difficulty": "難易度",
+    "browseByDifficulty": "レベルでラボを絞り込む",
+    "tags": "タグ",
+    "browseByTag": "タグでプロジェクトを閲覧"
   },
   "Common": {
     "loading": "読み込み中...",

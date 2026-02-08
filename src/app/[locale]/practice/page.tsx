@@ -1,18 +1,28 @@
 import { Suspense } from 'react';
-import Image from 'next/image';
-import { Play, Users, Wrench } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { TutorialBadge } from '@/components/features/TutorialBadge';
-import { Button } from '@/components/ui/button';
+import { LabCard } from '@/components/features/LabCard';
 import { getAllPracticeLabs } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
-export default async function PracticePage({ params }: { params: Promise<{ locale: string }> }) {
+interface PracticePageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ env?: string; difficulty?: string }>;
+}
+
+export default async function PracticePage({ params, searchParams }: PracticePageProps) {
   const { locale } = await params;
-  const labs = await getAllPracticeLabs(locale);
+  const { env, difficulty } = await searchParams;
+  let labs = await getAllPracticeLabs(locale);
   const t = await getTranslations('Practice');
+
+  if (env) {
+    labs = labs.filter(l => l?.environment === env);
+  }
+  if (difficulty) {
+    labs = labs.filter(l => l?.difficulty === difficulty);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -41,89 +51,21 @@ export default async function PracticePage({ params }: { params: Promise<{ local
               {/* Labs Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {labs.map((lab) => (
-                  <div
+                  <LabCard
                     key={lab?.id}
-                    className="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300"
-                  >
-                    {/* Thumbnail */}
-                    <div className="relative w-full aspect-video bg-slate-100 dark:bg-slate-800">
-                      {lab?.thumbnail && (
-                        <Image
-                          src={lab.thumbnail}
-                          alt={lab.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      )}
-                      {/* Environment Badge */}
-                      <div className="absolute top-3 left-3">
-                        <span className="px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs font-bold">
-                          {lab?.environment}
-                        </span>
-                      </div>
-                      {/* Status Indicator */}
-                      <div className="absolute top-3 right-3">
-                        <span
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold ${
-                            lab?.status === 'Online'
-                              ? 'bg-emerald-500/20 text-emerald-400 backdrop-blur-sm'
-                              : 'bg-orange-500/20 text-orange-400 backdrop-blur-sm'
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              lab?.status === 'Online' ? 'bg-emerald-400' : 'bg-orange-400'
-                            }`}
-                          />
-                          {lab?.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col gap-4 p-5">
-                      <div className="flex items-center justify-between">
-                        <TutorialBadge type="difficulty" value={lab?.difficulty || 'Beginner'} />
-                        {lab?.status === 'Online' && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            <Users className="w-3.5 h-3.5" />
-                            {lab?.usersOnline} {t('online')}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2">
-                          {lab?.title}
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2">
-                          {lab?.description}
-                        </p>
-                      </div>
-
-                      <Button
-                        className={`w-full ${
-                          lab?.status === 'Online'
-                            ? 'bg-primary-600 hover:bg-primary-700'
-                            : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'
-                        }`}
-                        disabled={lab?.status !== 'Online'}
-                      >
-                        {lab?.status === 'Online' ? (
-                          <>
-                            <Play className="w-4 h-4 mr-2" />
-                            {t('launchEnvironment')}
-                          </>
-                        ) : (
-                          <>
-                            <Wrench className="w-4 h-4 mr-2" />
-                            {t('underMaintenance')}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+                    lab={{
+                      id: lab?.id,
+                      title: lab?.title || '',
+                      description: lab?.description,
+                      environment: lab?.environment,
+                      difficulty: lab?.difficulty,
+                      status: lab?.status,
+                      usersOnline: lab?.usersOnline,
+                      thumbnail: lab?.thumbnail,
+                      launchUrl: lab?.launchUrl,
+                      launchMode: lab?.launchMode,
+                    }}
+                  />
                 ))}
               </div>
             </div>

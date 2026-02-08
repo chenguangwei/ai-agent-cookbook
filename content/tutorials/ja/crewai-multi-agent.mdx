@@ -1,0 +1,147 @@
+---
+title: "CrewAIによるマルチエージェントシステム"
+slug: "crewai-multi-agent"
+locale: "ja"
+description: "複雑な多段階ビジネスタスクを解決するために、役割分担する自律エージェントを調整する方法について深く掘り下げます。"
+category: "フレームワーク"
+tags: ["CrewAI", "オーケストレーション"]
+techStack: ["CrewAI", "Claude 3"]
+difficulty: "上級"
+duration: "15分で読了"
+thumbnail: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800"
+featured: false
+date: 2024-05-18
+---
+
+# CrewAIによるマルチエージェントシステム
+
+CrewAIは、自律的に協力して動作するAIエージェントのチームを作成できるようにします。各エージェントは、その行動を導く特定の役割、目標、バックストーリーを持っています。
+
+## CrewAIとは？
+
+CrewAIは、役割分担する自律エージェントを調整するためのフレームワークです。以下のことが可能です：
+
+- 特定のペルソナと専門知識を持つエージェントを定義する
+- 明確な目的を持つタスクを作成する
+- エージェント間の協調を調整する
+- エージェントの能力に基づいて作業を自動的に委任する
+
+## インストール
+
+```bash
+pip install crewai crewai-tools
+```
+
+## コアコンポーネント
+
+### エージェント
+
+エージェントはあなたのクルーの構成要素です：
+
+```python
+from crewai import Agent
+
+researcher = Agent(
+    role="シニアリサーチアナリスト",
+    goal="AIにおける最先端の進展を明らかにする",
+    backstory="""あなたは主要なテックシンクタンクで働いています。
+    あなたの専門は、新興トレンドを特定することにあります。""",
+    tools=[search_tool, scrape_tool],
+    llm=claude_3,
+    verbose=True
+)
+
+writer = Agent(
+    role="テックコンテンツストラテジスト",
+    goal="AIの発見に関する魅力的なコンテンツを作成する",
+    backstory="""あなたは、複雑なトピックを分かりやすくすることで知られる
+    有名なコンテンツストラテジストです。""",
+    llm=claude_3,
+    verbose=True
+)
+```
+
+### タスク
+
+タスクは、エージェントが達成する必要があることを定義します：
+
+```python
+from crewai import Task
+
+research_task = Task(
+    description="""2024年にリリースされた最新の
+    AIエージェントフレームワークに関する包括的な調査を実施してください。""",
+    expected_output="主要な発見を含む詳細なレポート",
+    agent=researcher
+)
+
+writing_task = Task(
+    description="""調査結果を使用して、
+    トップAIエージェントフレームワークに関するブログ記事を作成してください。""",
+    expected_output="公開準備が整った洗練されたブログ記事",
+    agent=writer,
+    context=[research_task]  # このタスクは調査に依存します
+)
+```
+
+### クルーの組み立て
+
+```python
+from crewai import Crew, Process
+
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, writing_task],
+    process=Process.sequential,  # または Process.hierarchical
+    verbose=True
+)
+
+result = crew.kickoff()
+```
+
+## 高度なパターン
+
+### 階層型プロセス
+
+複雑なワークフローの場合は、マネージャーエージェントを使用します：
+
+```python
+from crewai import Crew, Process
+
+crew = Crew(
+    agents=[researcher, writer, editor],
+    tasks=[research_task, writing_task, editing_task],
+    process=Process.hierarchical,
+    manager_llm=gpt4,  # マネージャーエージェントはGPT-4を使用します
+)
+```
+
+### カスタムツール
+
+エージェント用の専門ツールを作成します：
+
+```python
+from crewai_tools import BaseTool
+
+class DataAnalysisTool(BaseTool):
+    name: str = "データアナライザー"
+    description: str = "データセットを分析し、洞察を返します"
+
+    def _run(self, dataset_path: str) -> str:
+        # 実装
+        return analysis_results
+```
+
+## ベストプラクティス
+
+1. **明確な役割定義**: エージェントに明確で重複しない役割を与える
+2. **具体的な目標**: エージェントの目標を測定可能で達成可能なものにする
+3. **豊富なバックストーリー**: 詳細なバックストーリーはエージェントの推論を改善する
+4. **タスク依存関係**: コンテキストを使用してタスク出力を連鎖させる
+5. **メモリ管理**: 長時間実行されるクルーにはメモリを有効にする
+
+## 実世界のユースケース
+
+- **コンテンツ作成パイプライン**: 調査 → 執筆 → 編集 → SEO
+- **カスタマーサポート**: トリアージ → 解決 → フォローアップ
+- **データ分析**: 収集 → 処理 → 可視化 → レポート作成

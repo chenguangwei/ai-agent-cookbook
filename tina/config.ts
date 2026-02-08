@@ -346,6 +346,19 @@ export default defineConfig({
             name: 'thumbnail',
             label: 'Thumbnail',
           },
+          {
+            type: 'string',
+            name: 'launchUrl',
+            label: 'Launch URL',
+            description: 'URL for the sandbox environment (external link or iframe src)',
+          },
+          {
+            type: 'string',
+            name: 'launchMode',
+            label: 'Launch Mode',
+            description: 'How the sandbox opens: external (new tab) or iframe (embedded)',
+            options: ['external', 'iframe'],
+          },
         ],
       },
       {

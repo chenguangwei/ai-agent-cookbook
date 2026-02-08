@@ -111,7 +111,13 @@
   "Sidebar": {
     "categories": "Categories",
     "explore": "Explore agentic AI landscape",
-    "requestTutorial": "Request Tutorial"
+    "requestTutorial": "Request Tutorial",
+    "environment": "Environment",
+    "browseByEnv": "Filter labs by runtime",
+    "difficulty": "Difficulty",
+    "browseByDifficulty": "Filter labs by level",
+    "tags": "Tags",
+    "browseByTag": "Browse projects by tag"
   },
   "Common": {
     "loading": "Loading...",

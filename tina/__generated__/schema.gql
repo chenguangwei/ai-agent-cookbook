@@ -280,6 +280,8 @@ type PracticeLab implements Node & Document {
   status: String
   usersOnline: Float
   thumbnail: String
+  launchUrl: String
+  launchMode: String
   id: ID!
   _sys: SystemInfo!
   _values: JSON!
@@ -294,6 +296,8 @@ input PracticeLabFilter {
   status: StringFilter
   usersOnline: NumberFilter
   thumbnail: ImageFilter
+  launchUrl: StringFilter
+  launchMode: StringFilter
 }
 
 type PracticeLabConnectionEdges {
@@ -477,6 +481,8 @@ input PracticeLabMutation {
   status: String
   usersOnline: Float
   thumbnail: String
+  launchUrl: String
+  launchMode: String
 }
 
 input ShowcaseAuthorMutation {

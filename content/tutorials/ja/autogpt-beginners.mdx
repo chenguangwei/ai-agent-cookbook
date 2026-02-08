@@ -1,0 +1,172 @@
+---
+title: "AutoGPT 初心者ガイド"
+slug: "autogpt-beginners"
+locale: "ja"
+description: "初めての完全自律型AIエージェントを構築するためのステップバイステップセットアップガイドです。"
+category: "Frameworks"
+tags: ["AutoGPT", "Autonomous"]
+techStack: ["AutoGPT", "Docker"]
+difficulty: "Beginner"
+duration: "20 mins"
+thumbnail: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800"
+featured: false
+date: 2024-05-15
+---
+
+# AutoGPT 初心者ガイド
+
+AutoGPTは、完全自律型AIエージェントの最初の実装の一つです。このガイドでは、初めてのAutoGPTインスタンスをセットアップする手順を説明します。
+
+## AutoGPTとは？
+
+AutoGPTは、GPT-4が自律的に動作する能力を実証する実験的なオープンソースアプリケーションです。以下のことが可能です：
+
+- 自己プロンプトと思考の連鎖
+- 調査のためのインターネットアクセス
+- ファイル管理とコード実行
+- 時間の経過とともに学習・改善
+
+## 前提条件
+
+- システムにDockerがインストールされていること
+- OpenAI APIキー
+- 基本的なコマンドライン知識
+
+## インストール
+
+### オプション1: Docker (推奨)
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/Significant-Gravitas/AutoGPT.git
+cd AutoGPT
+
+# 環境設定テンプレートをコピー
+cp .env.template .env
+
+# .envを編集してAPIキーを追加
+nano .env
+```
+
+OpenAI APIキーを追加：
+```
+OPENAI_API_KEY=sk-your-key-here
+```
+
+### オプション2: ローカルインストール
+
+```bash
+# 仮想環境を作成
+python -m venv venv
+source venv/bin/activate  # Windowsの場合: venv\Scripts\activate
+
+# 依存関係をインストール
+pip install -r requirements.txt
+```
+
+## 設定
+
+### エージェントのセットアップ
+
+`ai_settings.yaml`ファイルを編集：
+
+```yaml
+ai_name: ResearchBot
+ai_role: トピックを調査し、結果を要約するAIアシスタント
+ai_goals:
+  - 量子コンピューティングの最新動向を調査する
+  - 調査結果を明確で分かりやすい形式で要約する
+  - 要約をマークダウンファイルに保存する
+```
+
+### メモリ設定
+
+AutoGPTはさまざまなメモリバックエンドをサポートしています：
+
+```yaml
+# .env 設定
+MEMORY_BACKEND=local  # オプション: local, redis, pinecone
+```
+
+## AutoGPTの実行
+
+### エージェントの起動
+
+```bash
+# Dockerを使用する場合
+docker-compose up
+
+# ローカルで実行する場合
+python -m autogpt
+```
+
+### インタラクションモード
+
+1. **連続モード**: ユーザーの確認なしでエージェントが実行されます
+   ```bash
+   python -m autogpt --continuous
+   ```
+
+2. **インタラクティブモード** (デフォルト): 各アクションに承認が必要です
+
+3. **GPT-3.5モード**: コスト削減のためにGPT-3.5-turboを使用します
+   ```bash
+   python -m autogpt --gpt3only
+   ```
+
+## 出力の理解
+
+AutoGPTは詳細なログを提供します：
+
+```
+THOUGHTS: 最近の量子コンピューティングのニュースを検索する必要があります
+REASONING: 調査目標を達成するには、現在の進展状況から始めるべきです
+PLAN:
+- 最近の量子コンピューティングのブレークスルーを検索する
+- トップの結果を読み分析する
+- 調査結果を要約にまとめる
+CRITICISM: 複数のソースから情報を確認すべきです
+```
+
+## 安全機能
+
+AutoGPTにはいくつかの安全メカニズムが含まれています：
+
+1. **予算制限**: 最大トークン使用量を設定
+2. **アクション承認**: 実行前にコマンドを確認
+3. **ワークスペース分離**: ファイル操作はワークスペースフォルダに限定
+
+```yaml
+# .env 安全設定
+EXECUTE_LOCAL_COMMANDS=False
+RESTRICT_TO_WORKSPACE=True
+```
+
+## 一般的なユースケース
+
+- **リサーチアシスタント**: 情報の収集と要約
+- **コンテンツクリエーター**: 記事やレポートの生成
+- **コード開発者**: コードの記述とデバッグ
+- **データアナリスト**: データの処理と可視化
+
+## トラブルシューティング
+
+### APIレート制限
+レート制限に達した場合、遅延を追加：
+```yaml
+OPENAI_API_RATE_LIMIT=60  # 1分あたりのリクエスト数
+```
+
+### メモリの問題
+大規模なタスクの場合、外部メモリを使用：
+```yaml
+MEMORY_BACKEND=redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+## 次のステップ
+
+- カスタムプラグインとコマンドの探索
+- 外部APIへの接続
+- マルチエージェントワークフローの構築

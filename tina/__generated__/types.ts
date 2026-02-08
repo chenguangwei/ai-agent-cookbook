@@ -443,6 +443,8 @@ export type PracticeLab = Node & Document & {
   status?: Maybe<Scalars['String']['output']>;
   usersOnline?: Maybe<Scalars['Float']['output']>;
   thumbnail?: Maybe<Scalars['String']['output']>;
+  launchUrl?: Maybe<Scalars['String']['output']>;
+  launchMode?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   _sys: SystemInfo;
   _values: Scalars['JSON']['output'];
@@ -457,6 +459,8 @@ export type PracticeLabFilter = {
   status?: InputMaybe<StringFilter>;
   usersOnline?: InputMaybe<NumberFilter>;
   thumbnail?: InputMaybe<ImageFilter>;
+  launchUrl?: InputMaybe<StringFilter>;
+  launchMode?: InputMaybe<StringFilter>;
 };
 
 export type PracticeLabConnectionEdges = {
@@ -755,6 +759,8 @@ export type PracticeLabMutation = {
   status?: InputMaybe<Scalars['String']['input']>;
   usersOnline?: InputMaybe<Scalars['Float']['input']>;
   thumbnail?: InputMaybe<Scalars['String']['input']>;
+  launchUrl?: InputMaybe<Scalars['String']['input']>;
+  launchMode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ShowcaseAuthorMutation = {
@@ -789,7 +795,7 @@ export type DocPartsFragment = { __typename: 'Doc', title: string, slug: string,
 
 export type NewsPartsFragment = { __typename: 'News', title: string, slug: string, locale: string, summary: string, source: string, sourceUrl?: string | null, author?: string | null, imageUrl?: string | null, publishedAt: string, category?: string | null, readTime?: string | null, body?: any | null };
 
-export type PracticeLabPartsFragment = { __typename: 'PracticeLab', title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null };
+export type PracticeLabPartsFragment = { __typename: 'PracticeLab', title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, launchUrl?: string | null, launchMode?: string | null };
 
 export type ShowcasePartsFragment = { __typename: 'Showcase', title: string, locale: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, repoUrl?: string | null, thumbnail?: string | null, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null };
 
@@ -857,7 +863,7 @@ export type PracticeLabQueryVariables = Exact<{
 }>;
 
 
-export type PracticeLabQuery = { __typename?: 'Query', practiceLab: { __typename: 'PracticeLab', id: string, title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
+export type PracticeLabQuery = { __typename?: 'Query', practiceLab: { __typename: 'PracticeLab', id: string, title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, launchUrl?: string | null, launchMode?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
 
 export type PracticeLabConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -869,7 +875,7 @@ export type PracticeLabConnectionQueryVariables = Exact<{
 }>;
 
 
-export type PracticeLabConnectionQuery = { __typename?: 'Query', practiceLabConnection: { __typename?: 'PracticeLabConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PracticeLabConnectionEdges', cursor: string, node?: { __typename: 'PracticeLab', id: string, title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
+export type PracticeLabConnectionQuery = { __typename?: 'Query', practiceLabConnection: { __typename?: 'PracticeLabConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PracticeLabConnectionEdges', cursor: string, node?: { __typename: 'PracticeLab', id: string, title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, launchUrl?: string | null, launchMode?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
 
 export type ShowcaseQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -968,6 +974,8 @@ export const PracticeLabPartsFragmentDoc = gql`
   status
   usersOnline
   thumbnail
+  launchUrl
+  launchMode
 }
     `;
 export const ShowcasePartsFragmentDoc = gql`

@@ -1,0 +1,217 @@
+---
+title: "LlamaIndex エージェント型 RAG"
+slug: "llamaindex-rag"
+locale: "ja"
+description: "高度なインデックス作成を用いて、データを認識するエージェントをあなたのプライベートなナレッジベースに接続します。"
+category: "RAG"
+tags: ["RAG", "LlamaIndex"]
+techStack: ["LlamaIndex", "OpenAI"]
+difficulty: "中級"
+duration: "25 分で読了"
+thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800"
+featured: true
+date: 2024-05-12
+---
+
+# LlamaIndex エージェント型 RAG
+
+LlamaIndex の強力な RAG 機能を使用して、プライベートデータ上で推論を行うインテリジェントなエージェントを構築する方法を学びましょう。
+
+## エージェント型 RAG とは？
+
+エージェント型 RAG は、RAG の検索力と AI エージェントの推論能力を組み合わせたものです。単純なクエリ-応答パターンの代わりに、エージェントは以下のことができます：
+
+- マルチステップの検索戦略を計画する
+- 複数のソースからの情報を組み合わせる
+- 検索されたコンテキストについて推論する
+- 発見に基づいてアクションを実行する
+
+## インストール
+
+```bash
+pip install llama-index llama-index-agent-openai
+pip install llama-index-vector-stores-chroma
+```
+
+## ナレッジベースの構築
+
+### ドキュメントの読み込み
+
+```python
+from llama_index.core import SimpleDirectoryReader
+
+# ディレクトリからドキュメントを読み込む
+documents = SimpleDirectoryReader(
+    input_dir="./data",
+    recursive=True,
+    filename_as_id=True
+).load_data()
+
+print(f"Loaded {len(documents)} documents")
+```
+
+### インデックスの作成
+
+```python
+from llama_index.core import VectorStoreIndex, Settings
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.openai import OpenAI
+
+# モデルを設定
+Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
+Settings.llm = OpenAI(model="gpt-4-turbo")
+
+# ベクトルインデックスを作成
+index = VectorStoreIndex.from_documents(documents)
+
+# 後で使用するために永続化
+index.storage_context.persist(persist_dir="./storage")
+```
+
+## ツールとしてのクエリエンジン
+
+インデックスをエージェントツールに変換します：
+
+```python
+from llama_index.core.tools import QueryEngineTool
+
+# クエリエンジンを作成
+query_engine = index.as_query_engine(
+    similarity_top_k=5,
+    response_mode="compact"
+)
+
+# ツールとしてラップ
+knowledge_tool = QueryEngineTool.from_defaults(
+    query_engine=query_engine,
+    name="knowledge_base",
+    description="会社のポリシーや手順に関する情報について、社内ナレッジベースを検索します。"
+)
+```
+
+## エージェントの作成
+
+### 基本的なエージェント設定
+
+```python
+from llama_index.agent.openai import OpenAIAgent
+
+agent = OpenAIAgent.from_tools(
+    tools=[knowledge_tool],
+    verbose=True,
+    system_prompt="""あなたは会社のナレッジベースにアクセスできる親切なアシスタントです。
+    ポリシーに関する質問には、必ずナレッジベースを検索してから答えてください。"""
+)
+
+# エージェントにクエリを実行
+response = agent.chat("What is our vacation policy?")
+print(response)
+```
+
+### マルチツールエージェント
+
+複数のデータソースを組み合わせます：
+
+```python
+from llama_index.core.tools import FunctionTool
+
+# 追加のツールを作成
+def get_current_date() -> str:
+    """現在の日付を返します。"""
+    from datetime import datetime
+    return datetime.now().strftime("%Y-%m-%d")
+
+date_tool = FunctionTool.from_defaults(fn=get_current_date)
+
+# 複数のツールを持つエージェントを作成
+agent = OpenAIAgent.from_tools(
+    tools=[knowledge_tool, date_tool, calculator_tool],
+    verbose=True
+)
+```
+
+## 高度な RAG パターン
+
+### サブクエスチョン クエリエンジン
+
+複雑なクエリをより単純なサブクエリに分解します：
+
+```python
+from llama_index.core.query_engine import SubQuestionQueryEngine
+from llama_index.core.tools import QueryEngineTool
+
+# 異なるインデックス用のツールを作成
+tools = [
+    QueryEngineTool.from_defaults(
+        query_engine=hr_index.as_query_engine(),
+        name="hr_policies",
+        description="人事ポリシーと従業員ハンドブック"
+    ),
+    QueryEngineTool.from_defaults(
+        query_engine=tech_index.as_query_engine(),
+        name="technical_docs",
+        description="技術文書と API"
+    )
+]
+
+# サブクエスチョンエンジンを作成
+query_engine = SubQuestionQueryEngine.from_defaults(
+    query_engine_tools=tools
+)
+```
+
+### ルーター クエリエンジン
+
+クエリを適切なインデックスに自動的にルーティングします：
+
+```python
+from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.selectors import LLMSingleSelector
+
+query_engine = RouterQueryEngine(
+    selector=LLMSingleSelector.from_defaults(),
+    query_engine_tools=tools
+)
+```
+
+## 本番環境での考慮事項
+
+### ベクトルストアの統合
+
+本番環境レベルのベクトルストアを使用します：
+
+```python
+import chromadb
+from llama_index.vector_stores.chroma import ChromaVectorStore
+
+# Chroma をセットアップ
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_or_create_collection("knowledge_base")
+
+# Chroma でインデックスを作成
+vector_store = ChromaVectorStore(chroma_collection=collection)
+index = VectorStoreIndex.from_vector_store(vector_store)
+```
+
+### キャッシングとパフォーマンス
+
+```python
+from llama_index.core import Settings
+
+# キャッシングを有効化
+Settings.cache_enabled = True
+
+# 本番環境ではより高速な埋め込みモデルを使用
+Settings.embed_model = OpenAIEmbedding(
+    model="text-embedding-3-small",
+    embed_batch_size=100
+)
+```
+
+## ベストプラクティス
+
+1.  **チャンキング戦略**: チャンクサイズ (512-1024 トークン) を試す
+2.  **メタデータフィルタリング**: 検索精度向上のためにメタデータを追加する
+3.  **ハイブリッド検索**: ベクトル検索とキーワード検索を組み合わせる
+4.  **評価**: RAGAS や LlamaIndex 評価モジュールを使用する
+5.  **可観測性**: Phoenix などのトレーシングツールと統合する

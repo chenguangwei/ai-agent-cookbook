@@ -1,0 +1,242 @@
+---
+title: "Gemini 1.5 Proでのコンテキスト最適化"
+slug: "gemini-1-5-pro-context"
+locale: "ja"
+description: "大規模なドキュメント分析のために、100万トークンを超えるコンテキストウィンドウを効果的に活用する方法を学びます。"
+category: "LLMモデル"
+tags: ["Gemini", "Google", "コンテキスト"]
+techStack: ["Gemini 1.5 Pro"]
+difficulty: "中級"
+duration: "18分で読了"
+thumbnail: "https://images.unsplash.com/photo-1617791160505-6f00504e3caf?w=800"
+featured: false
+date: "2024-05-08"
+---
+
+# Gemini 1.5 Proでのコンテキスト最適化
+
+Gemini 1.5 Proは、100万トークンを超える画期的なコンテキストウィンドウを提供し、ドキュメント分析と情報検索に新たな可能性をもたらします。
+
+## 長いコンテキストの利点を理解する
+
+従来のLLMは4K〜128Kトークンに制限されていました。Gemini 1.5 Proの100万トークン以上のコンテキストは、以下のことを可能にします：
+
+- コードベース全体を一度に処理
+- 長大な法的文書の分析
+- 書籍原稿全体のレビュー
+- 複数のドキュメントを同時に比較
+
+## はじめに
+
+### セットアップ
+
+```python
+import google.generativeai as genai
+
+genai.configure(api_key="YOUR_API_KEY")
+
+model = genai.GenerativeModel('gemini-1.5-pro')
+```
+
+### 基本的な長文コンテキストクエリ
+
+```python
+def analyze_large_document(document_path: str, query: str) -> str:
+    """大規模なドキュメントを特定のクエリで分析します。"""
+    with open(document_path, 'r') as f:
+        content = f.read()
+
+    prompt = f"""
+    Document:
+    {content}
+
+    Query: {query}
+
+    Please analyze the document and answer the query comprehensively.
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## コンテキストウィンドウ戦略
+
+### 構造化されたコンテキストの読み込み
+
+結果を向上させるためにコンテキストを整理します：
+
+```python
+def create_structured_context(documents: list) -> str:
+    """複数のドキュメントから構造化されたコンテキストを作成します。"""
+    context_parts = []
+
+    for i, doc in enumerate(documents):
+        context_parts.append(f"""
+=== DOCUMENT {i+1}: {doc['title']} ===
+Source: {doc['source']}
+Date: {doc['date']}
+Content:
+{doc['content']}
+=== END DOCUMENT {i+1} ===
+""")
+
+    return "\n\n".join(context_parts)
+```
+
+### 階層的なコンテキスト構成
+
+```python
+def build_hierarchical_context(data: dict) -> str:
+    """複雑なデータ構造に対して階層的なコンテキストを構築します。"""
+    template = """
+# Project Overview
+{overview}
+
+## Architecture
+{architecture}
+
+## Components
+{components}
+
+## Dependencies
+{dependencies}
+
+## Recent Changes
+{changes}
+"""
+    return template.format(**data)
+```
+
+## 効率的なトークン使用
+
+### トークンカウント
+
+```python
+def count_tokens(text: str) -> int:
+    """Geminiのトークナイザーを使用してテキスト内のトークンを数えます。"""
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    return model.count_tokens(text).total_tokens
+
+def check_context_fit(documents: list, max_tokens: int = 1000000) -> bool:
+    """ドキュメントがコンテキストウィンドウ内に収まるか確認します。"""
+    total = sum(count_tokens(doc) for doc in documents)
+    return total < max_tokens
+```
+
+### コンテキスト圧縮
+
+制限に近づいた場合、戦略的に圧縮します：
+
+```python
+def compress_context(content: str, target_ratio: float = 0.5) -> str:
+    """重要な情報を保持しながらコンテンツを圧縮します。"""
+    prompt = f"""
+    Summarize the following content, preserving:
+    - Key facts and figures
+    - Important decisions and conclusions
+    - Technical specifications
+    - Action items
+
+    Target compression: {int(target_ratio * 100)}% of original
+
+    Content:
+    {content}
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## 高度なユースケース
+
+### コードベース分析
+
+```python
+def analyze_codebase(repo_path: str) -> str:
+    """コードベース全体を一度に分析します。"""
+    files = collect_code_files(repo_path)
+
+    context = "# CODEBASE ANALYSIS\n\n"
+    for file_path, content in files.items():
+        context += f"## File: {file_path}\n```\n{content}\n```\n\n"
+
+    prompt = f"""
+    {context}
+
+    Analyze this codebase and provide:
+    1. Architecture overview
+    2. Main components and their responsibilities
+    3. Code quality assessment
+    4. Potential improvements
+    5. Security considerations
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+### 複数ドキュメント比較
+
+```python
+def compare_documents(docs: list, comparison_criteria: list) -> str:
+    """指定された基準に基づいて複数のドキュメントを比較します。"""
+    context = create_structured_context(docs)
+
+    criteria_str = "\n".join(f"- {c}" for c in comparison_criteria)
+
+    prompt = f"""
+    {context}
+
+    Compare all documents above based on these criteria:
+    {criteria_str}
+
+    Provide a detailed comparison table and analysis.
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+```
+
+## パフォーマンス最適化
+
+### キャッシュ戦略
+
+```python
+import hashlib
+from functools import lru_cache
+
+@lru_cache(maxsize=100)
+def cached_analysis(content_hash: str, query: str) -> str:
+    """コンテンツハッシュに基づいて分析結果をキャッシュします。"""
+    # ハッシュでコンテンツを取得して分析
+    pass
+
+def analyze_with_cache(content: str, query: str) -> str:
+    """キャッシュを使用してコンテンツを分析します。"""
+    content_hash = hashlib.md5(content.encode()).hexdigest()
+    return cached_analysis(content_hash, query)
+```
+
+### 長い出力のためのストリーミング
+
+```python
+def stream_analysis(context: str, query: str):
+    """長い出力に対して分析結果をストリーミングします。"""
+    prompt = f"{context}\n\nQuery: {query}"
+
+    response = model.generate_content(
+        prompt,
+        stream=True
+    )
+
+    for chunk in response:
+        yield chunk.text
+```
+
+## ベストプラクティス
+
+1.  **コンテキストを構造化する**: 明確な区切り文字と見出しを使用する
+2.  **重要な情報を先頭に配置する**: 重要な情報を早い段階に配置する
+3.  **明示的な参照を使用する**: 名前で特定のセクションを参照する
+4.  **トークン使用量を監視する**: 切り捨てを避けるために消費量を追跡する
+5.  **フォールバックを実装する**: コンテキストが大きすぎる場合の戦略を用意する

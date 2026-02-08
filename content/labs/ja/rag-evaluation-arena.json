@@ -6,5 +6,7 @@
   "difficulty": "中級",
   "status": "オンライン",
   "usersOnline": 89,
-  "thumbnail": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800"
+  "thumbnail": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800",
+  "launchUrl": "https://stackblitz.com/edit/vitejs-vite-4g1tkr?embed=1&file=src%2FApp.tsx",
+  "launchMode": "iframe"
 }

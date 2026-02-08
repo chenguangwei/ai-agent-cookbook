@@ -53,6 +53,8 @@ fragment PracticeLabParts on PracticeLab {
   status
   usersOnline
   thumbnail
+  launchUrl
+  launchMode
 }
 
 fragment ShowcaseParts on Showcase {

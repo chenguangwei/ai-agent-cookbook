@@ -8,10 +8,22 @@ import { Button } from '@/components/ui/button';
 import { getAllShowcaseProjects } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
-export default async function ShowcasePage({ params }: { params: Promise<{ locale: string }> }) {
+interface ShowcasePageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ tag?: string }>;
+}
+
+export default async function ShowcasePage({ params, searchParams }: ShowcasePageProps) {
   const { locale } = await params;
-  const projects = await getAllShowcaseProjects(locale);
+  const { tag } = await searchParams;
+  let projects = await getAllShowcaseProjects(locale);
   const t = await getTranslations('Showcase');
+
+  if (tag) {
+    projects = projects.filter(p =>
+      (p?.tags || []).some(t => t === tag)
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
