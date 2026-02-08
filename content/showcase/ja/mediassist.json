@@ -1,0 +1,14 @@
+{
+  "title": "MediAssist",
+  "locale": "ja",
+  "author": {
+    "name": "Dr. Emily Wu",
+    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704e"
+  },
+  "description": "HIPAA準拠のアシスタントで、非構造化メモから患者の病歴を要約します。",
+  "tags": ["医療", "プライバシー", "自然言語処理"],
+  "stars": 567,
+  "demoUrl": "#",
+  "repoUrl": "#",
+  "thumbnail": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800"
+}

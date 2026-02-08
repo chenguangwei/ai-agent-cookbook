@@ -1,5 +1,24 @@
 // tina/config.ts
 import { defineConfig } from "tinacms";
+
+// src/lib/categories.ts
+var TUTORIAL_CATEGORIES = [
+  { id: "frameworks", value: "Frameworks", i18nKey: "frameworks", icon: "grid" },
+  { id: "llms", value: "LLM Models", i18nKey: "llms", icon: "cpu" },
+  { id: "workflows", value: "Agentic Workflows", i18nKey: "workflows", icon: "git-merge" },
+  { id: "cases", value: "Real-world Cases", i18nKey: "cases", icon: "briefcase" },
+  { id: "rag", value: "RAG", i18nKey: "rag", icon: "database" },
+  { id: "prompting", value: "Prompting", i18nKey: "prompting", icon: "message-square" }
+];
+var categoryValueToId = Object.fromEntries(
+  TUTORIAL_CATEGORIES.map((c) => [c.value, c.id])
+);
+var categoryIdToValue = Object.fromEntries(
+  TUTORIAL_CATEGORIES.map((c) => [c.id, c.value])
+);
+var CATEGORY_OPTIONS = TUTORIAL_CATEGORIES.map((c) => c.value);
+
+// tina/config.ts
 var config_default = defineConfig({
   branch: process.env.TINA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "main",
   clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID || "",
@@ -64,14 +83,7 @@ var config_default = defineConfig({
             name: "category",
             label: "Category",
             required: true,
-            options: [
-              "Frameworks",
-              "LLM Models",
-              "Agentic Workflows",
-              "Real-world Cases",
-              "RAG",
-              "Prompting"
-            ]
+            options: CATEGORY_OPTIONS
           },
           {
             type: "string",

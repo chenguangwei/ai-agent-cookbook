@@ -1,0 +1,10 @@
+{
+  "title": "提示工程沙盒",
+  "locale": "zh",
+  "description": "通过多个LLM提供商的即时反馈，测试并迭代系统提示。",
+  "environment": "Python",
+  "difficulty": "初级",
+  "status": "在线",
+  "usersOnline": 124,
+  "thumbnail": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800"
+}

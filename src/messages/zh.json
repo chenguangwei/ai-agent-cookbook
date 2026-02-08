@@ -99,6 +99,20 @@
     "editOnGithub": "在 GitHub 上编辑",
     "lastUpdated": "最后更新: {date}"
   },
+  "Categories": {
+    "frameworks": "框架",
+    "llms": "大语言模型",
+    "workflows": "智能体工作流",
+    "cases": "实战案例",
+    "rag": "RAG",
+    "prompting": "提示工程",
+    "other": "其他"
+  },
+  "Sidebar": {
+    "categories": "分类",
+    "explore": "探索智能体 AI 领域",
+    "requestTutorial": "请求教程"
+  },
   "Common": {
     "loading": "加载中...",
     "error": "出错了",

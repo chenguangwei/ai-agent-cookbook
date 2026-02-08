@@ -1,0 +1,10 @@
+{
+  "title": "プロンプトエンジニアリングサンドボックス",
+  "locale": "ja",
+  "description": "複数のLLMプロバイダーからの即時フィードバックで、システムプロンプトをテストし反復改善できます。",
+  "environment": "Python",
+  "difficulty": "初級",
+  "status": "オンライン",
+  "usersOnline": 124,
+  "thumbnail": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800"
+}

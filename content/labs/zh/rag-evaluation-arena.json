@@ -1,0 +1,10 @@
+{
+  "title": "RAG 评估竞技场",
+  "locale": "zh",
+  "description": "上传您自己的文档，并对不同检索策略（稠密检索 vs 稀疏检索）进行基准测试。",
+  "environment": "Python",
+  "difficulty": "中级",
+  "status": "在线",
+  "usersOnline": 89,
+  "thumbnail": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800"
+}

@@ -99,6 +99,20 @@
     "editOnGithub": "Edit on GitHub",
     "lastUpdated": "Last updated: {date}"
   },
+  "Categories": {
+    "frameworks": "Frameworks",
+    "llms": "LLM Models",
+    "workflows": "Agentic Workflows",
+    "cases": "Real-world Cases",
+    "rag": "RAG",
+    "prompting": "Prompting",
+    "other": "Other"
+  },
+  "Sidebar": {
+    "categories": "Categories",
+    "explore": "Explore agentic AI landscape",
+    "requestTutorial": "Request Tutorial"
+  },
   "Common": {
     "loading": "Loading...",
     "error": "Something went wrong",

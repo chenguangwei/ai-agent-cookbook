@@ -6,17 +6,11 @@ import { Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useTranslations } from 'next-intl';
-
-const CATEGORIES = [
-  'Frameworks',
-  'LLM Models',
-  'Agentic Workflows',
-  'Real-world Cases',
-  'Other',
-];
+import { TUTORIAL_CATEGORIES } from '@/lib/categories';
 
 export default function RequestPage() {
   const t = useTranslations('RequestForm');
+  const tCat = useTranslations('Categories');
   const [formData, setFormData] = useState({
     topic: '',
     category: '',
@@ -116,11 +110,12 @@ export default function RequestPage() {
                 className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               >
                 <option value="">{t('categoryPlaceholder')}</option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                {TUTORIAL_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.value}>
+                    {tCat(cat.i18nKey)}
                   </option>
                 ))}
+                <option value="Other">{tCat('other')}</option>
               </select>
             </div>
 

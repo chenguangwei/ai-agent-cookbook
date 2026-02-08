@@ -1,4 +1,5 @@
 import { defineConfig } from 'tinacms';
+import { CATEGORY_OPTIONS } from '../src/lib/categories';
 
 export default defineConfig({
   branch: process.env.TINA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || 'main',
@@ -67,14 +68,7 @@ export default defineConfig({
             name: 'category',
             label: 'Category',
             required: true,
-            options: [
-              'Frameworks',
-              'LLM Models',
-              'Agentic Workflows',
-              'Real-world Cases',
-              'RAG',
-              'Prompting',
-            ],
+            options: CATEGORY_OPTIONS,
           },
           {
             type: 'string',

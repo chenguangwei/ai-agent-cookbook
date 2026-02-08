@@ -1,0 +1,10 @@
+{
+  "title": "多智能体集群模拟器",
+  "locale": "zh",
+  "description": "在封闭环境中可视化5个以上自主智能体之间的通信模式。",
+  "environment": "Node.js",
+  "difficulty": "高级",
+  "status": "维护中",
+  "usersOnline": 0,
+  "thumbnail": "https://images.unsplash.com/photo-1558494949-ef526bca4852?w=800"
+}

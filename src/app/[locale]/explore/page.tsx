@@ -7,7 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getAllTutorials } from '@/lib/tina';
-import { CATEGORIES } from '@/lib/data';
+import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 
@@ -30,25 +30,19 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const localeFilter = params.locale;
   const difficultyFilter = params.difficulty;
   const t = await getTranslations('Explore');
+  const tCat = await getTranslations('Categories');
 
-  // Map category param to category name
-  const categoryMap: Record<string, string> = {
-    frameworks: 'Frameworks',
-    llms: 'LLM Models',
-    workflows: 'Agentic Workflows',
-    cases: 'Real-world Cases',
-  };
-
-  const categoryName = categoryParam ? categoryMap[categoryParam] : null;
-  const currentCategory = CATEGORIES.find(
+  // Map category id (URL param) to category value (stored in content)
+  const categoryValue = categoryParam ? categoryIdToValue[categoryParam] : null;
+  const currentCategory = TUTORIAL_CATEGORIES.find(
     (c) => c.id === categoryParam
   );
 
   // Fetch and filter tutorials
   let tutorials = await getAllTutorials();
 
-  if (categoryName) {
-    tutorials = tutorials.filter((t) => t?.category === categoryName);
+  if (categoryValue) {
+    tutorials = tutorials.filter((t) => t?.category === categoryValue);
   }
   if (localeFilter) {
     tutorials = tutorials.filter((t) => t?.locale === localeFilter);
@@ -75,11 +69,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
               {currentCategory ? (
                 <div className="mb-8">
                   <h1 className="text-slate-900 dark:text-white text-3xl font-bold mb-2 font-display">
-                    {currentCategory.name}
+                    {tCat(currentCategory.i18nKey)}
                   </h1>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm max-w-2xl">
-                    {currentCategory.description}
-                  </p>
                 </div>
               ) : (
                 <div className="mb-8">
