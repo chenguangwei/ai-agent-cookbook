@@ -88,7 +88,14 @@
     "title": "Community Showcase",
     "description": "Discover incredible AI agent projects built by our community. Get inspired and share your own creations.",
     "fork": "Fork",
-    "demo": "Demo"
+    "demo": "Demo",
+    "readMore": "Read More",
+    "backToShowcase": "Back to Showcase",
+    "viewDemo": "View Demo",
+    "viewRepo": "View Repository",
+    "visitWebsite": "Visit Website",
+    "website": "Website",
+    "caseStudy": "Case Study"
   },
   "Docs": {
     "title": "Documentation",

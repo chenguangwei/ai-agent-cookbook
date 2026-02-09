@@ -1,0 +1,59 @@
+---
+title: "PromptBuilder"
+slug: "prompt-builder"
+locale: "ja"
+contentType: "detailed"
+author:
+  name: "James Liu"
+  avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704f"
+description: "リアルタイムプレビュー付きでプロンプトの設計、テスト、反復を支援するビジュアルプロンプトエンジニアリングツール。"
+tags: ["Prompt Engineering", "Developer Tools", "Productivity"]
+stars: 892
+repoUrl: "https://github.com/example/prompt-builder"
+thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
+---
+
+# PromptBuilder：ビジュアルプロンプトエンジニアリング
+
+## 概要
+
+PromptBuilderは、プロンプトを視覚的に設計・テストするためのオープンソースツールです。分割ペインインターフェースでリアルタイムプレビュー、バージョン管理、A/Bテスト機能を提供します。
+
+## 主な機能
+
+### ビジュアルエディタ
+- シンタックスハイライト付きプロンプト編集
+- `{{プレースホルダー}}` による変数補間
+- よく使うパターンのテンプレートライブラリ
+- 入力/出力のサイドバイサイドプレビュー
+
+### バージョン管理
+- Gitライクなプロンプトのバージョニング
+- プロンプトバージョン間の差分表示
+- プロンプトバリアントのブランチとマージ
+- 任意の過去バージョンへのロールバック
+
+### A/Bテスト
+プロンプトバリアントをサイドバイサイドで比較：
+- 同じ入力に対して複数のプロンプトを実行
+- カスタム評価基準で出力をスコアリング
+- パフォーマンスの統計分析
+- CSV/JSONで結果をエクスポート
+
+## アーキテクチャ
+
+シンプルで効果的な技術スタック：
+- **フロントエンド**：React + Monaco Editor
+- **バックエンド**：Node.js + WebSocketによるリアルタイム更新
+- **ストレージ**：SQLiteでプロンプト履歴を管理
+
+## クイックスタート
+
+```bash
+git clone https://github.com/example/prompt-builder
+cd prompt-builder
+npm install
+npm run dev
+```
+
+`http://localhost:3000` を開いてプロンプトの構築を開始します。

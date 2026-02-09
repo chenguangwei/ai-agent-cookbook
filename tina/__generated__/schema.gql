@@ -318,14 +318,19 @@ type ShowcaseAuthor {
 
 type Showcase implements Node & Document {
   title: String!
+  slug: String!
   locale: String!
+  contentType: String!
   author: ShowcaseAuthor
   description: String!
   tags: [String]
   stars: Float
   demoUrl: String
+  videoUrl: String
   repoUrl: String
+  websiteUrl: String
   thumbnail: String
+  body: JSON
   id: ID!
   _sys: SystemInfo!
   _values: JSON!
@@ -338,14 +343,19 @@ input ShowcaseAuthorFilter {
 
 input ShowcaseFilter {
   title: StringFilter
+  slug: StringFilter
   locale: StringFilter
+  contentType: StringFilter
   author: ShowcaseAuthorFilter
   description: StringFilter
   tags: StringFilter
   stars: NumberFilter
   demoUrl: StringFilter
+  videoUrl: StringFilter
   repoUrl: StringFilter
+  websiteUrl: StringFilter
   thumbnail: ImageFilter
+  body: RichTextFilter
 }
 
 type ShowcaseConnectionEdges {
@@ -492,14 +502,19 @@ input ShowcaseAuthorMutation {
 
 input ShowcaseMutation {
   title: String
+  slug: String
   locale: String
+  contentType: String
   author: ShowcaseAuthorMutation
   description: String
   tags: [String]
   stars: Float
   demoUrl: String
+  videoUrl: String
   repoUrl: String
+  websiteUrl: String
   thumbnail: String
+  body: JSON
 }
 
 input RequestMutation {

@@ -1,0 +1,14 @@
+{
+  "name": "ai-agent-chatbot",
+  "version": "1.0.0",
+  "description": "Build a simple AI chatbot agent with tool-calling capabilities",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "openai": "^4.52.0"
+  }
+}

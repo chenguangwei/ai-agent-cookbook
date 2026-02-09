@@ -22,20 +22,46 @@ interface LabCardProps {
   };
 }
 
+// Resolve URL template variables, e.g. {GITHUB_REPO} → env value
+function resolveUrl(url: string): { url: string; hasError: boolean; errorMessage?: string } {
+  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO;
+
+  // Check if URL contains placeholder
+  if (url.includes('{GITHUB_REPO}')) {
+    if (!repo || repo === 'your-username/ai-agent-cookbook') {
+      return {
+        url,
+        hasError: true,
+        errorMessage: 'GitHub repository not configured. Please set NEXT_PUBLIC_GITHUB_REPO in .env.local'
+      };
+    }
+    return {
+      url: url.replace(/\{GITHUB_REPO\}/g, repo),
+      hasError: false
+    };
+  }
+
+  return { url, hasError: false };
+}
+
 export function LabCard({ lab }: LabCardProps) {
   const [iframeOpen, setIframeOpen] = useState(false);
   const t = useTranslations('Practice');
 
+  const resolved = lab.launchUrl ? resolveUrl(lab.launchUrl) : null;
+  const launchUrl = resolved?.url || null;
+  const hasConfigError = resolved?.hasError || false;
+  const configErrorMessage = resolved?.errorMessage;
   const isOnline = lab.status === 'Online';
-  const hasUrl = !!lab.launchUrl;
+  const hasUrl = !!launchUrl && !hasConfigError;
 
   const handleLaunch = () => {
-    if (!isOnline || !hasUrl) return;
+    if (!isOnline || !hasUrl || hasConfigError) return;
 
     if (lab.launchMode === 'iframe') {
       setIframeOpen(true);
     } else {
-      window.open(lab.launchUrl!, '_blank', 'noopener,noreferrer');
+      window.open(launchUrl!, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -101,17 +127,23 @@ export function LabCard({ lab }: LabCardProps) {
 
           <Button
             className={`w-full ${
-              isOnline && hasUrl
+              isOnline && hasUrl && !hasConfigError
                 ? 'bg-primary-600 hover:bg-primary-700'
                 : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'
             }`}
-            disabled={!isOnline || !hasUrl}
+            disabled={!isOnline || !hasUrl || hasConfigError}
             onClick={handleLaunch}
+            title={hasConfigError ? configErrorMessage : undefined}
           >
             {!isOnline ? (
               <>
                 <Wrench className="w-4 h-4 mr-2" />
                 {t('underMaintenance')}
+              </>
+            ) : hasConfigError ? (
+              <>
+                <Wrench className="w-4 h-4 mr-2" />
+                Config Required
               </>
             ) : (
               <>
@@ -131,7 +163,7 @@ export function LabCard({ lab }: LabCardProps) {
       </div>
 
       {/* Iframe Modal */}
-      {iframeOpen && lab.launchUrl && (
+      {iframeOpen && launchUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
           <div
@@ -152,7 +184,7 @@ export function LabCard({ lab }: LabCardProps) {
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href={lab.launchUrl}
+                  href={launchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
@@ -170,10 +202,10 @@ export function LabCard({ lab }: LabCardProps) {
             </div>
             {/* Iframe */}
             <iframe
-              src={lab.launchUrl}
+              src={launchUrl}
               className="flex-1 w-full border-0"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-              allow="clipboard-read; clipboard-write"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
+              allow="clipboard-read; clipboard-write; cross-origin-isolated"
               title={lab.title}
             />
           </div>

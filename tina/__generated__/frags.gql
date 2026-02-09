@@ -60,7 +60,9 @@ fragment PracticeLabParts on PracticeLab {
 fragment ShowcaseParts on Showcase {
   __typename
   title
+  slug
   locale
+  contentType
   author {
     __typename
     name
@@ -70,8 +72,11 @@ fragment ShowcaseParts on Showcase {
   tags
   stars
   demoUrl
+  videoUrl
   repoUrl
+  websiteUrl
   thumbnail
+  body
 }
 
 fragment RequestParts on Request {

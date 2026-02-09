@@ -283,6 +283,9 @@ export default defineConfig({
         label: 'Practice Labs',
         path: 'content/labs',
         format: 'json',
+        match: {
+          include: '{en,zh,ja}/*',
+        },
         ui: {
           filename: {
             readonly: false,
@@ -365,13 +368,13 @@ export default defineConfig({
         name: 'showcase',
         label: 'Showcase Projects',
         path: 'content/showcase',
-        format: 'json',
+        format: 'mdx',
         ui: {
           filename: {
             readonly: false,
             slugify: (values) => {
               const locale = values?.locale || 'en';
-              const slug = (values?.title || '')
+              const slug = values?.slug || (values?.title || '')
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/(^-|-$)/g, '');
@@ -389,10 +392,24 @@ export default defineConfig({
           },
           {
             type: 'string',
+            name: 'slug',
+            label: 'Slug',
+            required: true,
+          },
+          {
+            type: 'string',
             name: 'locale',
             label: 'Locale',
             required: true,
             options: ['en', 'zh', 'ja'],
+          },
+          {
+            type: 'string',
+            name: 'contentType',
+            label: 'Content Type',
+            required: true,
+            options: ['card', 'detailed'],
+            description: 'Card: Simple project card | Detailed: Full case study with MDX content',
           },
           {
             type: 'object',
@@ -437,13 +454,31 @@ export default defineConfig({
           },
           {
             type: 'string',
+            name: 'videoUrl',
+            label: 'Video URL (YouTube, etc.)',
+            description: 'Full URL to embedded video for detailed pages',
+          },
+          {
+            type: 'string',
             name: 'repoUrl',
             label: 'Repo URL',
+          },
+          {
+            type: 'string',
+            name: 'websiteUrl',
+            label: 'Website / Product URL',
+            description: 'Link to a landing page, product page, or external website',
           },
           {
             type: 'image',
             name: 'thumbnail',
             label: 'Thumbnail',
+          },
+          {
+            type: 'rich-text',
+            name: 'body',
+            label: 'Body',
+            isBody: true,
           },
         ],
       },

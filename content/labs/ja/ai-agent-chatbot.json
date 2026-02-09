@@ -1,0 +1,12 @@
+{
+  "title": "AIエージェントチャットボット",
+  "locale": "ja",
+  "description": "ツール呼び出し機能を持つチャットボットを構築。Agent Loopパターンを学ぶ：LLM → ツール呼び出し → 結果 → 応答。",
+  "environment": "Node.js",
+  "difficulty": "初級",
+  "status": "オンライン",
+  "usersOnline": 156,
+  "thumbnail": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800",
+  "launchUrl": "https://stackblitz.com/github/{GITHUB_REPO}/tree/main/content/labs/templates/ai-agent-chatbot?embed=1&file=index.js&view=editor",
+  "launchMode": "iframe"
+}

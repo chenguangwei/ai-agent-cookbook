@@ -485,14 +485,19 @@ export type ShowcaseAuthor = {
 export type Showcase = Node & Document & {
   __typename?: 'Showcase';
   title: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
   locale: Scalars['String']['output'];
+  contentType: Scalars['String']['output'];
   author?: Maybe<ShowcaseAuthor>;
   description: Scalars['String']['output'];
   tags?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   stars?: Maybe<Scalars['Float']['output']>;
   demoUrl?: Maybe<Scalars['String']['output']>;
+  videoUrl?: Maybe<Scalars['String']['output']>;
   repoUrl?: Maybe<Scalars['String']['output']>;
+  websiteUrl?: Maybe<Scalars['String']['output']>;
   thumbnail?: Maybe<Scalars['String']['output']>;
+  body?: Maybe<Scalars['JSON']['output']>;
   id: Scalars['ID']['output'];
   _sys: SystemInfo;
   _values: Scalars['JSON']['output'];
@@ -505,14 +510,19 @@ export type ShowcaseAuthorFilter = {
 
 export type ShowcaseFilter = {
   title?: InputMaybe<StringFilter>;
+  slug?: InputMaybe<StringFilter>;
   locale?: InputMaybe<StringFilter>;
+  contentType?: InputMaybe<StringFilter>;
   author?: InputMaybe<ShowcaseAuthorFilter>;
   description?: InputMaybe<StringFilter>;
   tags?: InputMaybe<StringFilter>;
   stars?: InputMaybe<NumberFilter>;
   demoUrl?: InputMaybe<StringFilter>;
+  videoUrl?: InputMaybe<StringFilter>;
   repoUrl?: InputMaybe<StringFilter>;
+  websiteUrl?: InputMaybe<StringFilter>;
   thumbnail?: InputMaybe<ImageFilter>;
+  body?: InputMaybe<RichTextFilter>;
 };
 
 export type ShowcaseConnectionEdges = {
@@ -770,14 +780,19 @@ export type ShowcaseAuthorMutation = {
 
 export type ShowcaseMutation = {
   title?: InputMaybe<Scalars['String']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
   locale?: InputMaybe<Scalars['String']['input']>;
+  contentType?: InputMaybe<Scalars['String']['input']>;
   author?: InputMaybe<ShowcaseAuthorMutation>;
   description?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   stars?: InputMaybe<Scalars['Float']['input']>;
   demoUrl?: InputMaybe<Scalars['String']['input']>;
+  videoUrl?: InputMaybe<Scalars['String']['input']>;
   repoUrl?: InputMaybe<Scalars['String']['input']>;
+  websiteUrl?: InputMaybe<Scalars['String']['input']>;
   thumbnail?: InputMaybe<Scalars['String']['input']>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
 export type RequestMutation = {
@@ -797,7 +812,7 @@ export type NewsPartsFragment = { __typename: 'News', title: string, slug: strin
 
 export type PracticeLabPartsFragment = { __typename: 'PracticeLab', title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, launchUrl?: string | null, launchMode?: string | null };
 
-export type ShowcasePartsFragment = { __typename: 'Showcase', title: string, locale: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, repoUrl?: string | null, thumbnail?: string | null, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null };
+export type ShowcasePartsFragment = { __typename: 'Showcase', title: string, slug: string, locale: string, contentType: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, videoUrl?: string | null, repoUrl?: string | null, websiteUrl?: string | null, thumbnail?: string | null, body?: any | null, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null };
 
 export type RequestPartsFragment = { __typename: 'Request', topic: string, category: string, description: string, email?: string | null, status?: string | null, submittedAt?: string | null };
 
@@ -882,7 +897,7 @@ export type ShowcaseQueryVariables = Exact<{
 }>;
 
 
-export type ShowcaseQuery = { __typename?: 'Query', showcase: { __typename: 'Showcase', id: string, title: string, locale: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, repoUrl?: string | null, thumbnail?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null } };
+export type ShowcaseQuery = { __typename?: 'Query', showcase: { __typename: 'Showcase', id: string, title: string, slug: string, locale: string, contentType: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, videoUrl?: string | null, repoUrl?: string | null, websiteUrl?: string | null, thumbnail?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null } };
 
 export type ShowcaseConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -894,7 +909,7 @@ export type ShowcaseConnectionQueryVariables = Exact<{
 }>;
 
 
-export type ShowcaseConnectionQuery = { __typename?: 'Query', showcaseConnection: { __typename?: 'ShowcaseConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'ShowcaseConnectionEdges', cursor: string, node?: { __typename: 'Showcase', id: string, title: string, locale: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, repoUrl?: string | null, thumbnail?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null } | null } | null> | null } };
+export type ShowcaseConnectionQuery = { __typename?: 'Query', showcaseConnection: { __typename?: 'ShowcaseConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'ShowcaseConnectionEdges', cursor: string, node?: { __typename: 'Showcase', id: string, title: string, slug: string, locale: string, contentType: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, videoUrl?: string | null, repoUrl?: string | null, websiteUrl?: string | null, thumbnail?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null } | null } | null> | null } };
 
 export type RequestQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -982,7 +997,9 @@ export const ShowcasePartsFragmentDoc = gql`
     fragment ShowcaseParts on Showcase {
   __typename
   title
+  slug
   locale
+  contentType
   author {
     __typename
     name
@@ -992,8 +1009,11 @@ export const ShowcasePartsFragmentDoc = gql`
   tags
   stars
   demoUrl
+  videoUrl
   repoUrl
+  websiteUrl
   thumbnail
+  body
 }
     `;
 export const RequestPartsFragmentDoc = gql`

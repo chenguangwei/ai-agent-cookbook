@@ -1,0 +1,59 @@
+---
+title: "PromptBuilder"
+slug: "prompt-builder"
+locale: "zh"
+contentType: "detailed"
+author:
+  name: "James Liu"
+  avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704f"
+description: "一款可视化提示词工程工具，帮助你设计、测试和迭代提示词，支持实时预览。"
+tags: ["Prompt Engineering", "Developer Tools", "Productivity"]
+stars: 892
+repoUrl: "https://github.com/example/prompt-builder"
+thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
+---
+
+# PromptBuilder：可视化提示词工程
+
+## 概述
+
+PromptBuilder 是一款开源的可视化提示词设计和测试工具。它提供分屏界面，支持实时预览、版本控制和 A/B 测试功能。
+
+## 核心功能
+
+### 可视化编辑器
+- 语法高亮的提示词编辑
+- 使用 `{{占位符}}` 进行变量插值
+- 常用模式的模板库
+- 输入/输出并排预览
+
+### 版本控制
+- 类 Git 的提示词版本管理
+- 提示词版本间的差异对比
+- 提示词变体的分支与合并
+- 回滚到任意历史版本
+
+### A/B 测试
+并排比较提示词变体：
+- 对相同输入运行多个提示词
+- 使用自定义评分标准评估输出
+- 性能统计分析
+- 导出结果为 CSV/JSON
+
+## 架构
+
+该工具采用简洁高效的技术栈：
+- **前端**：React + Monaco Editor
+- **后端**：Node.js + WebSocket 实时更新
+- **存储**：SQLite 存储提示词历史
+
+## 快速开始
+
+```bash
+git clone https://github.com/example/prompt-builder
+cd prompt-builder
+npm install
+npm run dev
+```
+
+打开 `http://localhost:3000` 开始构建提示词。

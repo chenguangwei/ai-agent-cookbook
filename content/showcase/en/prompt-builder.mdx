@@ -1,0 +1,59 @@
+---
+title: "PromptBuilder"
+slug: "prompt-builder"
+locale: "en"
+contentType: "detailed"
+author:
+  name: "James Liu"
+  avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704f"
+description: "A visual prompt engineering tool that helps you design, test, and iterate on prompts with real-time previews."
+tags: ["Prompt Engineering", "Developer Tools", "Productivity"]
+stars: 892
+repoUrl: "https://github.com/example/prompt-builder"
+thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
+---
+
+# PromptBuilder: Visual Prompt Engineering
+
+## Overview
+
+PromptBuilder is an open-source tool for designing and testing prompts visually. It provides a split-pane interface with real-time previews, version control, and A/B testing capabilities.
+
+## Key Features
+
+### Visual Editor
+- Syntax-highlighted prompt editing
+- Variable interpolation with `{{placeholders}}`
+- Template library with common patterns
+- Side-by-side input/output preview
+
+### Version Control
+- Git-like versioning for prompts
+- Diff view between prompt versions
+- Branch and merge prompt variants
+- Rollback to any previous version
+
+### A/B Testing
+Compare prompt variants side by side:
+- Run multiple prompts against the same input
+- Score outputs with custom rubrics
+- Statistical analysis of performance
+- Export results as CSV/JSON
+
+## Architecture
+
+The tool is built with a simple but effective stack:
+- **Frontend**: React + Monaco Editor
+- **Backend**: Node.js with WebSocket for real-time updates
+- **Storage**: SQLite for prompt history
+
+## Quick Start
+
+```bash
+git clone https://github.com/example/prompt-builder
+cd prompt-builder
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000` and start building prompts.

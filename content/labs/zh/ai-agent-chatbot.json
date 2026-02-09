@@ -1,0 +1,12 @@
+{
+  "title": "AI 智能体聊天机器人",
+  "locale": "zh",
+  "description": "构建一个具有工具调用能力的聊天机器人。学习 Agent Loop 模式：LLM → 工具调用 → 结果 → 响应。",
+  "environment": "Node.js",
+  "difficulty": "初级",
+  "status": "在线",
+  "usersOnline": 156,
+  "thumbnail": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800",
+  "launchUrl": "https://stackblitz.com/github/{GITHUB_REPO}/tree/main/content/labs/templates/ai-agent-chatbot?embed=1&file=index.js&view=editor",
+  "launchMode": "iframe"
+}

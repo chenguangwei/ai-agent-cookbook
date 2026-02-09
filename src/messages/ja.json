@@ -88,7 +88,14 @@
     "title": "コミュニティショーケース",
     "description": "コミュニティが構築した素晴らしいAIエージェントプロジェクトを発見。インスピレーションを得て、あなたの作品を共有しましょう。",
     "fork": "フォーク",
-    "demo": "デモ"
+    "demo": "デモ",
+    "readMore": "続きを読む",
+    "backToShowcase": "ショーケースに戻る",
+    "viewDemo": "デモを見る",
+    "viewRepo": "リポジトリを見る",
+    "visitWebsite": "ウェブサイトを見る",
+    "website": "ウェブサイト",
+    "caseStudy": "ケーススタディ"
   },
   "Docs": {
     "title": "ドキュメント",
