@@ -95,3 +95,56 @@ related_ids: ["agent-basics-01"] # 关联阅读
 "一键复刻" 按钮: 在教程代码块旁增加按钮，如果可能，链接到 GitHub Repo 或 Replit/CodeSandbox，方便开发者直接运行 Agent 代码。
 
 Tech Stack 标签: 在文章卡片上直观显示该 Agent 使用了什么模型（GPT-4, Claude 3）和什么工具（SearxNG, Pinecone），方便用户按工具检索。
+
+## 工具收录 (Tools)
+
+系统提供了专门的工具收录功能，位于 `/tools` 路由。
+
+### 支持的工具有以下分类：
+
+- LLM Framework（大语言模型框架）
+- Vector Database（向量数据库）
+- Agent Framework（智能体框架）
+- Embedding（嵌入模型）
+- Monitoring（监控工具）
+- IDE/Editor（IDE/编辑器）
+- Deployment（部署工具）
+- Prompt Engineering（提示工程）
+- Data Processing（数据处理）
+- Testing（测试工具）
+- Other（其他）
+
+### 添加新工具
+
+在 `content/tools/{locale}/` 目录下创建 MDX 文件：
+
+```mdx
+---
+title: "工具名称"
+slug: "tool-slug"
+locale: "zh"
+description: "工具简要描述"
+category: "Agent Framework"
+tags: ["Python", "Agent"]
+websiteUrl: "https://..."
+repoUrl: "https://github.com/..."
+docsUrl: "https://..."
+pricing: "Open Source"
+stars: 5000
+license: "MIT"
+featured: false
+date: 2024-01-01
+---
+
+# 工具名称
+
+工具详细介绍和使用文档...
+```
+
+### 定价模式筛选
+
+工具支持按定价模式筛选：
+- Open Source（开源）
+- Free（免费）
+- Freemium（免费增值）
+- Paid（付费）

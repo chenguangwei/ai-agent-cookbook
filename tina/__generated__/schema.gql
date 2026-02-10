@@ -64,6 +64,8 @@ type Query {
   practiceLabConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: PracticeLabFilter): PracticeLabConnection!
   showcase(relativePath: String): Showcase!
   showcaseConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: ShowcaseFilter): ShowcaseConnection!
+  tool(relativePath: String): Tool!
+  toolConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: ToolFilter): ToolConnection!
   request(relativePath: String): Request!
   requestConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: RequestFilter): RequestConnection!
 }
@@ -74,6 +76,7 @@ input DocumentFilter {
   news: NewsFilter
   practiceLab: PracticeLabFilter
   showcase: ShowcaseFilter
+  tool: ToolFilter
   request: RequestFilter
 }
 
@@ -100,7 +103,7 @@ type Collection {
   documents(before: String, after: String, first: Float, last: Float, sort: String, filter: DocumentFilter, folder: String): DocumentConnection!
 }
 
-union DocumentNode = Tutorial | Doc | News | PracticeLab | Showcase | Request | Folder
+union DocumentNode = Tutorial | Doc | News | PracticeLab | Showcase | Tool | Request | Folder
 
 type Tutorial implements Node & Document {
   title: String!
@@ -369,6 +372,58 @@ type ShowcaseConnection implements Connection {
   edges: [ShowcaseConnectionEdges]
 }
 
+type Tool implements Node & Document {
+  title: String!
+  slug: String!
+  locale: String!
+  description: String!
+  category: String!
+  tags: [String]
+  logoUrl: String
+  websiteUrl: String
+  repoUrl: String
+  docsUrl: String
+  pricing: String
+  stars: Float
+  license: String
+  featured: Boolean
+  date: String!
+  body: JSON
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input ToolFilter {
+  title: StringFilter
+  slug: StringFilter
+  locale: StringFilter
+  description: StringFilter
+  category: StringFilter
+  tags: StringFilter
+  logoUrl: ImageFilter
+  websiteUrl: StringFilter
+  repoUrl: StringFilter
+  docsUrl: StringFilter
+  pricing: StringFilter
+  stars: NumberFilter
+  license: StringFilter
+  featured: BooleanFilter
+  date: DatetimeFilter
+  body: RichTextFilter
+}
+
+type ToolConnectionEdges {
+  cursor: String!
+  node: Tool
+}
+
+type ToolConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [ToolConnectionEdges]
+}
+
 type Request implements Node & Document {
   topic: String!
   category: String!
@@ -417,6 +472,8 @@ type Mutation {
   createPracticeLab(relativePath: String!, params: PracticeLabMutation!): PracticeLab!
   updateShowcase(relativePath: String!, params: ShowcaseMutation!): Showcase!
   createShowcase(relativePath: String!, params: ShowcaseMutation!): Showcase!
+  updateTool(relativePath: String!, params: ToolMutation!): Tool!
+  createTool(relativePath: String!, params: ToolMutation!): Tool!
   updateRequest(relativePath: String!, params: RequestMutation!): Request!
   createRequest(relativePath: String!, params: RequestMutation!): Request!
 }
@@ -427,6 +484,7 @@ input DocumentUpdateMutation {
   news: NewsMutation
   practiceLab: PracticeLabMutation
   showcase: ShowcaseMutation
+  tool: ToolMutation
   request: RequestMutation
   relativePath: String
 }
@@ -437,6 +495,7 @@ input DocumentMutation {
   news: NewsMutation
   practiceLab: PracticeLabMutation
   showcase: ShowcaseMutation
+  tool: ToolMutation
   request: RequestMutation
 }
 
@@ -514,6 +573,25 @@ input ShowcaseMutation {
   repoUrl: String
   websiteUrl: String
   thumbnail: String
+  body: JSON
+}
+
+input ToolMutation {
+  title: String
+  slug: String
+  locale: String
+  description: String
+  category: String
+  tags: [String]
+  logoUrl: String
+  websiteUrl: String
+  repoUrl: String
+  docsUrl: String
+  pricing: String
+  stars: Float
+  license: String
+  featured: Boolean
+  date: String
   body: JSON
 }
 

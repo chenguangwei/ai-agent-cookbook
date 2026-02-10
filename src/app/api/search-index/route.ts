@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getAllTutorials, getAllDocs, getAllNews, getAllPracticeLabs, getAllShowcaseProjects } from '@/lib/tina';
+import { getAllTutorials, getAllDocs, getAllNews, getAllPracticeLabs, getAllShowcaseProjects, getAllTools } from '@/lib/tina';
 
 export async function GET() {
   try {
-    const [tutorials, docs, news, labs, showcases] = await Promise.all([
+    const [tutorials, docs, news, labs, showcases, tools] = await Promise.all([
       getAllTutorials(),
       getAllDocs(),
       getAllNews(),
       getAllPracticeLabs(),
       getAllShowcaseProjects(),
+      getAllTools(),
     ]);
 
     const documents = [
@@ -68,6 +69,18 @@ export async function GET() {
         category: '',
         tags: (s?.tags || []).filter((tag): tag is string => tag !== null),
         locale: s?.locale || 'en',
+      })),
+      ...tools.map(t => ({
+        id: t?.id || '',
+        title: t?.title || '',
+        description: t?.description || '',
+        content: '',
+        url: `/tools/${t?.slug}`,
+        type: 'tool' as const,
+        category: t?.category,
+        tags: (t?.tags || []).filter((tag): tag is string => tag !== null),
+        locale: t?.locale || 'en',
+        pricing: t?.pricing,
       })),
     ];
 

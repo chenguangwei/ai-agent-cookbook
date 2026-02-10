@@ -92,6 +92,8 @@ export type Query = {
   practiceLabConnection: PracticeLabConnection;
   showcase: Showcase;
   showcaseConnection: ShowcaseConnection;
+  tool: Tool;
+  toolConnection: ToolConnection;
   request: Request;
   requestConnection: RequestConnection;
 };
@@ -193,6 +195,21 @@ export type QueryShowcaseConnectionArgs = {
 };
 
 
+export type QueryToolArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryToolConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ToolFilter>;
+};
+
+
 export type QueryRequestArgs = {
   relativePath?: InputMaybe<Scalars['String']['input']>;
 };
@@ -213,6 +230,7 @@ export type DocumentFilter = {
   news?: InputMaybe<NewsFilter>;
   practiceLab?: InputMaybe<PracticeLabFilter>;
   showcase?: InputMaybe<ShowcaseFilter>;
+  tool?: InputMaybe<ToolFilter>;
   request?: InputMaybe<RequestFilter>;
 };
 
@@ -253,7 +271,7 @@ export type CollectionDocumentsArgs = {
   folder?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type DocumentNode = Tutorial | Doc | News | PracticeLab | Showcase | Request | Folder;
+export type DocumentNode = Tutorial | Doc | News | PracticeLab | Showcase | Tool | Request | Folder;
 
 export type Tutorial = Node & Document & {
   __typename?: 'Tutorial';
@@ -538,6 +556,61 @@ export type ShowcaseConnection = Connection & {
   edges?: Maybe<Array<Maybe<ShowcaseConnectionEdges>>>;
 };
 
+export type Tool = Node & Document & {
+  __typename?: 'Tool';
+  title: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+  locale: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  category: Scalars['String']['output'];
+  tags?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  logoUrl?: Maybe<Scalars['String']['output']>;
+  websiteUrl?: Maybe<Scalars['String']['output']>;
+  repoUrl?: Maybe<Scalars['String']['output']>;
+  docsUrl?: Maybe<Scalars['String']['output']>;
+  pricing?: Maybe<Scalars['String']['output']>;
+  stars?: Maybe<Scalars['Float']['output']>;
+  license?: Maybe<Scalars['String']['output']>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  date: Scalars['String']['output'];
+  body?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type ToolFilter = {
+  title?: InputMaybe<StringFilter>;
+  slug?: InputMaybe<StringFilter>;
+  locale?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  category?: InputMaybe<StringFilter>;
+  tags?: InputMaybe<StringFilter>;
+  logoUrl?: InputMaybe<ImageFilter>;
+  websiteUrl?: InputMaybe<StringFilter>;
+  repoUrl?: InputMaybe<StringFilter>;
+  docsUrl?: InputMaybe<StringFilter>;
+  pricing?: InputMaybe<StringFilter>;
+  stars?: InputMaybe<NumberFilter>;
+  license?: InputMaybe<StringFilter>;
+  featured?: InputMaybe<BooleanFilter>;
+  date?: InputMaybe<DatetimeFilter>;
+  body?: InputMaybe<RichTextFilter>;
+};
+
+export type ToolConnectionEdges = {
+  __typename?: 'ToolConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<Tool>;
+};
+
+export type ToolConnection = Connection & {
+  __typename?: 'ToolConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<ToolConnectionEdges>>>;
+};
+
 export type Request = Node & Document & {
   __typename?: 'Request';
   topic: Scalars['String']['output'];
@@ -590,6 +663,8 @@ export type Mutation = {
   createPracticeLab: PracticeLab;
   updateShowcase: Showcase;
   createShowcase: Showcase;
+  updateTool: Tool;
+  createTool: Tool;
   updateRequest: Request;
   createRequest: Request;
 };
@@ -688,6 +763,18 @@ export type MutationCreateShowcaseArgs = {
 };
 
 
+export type MutationUpdateToolArgs = {
+  relativePath: Scalars['String']['input'];
+  params: ToolMutation;
+};
+
+
+export type MutationCreateToolArgs = {
+  relativePath: Scalars['String']['input'];
+  params: ToolMutation;
+};
+
+
 export type MutationUpdateRequestArgs = {
   relativePath: Scalars['String']['input'];
   params: RequestMutation;
@@ -705,6 +792,7 @@ export type DocumentUpdateMutation = {
   news?: InputMaybe<NewsMutation>;
   practiceLab?: InputMaybe<PracticeLabMutation>;
   showcase?: InputMaybe<ShowcaseMutation>;
+  tool?: InputMaybe<ToolMutation>;
   request?: InputMaybe<RequestMutation>;
   relativePath?: InputMaybe<Scalars['String']['input']>;
 };
@@ -715,6 +803,7 @@ export type DocumentMutation = {
   news?: InputMaybe<NewsMutation>;
   practiceLab?: InputMaybe<PracticeLabMutation>;
   showcase?: InputMaybe<ShowcaseMutation>;
+  tool?: InputMaybe<ToolMutation>;
   request?: InputMaybe<RequestMutation>;
 };
 
@@ -795,6 +884,25 @@ export type ShowcaseMutation = {
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
+export type ToolMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+  locale?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  category?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  logoUrl?: InputMaybe<Scalars['String']['input']>;
+  websiteUrl?: InputMaybe<Scalars['String']['input']>;
+  repoUrl?: InputMaybe<Scalars['String']['input']>;
+  docsUrl?: InputMaybe<Scalars['String']['input']>;
+  pricing?: InputMaybe<Scalars['String']['input']>;
+  stars?: InputMaybe<Scalars['Float']['input']>;
+  license?: InputMaybe<Scalars['String']['input']>;
+  featured?: InputMaybe<Scalars['Boolean']['input']>;
+  date?: InputMaybe<Scalars['String']['input']>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
+};
+
 export type RequestMutation = {
   topic?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
@@ -813,6 +921,8 @@ export type NewsPartsFragment = { __typename: 'News', title: string, slug: strin
 export type PracticeLabPartsFragment = { __typename: 'PracticeLab', title: string, locale: string, description: string, environment?: string | null, difficulty?: string | null, status?: string | null, usersOnline?: number | null, thumbnail?: string | null, launchUrl?: string | null, launchMode?: string | null };
 
 export type ShowcasePartsFragment = { __typename: 'Showcase', title: string, slug: string, locale: string, contentType: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, videoUrl?: string | null, repoUrl?: string | null, websiteUrl?: string | null, thumbnail?: string | null, body?: any | null, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null };
+
+export type ToolPartsFragment = { __typename: 'Tool', title: string, slug: string, locale: string, description: string, category: string, tags?: Array<string | null> | null, logoUrl?: string | null, websiteUrl?: string | null, repoUrl?: string | null, docsUrl?: string | null, pricing?: string | null, stars?: number | null, license?: string | null, featured?: boolean | null, date: string, body?: any | null };
 
 export type RequestPartsFragment = { __typename: 'Request', topic: string, category: string, description: string, email?: string | null, status?: string | null, submittedAt?: string | null };
 
@@ -910,6 +1020,25 @@ export type ShowcaseConnectionQueryVariables = Exact<{
 
 
 export type ShowcaseConnectionQuery = { __typename?: 'Query', showcaseConnection: { __typename?: 'ShowcaseConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'ShowcaseConnectionEdges', cursor: string, node?: { __typename: 'Showcase', id: string, title: string, slug: string, locale: string, contentType: string, description: string, tags?: Array<string | null> | null, stars?: number | null, demoUrl?: string | null, videoUrl?: string | null, repoUrl?: string | null, websiteUrl?: string | null, thumbnail?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, author?: { __typename: 'ShowcaseAuthor', name: string, avatar?: string | null } | null } | null } | null> | null } };
+
+export type ToolQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type ToolQuery = { __typename?: 'Query', tool: { __typename: 'Tool', id: string, title: string, slug: string, locale: string, description: string, category: string, tags?: Array<string | null> | null, logoUrl?: string | null, websiteUrl?: string | null, repoUrl?: string | null, docsUrl?: string | null, pricing?: string | null, stars?: number | null, license?: string | null, featured?: boolean | null, date: string, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
+
+export type ToolConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ToolFilter>;
+}>;
+
+
+export type ToolConnectionQuery = { __typename?: 'Query', toolConnection: { __typename?: 'ToolConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'ToolConnectionEdges', cursor: string, node?: { __typename: 'Tool', id: string, title: string, slug: string, locale: string, description: string, category: string, tags?: Array<string | null> | null, logoUrl?: string | null, websiteUrl?: string | null, repoUrl?: string | null, docsUrl?: string | null, pricing?: string | null, stars?: number | null, license?: string | null, featured?: boolean | null, date: string, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
 
 export type RequestQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -1013,6 +1142,27 @@ export const ShowcasePartsFragmentDoc = gql`
   repoUrl
   websiteUrl
   thumbnail
+  body
+}
+    `;
+export const ToolPartsFragmentDoc = gql`
+    fragment ToolParts on Tool {
+  __typename
+  title
+  slug
+  locale
+  description
+  category
+  tags
+  logoUrl
+  websiteUrl
+  repoUrl
+  docsUrl
+  pricing
+  stars
+  license
+  featured
+  date
   body
 }
     `;
@@ -1312,6 +1462,63 @@ export const ShowcaseConnectionDocument = gql`
   }
 }
     ${ShowcasePartsFragmentDoc}`;
+export const ToolDocument = gql`
+    query tool($relativePath: String!) {
+  tool(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...ToolParts
+  }
+}
+    ${ToolPartsFragmentDoc}`;
+export const ToolConnectionDocument = gql`
+    query toolConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: ToolFilter) {
+  toolConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...ToolParts
+      }
+    }
+  }
+}
+    ${ToolPartsFragmentDoc}`;
 export const RequestDocument = gql`
     query request($relativePath: String!) {
   request(relativePath: $relativePath) {
@@ -1401,6 +1608,12 @@ export type Requester<C= {}> = <R, V>(doc: DocumentNode, vars?: V, options?: C) 
       },
     showcaseConnection(variables?: ShowcaseConnectionQueryVariables, options?: C): Promise<{data: ShowcaseConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ShowcaseConnectionQueryVariables, query: string}> {
         return requester<{data: ShowcaseConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ShowcaseConnectionQueryVariables, query: string}, ShowcaseConnectionQueryVariables>(ShowcaseConnectionDocument, variables, options);
+      },
+    tool(variables: ToolQueryVariables, options?: C): Promise<{data: ToolQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ToolQueryVariables, query: string}> {
+        return requester<{data: ToolQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ToolQueryVariables, query: string}, ToolQueryVariables>(ToolDocument, variables, options);
+      },
+    toolConnection(variables?: ToolConnectionQueryVariables, options?: C): Promise<{data: ToolConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ToolConnectionQueryVariables, query: string}> {
+        return requester<{data: ToolConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ToolConnectionQueryVariables, query: string}, ToolConnectionQueryVariables>(ToolConnectionDocument, variables, options);
       },
     request(variables: RequestQueryVariables, options?: C): Promise<{data: RequestQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: RequestQueryVariables, query: string}> {
         return requester<{data: RequestQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: RequestQueryVariables, query: string}, RequestQueryVariables>(RequestDocument, variables, options);

@@ -17,6 +17,7 @@ const CONTENT_TYPE_DIRS: Record<ContentType, string> = {
   news: 'news',
   labs: 'labs',
   showcase: 'showcase',
+  tools: 'tools',
 };
 
 interface ContentItem {

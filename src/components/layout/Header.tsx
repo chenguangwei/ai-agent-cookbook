@@ -55,6 +55,9 @@ export function Header() {
           <Link href="/showcase" className={navLinkClass('/showcase')}>
             {t('showcase')}
           </Link>
+          <Link href="/tools" className={navLinkClass('/tools')}>
+            {t('tools')}
+          </Link>
           <Link
             href="/news"
             className={`${navLinkClass('/news')} flex items-center gap-2`}

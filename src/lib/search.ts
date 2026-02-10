@@ -7,7 +7,7 @@ export interface SearchDocument {
   description: string;
   content: string;
   url: string;
-  type: 'tutorial' | 'doc' | 'news';
+  type: 'tutorial' | 'doc' | 'news' | 'tool';
   category?: string;
   tags?: string[];
   locale: string;
@@ -19,7 +19,7 @@ export interface SearchResult {
   title: string;
   description: string;
   url: string;
-  type: 'tutorial' | 'doc' | 'news';
+  type: 'tutorial' | 'doc' | 'news' | 'tool';
   category?: string;
   score: number;
 }
@@ -74,7 +74,7 @@ export async function searchDocuments(
   query: string,
   options?: {
     locale?: string;
-    type?: 'tutorial' | 'doc' | 'news';
+    type?: 'tutorial' | 'doc' | 'news' | 'tool';
     limit?: number;
   }
 ): Promise<SearchResult[]> {
@@ -94,7 +94,7 @@ export async function searchDocuments(
     title: hit.document.title,
     description: hit.document.description,
     url: hit.document.url,
-    type: hit.document.type as 'tutorial' | 'doc' | 'news',
+    type: hit.document.type as 'tutorial' | 'doc' | 'news' | 'tool',
     category: hit.document.category,
     score: hit.score,
   }));

@@ -79,6 +79,26 @@ fragment ShowcaseParts on Showcase {
   body
 }
 
+fragment ToolParts on Tool {
+  __typename
+  title
+  slug
+  locale
+  description
+  category
+  tags
+  logoUrl
+  websiteUrl
+  repoUrl
+  docsUrl
+  pricing
+  stars
+  license
+  featured
+  date
+  body
+}
+
 fragment RequestParts on Request {
   __typename
   topic

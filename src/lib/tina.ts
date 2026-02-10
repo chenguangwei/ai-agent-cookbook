@@ -1,7 +1,7 @@
 import client from '../../tina/__generated__/client';
 
 // Re-export types from generated types for convenience
-export type { Tutorial, Doc, News, PracticeLab, Showcase } from '../../tina/__generated__/types';
+export type { Tutorial, Doc, News, PracticeLab, Showcase, Tool } from '../../tina/__generated__/types';
 
 export async function getAllTutorials(locale?: string) {
   try {
@@ -82,6 +82,31 @@ export async function getAllShowcaseProjects(locale?: string) {
   } catch {
     return [];
   }
+}
+
+export async function getAllTools(locale?: string) {
+  try {
+    const result = await client.queries.toolConnection({ last: 100 });
+    const tools = result.data.toolConnection.edges?.map(e => e?.node).filter(Boolean) ?? [];
+    if (locale) {
+      return tools.filter(t => t?.locale === locale);
+    }
+    return tools;
+  } catch {
+    return [];
+  }
+}
+
+export async function getToolBySlug(slug: string) {
+  const all = await getAllTools();
+  return all.find(t => t?.slug === slug) ?? null;
+}
+
+export async function getFeaturedTools(limit = 6, locale?: string) {
+  const all = await getAllTools(locale);
+  const featured = all.filter(t => t?.featured);
+  const rest = all.filter(t => !t?.featured);
+  return [...featured, ...rest].slice(0, limit);
 }
 
 export async function getCategoryCounts(locale?: string) {

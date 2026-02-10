@@ -31,7 +31,7 @@ export function getTranslateConfig(): TranslateConfig {
   };
 }
 
-export type ContentType = 'tutorials' | 'docs' | 'news' | 'labs' | 'showcase';
+export type ContentType = 'tutorials' | 'docs' | 'news' | 'labs' | 'showcase' | 'tools';
 
 export const contentTypeLabels: Record<ContentType, string> = {
   tutorials: 'Tutorials',
@@ -39,6 +39,7 @@ export const contentTypeLabels: Record<ContentType, string> = {
   news: 'News',
   labs: 'Practice Labs',
   showcase: 'Showcase',
+  tools: 'Tools',
 };
 
 export const contentTypeFormats: Record<ContentType, 'mdx' | 'json'> = {
@@ -47,6 +48,7 @@ export const contentTypeFormats: Record<ContentType, 'mdx' | 'json'> = {
   news: 'mdx',
   labs: 'json',
   showcase: 'json',
+  tools: 'mdx',
 };
 
 /**

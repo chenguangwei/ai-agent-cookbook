@@ -1,5 +1,6 @@
 import { defineConfig } from 'tinacms';
 import { CATEGORY_OPTIONS } from '../src/lib/categories';
+import { TOOL_CATEGORY_OPTIONS } from '../src/lib/tool-categories';
 
 export default defineConfig({
   branch: process.env.TINA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || 'main',
@@ -473,6 +474,121 @@ export default defineConfig({
             type: 'image',
             name: 'thumbnail',
             label: 'Thumbnail',
+          },
+          {
+            type: 'rich-text',
+            name: 'body',
+            label: 'Body',
+            isBody: true,
+          },
+        ],
+      },
+      {
+        name: 'tool',
+        label: 'Tools',
+        path: 'content/tools',
+        format: 'mdx',
+        ui: {
+          filename: {
+            readonly: false,
+            slugify: (values) => {
+              const locale = values?.locale || 'en';
+              const slug = values?.slug || (values?.title || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+              return `${locale}/${slug}`;
+            },
+          },
+        },
+        fields: [
+          {
+            type: 'string',
+            name: 'title',
+            label: 'Title',
+            required: true,
+            isTitle: true,
+          },
+          {
+            type: 'string',
+            name: 'slug',
+            label: 'Slug',
+            required: true,
+          },
+          {
+            type: 'string',
+            name: 'locale',
+            label: 'Locale',
+            required: true,
+            options: ['en', 'zh', 'ja'],
+          },
+          {
+            type: 'string',
+            name: 'description',
+            label: 'Description',
+            required: true,
+            ui: { component: 'textarea' },
+          },
+          {
+            type: 'string',
+            name: 'category',
+            label: 'Category',
+            required: true,
+            options: TOOL_CATEGORY_OPTIONS,
+          },
+          {
+            type: 'string',
+            name: 'tags',
+            label: 'Tags',
+            list: true,
+          },
+          {
+            type: 'image',
+            name: 'logoUrl',
+            label: 'Logo/Icon',
+          },
+          {
+            type: 'string',
+            name: 'websiteUrl',
+            label: 'Official Website',
+          },
+          {
+            type: 'string',
+            name: 'repoUrl',
+            label: 'GitHub Repository',
+          },
+          {
+            type: 'string',
+            name: 'docsUrl',
+            label: 'Documentation URL',
+          },
+          {
+            type: 'string',
+            name: 'pricing',
+            label: 'Pricing Model',
+            options: ['Free', 'Freemium', 'Paid', 'Open Source'],
+          },
+          {
+            type: 'number',
+            name: 'stars',
+            label: 'GitHub Stars',
+          },
+          {
+            type: 'string',
+            name: 'license',
+            label: 'License',
+            options: ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'Proprietary', 'Other'],
+          },
+          {
+            type: 'boolean',
+            name: 'featured',
+            label: 'Featured',
+          },
+          {
+            type: 'datetime',
+            name: 'date',
+            label: 'Date Added',
+            required: true,
           },
           {
             type: 'rich-text',

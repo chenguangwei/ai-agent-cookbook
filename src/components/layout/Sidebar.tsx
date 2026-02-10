@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Grid, Cpu, GitMerge, Briefcase, Database, MessageSquare,
-  Code, Terminal, Monitor, Tag, BarChart3,
+  Code, Terminal, Monitor, Tag, BarChart3, Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { TUTORIAL_CATEGORIES, categoryValueToId } from '@/lib/categories';
+import { TOOL_CATEGORIES, toolCategoryValueToId } from '@/lib/tool-categories';
 import { LAB_ENVIRONMENTS, LAB_DIFFICULTIES } from '@/lib/practice-filters';
 import { locales, defaultLocale } from '@/i18n/config';
 
@@ -84,6 +85,7 @@ export function Sidebar() {
   const pageContext = useMemo(() => {
     if (pathname.includes('/practice')) return 'practice';
     if (pathname.includes('/showcase')) return 'showcase';
+    if (pathname.includes('/tools')) return 'tools';
     return 'explore';
   }, [pathname]);
 
@@ -98,6 +100,9 @@ export function Sidebar() {
         )}
         {pageContext === 'showcase' && (
           <ShowcaseSidebar docs={localeDocs} searchParams={searchParams} />
+        )}
+        {pageContext === 'tools' && (
+          <ToolsSidebar docs={localeDocs} searchParams={searchParams} />
         )}
       </div>
     </aside>
@@ -356,5 +361,118 @@ function ShowcaseSidebar({
         })}
       </nav>
     </div>
+  );
+}
+
+// ============================================================
+// Tools Sidebar — category + pricing filters
+// ============================================================
+
+function ToolsSidebar({
+  docs,
+  searchParams,
+}: {
+  docs: SearchDoc[];
+  searchParams: ReturnType<typeof useSearchParams>;
+}) {
+  const tCat = useTranslations('ToolCategories');
+  const tSidebar = useTranslations('Sidebar');
+
+  const tools = useMemo(() => docs.filter(d => d.type === 'tool'), [docs]);
+
+  const categoryCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const t of tools) {
+      const catId = toolCategoryValueToId[t.category || ''] || t.category || '';
+      c[catId] = (c[catId] || 0) + 1;
+    }
+    return c;
+  }, [tools]);
+
+  const currentCat = searchParams.get('cat');
+  const currentPricing = searchParams.get('pricing');
+
+  const buildHref = (paramName: string, value: string) => {
+    const params = new URLSearchParams();
+    if (paramName === 'cat') {
+      params.set('cat', value);
+      if (currentPricing) params.set('pricing', currentPricing);
+    } else {
+      params.set('pricing', value);
+      if (currentCat) params.set('cat', currentCat);
+    }
+    return `/tools?${params.toString()}`;
+  };
+
+  return (
+    <>
+      {/* Categories Section */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
+          <h3 className="text-slate-900 dark:text-slate-200 text-xs font-bold uppercase tracking-wider mb-1">
+            {tSidebar('categories')}
+          </h3>
+          <p className="text-slate-500 dark:text-slate-500 text-[10px]">
+            {tSidebar('browseByCategory')}
+          </p>
+        </div>
+        <nav className="flex flex-col gap-1">
+          {TOOL_CATEGORIES.map((category) => {
+            const count = categoryCounts[category.id] || 0;
+            const isActive = currentCat === category.id;
+            return (
+              <Link
+                key={category.id}
+                href={buildHref('cat', category.id)}
+                className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${isActive ? ACTIVE_CLASS : DEFAULT_CLASS}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-4 h-4" />
+                  <span className="text-sm font-medium">{tCat(category.i18nKey)}</span>
+                </div>
+                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md ${isActive ? ACTIVE_BADGE : DEFAULT_BADGE}`}>
+                  {count}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="border-t border-slate-200 dark:border-slate-800" />
+
+      {/* Pricing Section */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
+          <h3 className="text-slate-900 dark:text-slate-200 text-xs font-bold uppercase tracking-wider mb-1">
+            {tSidebar('pricing')}
+          </h3>
+          <p className="text-slate-500 dark:text-slate-500 text-[10px]">
+            {tSidebar('browseByPricing')}
+          </p>
+        </div>
+        <nav className="flex flex-col gap-1">
+          {['Open Source', 'Free', 'Freemium', 'Paid'].map((pricing) => {
+            const count = tools.filter(t => (t as SearchDoc & { pricing?: string }).pricing === pricing).length;
+            const isActive = currentPricing === pricing;
+            return (
+              <Link
+                key={pricing}
+                href={buildHref('pricing', pricing)}
+                className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${isActive ? ACTIVE_CLASS : DEFAULT_CLASS}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Tag className="w-4 h-4" />
+                  <span className="text-sm font-medium">{pricing}</span>
+                </div>
+                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md ${isActive ? ACTIVE_BADGE : DEFAULT_BADGE}`}>
+                  {count}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </>
   );
 }

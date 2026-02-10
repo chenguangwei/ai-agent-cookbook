@@ -27,12 +27,14 @@ src/
 │   │   ├── news/              # News feed
 │   │   ├── practice/          # Practice labs
 │   │   ├── showcase/          # Community projects
+│   │   ├── tools/             # AI Agent Tools directory
 │   │   ├── translate/         # Translation manager
 │   │   └── request/           # Tutorial request form
 │   └── api/
 │       ├── docs/              # Docs API (locale filtering)
 │       ├── translate/         # AI translation API
 │       ├── tutorials/         # Tutorials API
+│       ├── tools/             # Tools API
 │       ├── search-index/      # Search index builder
 │       └── request/           # Tutorial request submission
 ├── components/
@@ -62,6 +64,7 @@ content/                       # All content, organized by locale
 ├── news/{en}/                 # News articles MDX files
 ├── labs/{en}/                 # Practice labs JSON files
 ├── showcase/{en}/             # Showcase projects JSON files
+├── tools/{en,zh,ja}/          # Tools MDX files
 └── requests/                  # Tutorial requests JSON files
 
 tina/
@@ -169,6 +172,33 @@ Create JSON files in `content/labs/en/` or `content/showcase/en/`:
 }
 ```
 
+### New Tool
+
+Create `content/tools/en/my-tool.mdx`:
+
+```mdx
+---
+title: "My Tool"
+slug: "my-tool"
+locale: "en"
+description: "Brief description of the tool"
+category: "Agent Framework"
+tags: ["Python", "Agent"]
+websiteUrl: "https://..."
+repoUrl: "https://github.com/..."
+docsUrl: "https://..."
+pricing: "Open Source"
+stars: 5000
+license: "MIT"
+featured: false
+date: 2025-01-01
+---
+
+# My Tool
+
+Tool description and documentation...
+```
+
 ## Multi-Language Support
 
 All content types support locale-based subdirectories:
@@ -192,7 +222,7 @@ TRANSLATE_MODEL=gpt-4o                          # or deepseek-chat, etc.
 ```
 
 Features:
-- Translates all content types (tutorials, docs, news, labs, showcase)
+- Translates all content types (tutorials, docs, news, labs, showcase, tools)
 - Content type filtering tabs
 - Locale filter (show missing translations)
 - Multi-select with batch translation
