@@ -2,9 +2,12 @@
 // Background Service Worker
 // - Context menu registration
 // - Message routing between content script and popup
+// - MDX processing in background (popup-close-safe)
 // ============================================================
 
-import type { ContentType } from '../shared/types';
+import type { ContentType, ProcessingTask } from '../shared/types';
+import { aiToMdx } from '../shared/llm';
+import { getSettings } from '../shared/storage';
 
 // ============================================================
 // Context Menu Setup
@@ -100,4 +103,150 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     });
   }
+
+  // ============================================================
+  // MDX Processing Handler (Background Task)
+  // ============================================================
+
+  if (message.type === 'START_PROCESS_MDX') {
+    const { extractedData, title, contentType } = message.payload as {
+      extractedData: { content: string };
+      title: string;
+      contentType: ContentType;
+    };
+
+    const taskId = `mdx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    // Send immediate response that task has started
+    sendResponse({ status: 'started', taskId });
+
+    // Start background processing
+    processMdxInBackground({
+      taskId,
+      url: extractedData.content, // placeholder
+      title,
+      contentType,
+      extractedData,
+    });
+
+    return true;
+  }
+
+  if (message.type === 'GET_PROCESS_STATUS') {
+    chrome.storage.local.get(['processingTask', 'processingStatus'], (result) => {
+      sendResponse({
+        task: result.processingTask || null,
+        status: result.processingStatus || null,
+      });
+    });
+    return true;
+  }
 });
+
+// ============================================================
+// Background MDX Processing (Popup-Close-Safe)
+// ============================================================
+
+async function processMdxInBackground(task: {
+  taskId: string;
+  url: string;
+  title: string;
+  contentType: ContentType;
+  extractedData: { content: string };
+}) {
+  const processingTask: ProcessingTask = {
+    id: task.taskId,
+    url: task.url,
+    title: task.title,
+    contentType: task.contentType,
+    status: 'processing',
+    timestamp: Date.now(),
+  };
+
+  try {
+    // Save initial processing state
+    await chrome.storage.local.set({
+      processingTask,
+      processingStatus: {
+        taskId: task.taskId,
+        status: 'processing',
+        progress: 'Starting MDX conversion...',
+      },
+    });
+
+    // Check if LLM is configured
+    const settings = await getSettings();
+    if (!settings.llm.enabled || !settings.llm.apiKey) {
+      throw new Error('LLM not configured. Please set up your API key in Settings.');
+    }
+
+    // Update progress
+    await chrome.storage.local.set({
+      processingStatus: {
+        taskId: task.taskId,
+        status: 'processing',
+        progress: 'AI is processing content...',
+      },
+    });
+
+    // Call LLM to convert to MDX (this takes time)
+    const mdxContent = await aiToMdx(task.extractedData.content, task.title);
+
+    // Save completed result
+    const completedTask: ProcessingTask = {
+      ...processingTask,
+      status: 'completed',
+      result: mdxContent,
+    };
+
+    await chrome.storage.local.set({
+      processingTask: completedTask,
+      processingStatus: {
+        taskId: task.taskId,
+        status: 'completed',
+        result: mdxContent,
+        progress: 'Processing complete!',
+      },
+    });
+
+    // Show notification
+    if (chrome.notifications) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'MDX Conversion Complete',
+        message: `"${task.title}" has been processed.`,
+      });
+    }
+
+    console.log(`[Background] MDX processing complete for: ${task.title}`);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error('[Background] MDX processing failed:', errorMessage);
+
+    const failedTask: ProcessingTask = {
+      ...processingTask,
+      status: 'failed',
+      error: errorMessage,
+    };
+
+    await chrome.storage.local.set({
+      processingTask: failedTask,
+      processingStatus: {
+        taskId: task.taskId,
+        status: 'failed',
+        error: errorMessage,
+      },
+    });
+
+    // Show error notification
+    if (chrome.notifications) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'MDX Processing Failed',
+        message: errorMessage.slice(0, 100),
+      });
+    }
+  }
+}

@@ -139,14 +139,12 @@ export function OptionsApp() {
                 onClick={() =>
                   setSettings({ ...settings, autoExtract: !settings.autoExtract })
                 }
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  settings.autoExtract ? 'bg-blue-600' : 'bg-gray-300'
-                }`}
+                className={`relative w-11 h-6 rounded-full transition-colors ${settings.autoExtract ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    settings.autoExtract ? 'translate-x-5' : ''
-                  }`}
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.autoExtract ? 'translate-x-5' : ''
+                    }`}
                 />
               </button>
             </div>
@@ -177,20 +175,44 @@ export function OptionsApp() {
                     llm: { ...settings.llm, enabled: !settings.llm.enabled },
                   })
                 }
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  settings.llm.enabled ? 'bg-blue-600' : 'bg-gray-300'
-                }`}
+                className={`relative w-11 h-6 rounded-full transition-colors ${settings.llm.enabled ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    settings.llm.enabled ? 'translate-x-5' : ''
-                  }`}
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.llm.enabled ? 'translate-x-5' : ''
+                    }`}
                 />
               </button>
             </div>
 
             {settings.llm.enabled && (
               <>
+                {/* Provider Selection */}
+                <div>
+                  <label className={labelClass}>Provider</label>
+                  <select
+                    className={inputClass}
+                    onChange={(e) => {
+                      const provider = e.target.value;
+                      let baseUrl = settings.llm.baseUrl;
+                      if (provider === 'openai') baseUrl = 'https://api.openai.com/v1';
+                      if (provider === 'deepseek') baseUrl = 'https://api.deepseek.com';
+                      if (provider === 'ollama') baseUrl = 'http://localhost:11434/v1';
+
+                      setSettings({
+                        ...settings,
+                        llm: { ...settings.llm, baseUrl: baseUrl },
+                      });
+                    }}
+                    defaultValue="custom"
+                  >
+                    <option value="custom">Custom</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="ollama">Ollama</option>
+                  </select>
+                </div>
+
                 {/* API Key */}
                 <div>
                   <label className={labelClass}>API Key</label>
@@ -225,7 +247,7 @@ export function OptionsApp() {
                     placeholder="https://api.openai.com/v1"
                   />
                   <p className={hintClass}>
-                    OpenAI: https://api.openai.com/v1 | DeepSeek: https://api.deepseek.com/v1 | Ollama: http://localhost:11434/v1
+                    OpenAI: https://api.openai.com/v1 | DeepSeek: https://api.deepseek.com | Ollama: http://localhost:11434/v1
                   </p>
                 </div>
 
@@ -264,14 +286,12 @@ export function OptionsApp() {
                         llm: { ...settings.llm, autoClean: !settings.llm.autoClean },
                       })
                     }
-                    className={`relative w-11 h-6 rounded-full transition-colors ${
-                      settings.llm.autoClean ? 'bg-blue-600' : 'bg-gray-300'
-                    }`}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${settings.llm.autoClean ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
                   >
                     <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                        settings.llm.autoClean ? 'translate-x-5' : ''
-                      }`}
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings.llm.autoClean ? 'translate-x-5' : ''
+                        }`}
                     />
                   </button>
                 </div>
@@ -287,9 +307,8 @@ export function OptionsApp() {
                   </button>
                   {testMsg && (
                     <p
-                      className={`text-xs mt-2 ${
-                        testStatus === 'success' ? 'text-green-600' : 'text-red-600'
-                      }`}
+                      className={`text-xs mt-2 ${testStatus === 'success' ? 'text-green-600' : 'text-red-600'
+                        }`}
                     >
                       {testMsg}
                     </p>

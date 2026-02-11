@@ -1,7 +1,12 @@
 import type { ExtractedPageData } from '../shared/types';
+import { Readability } from '@mozilla/readability';
+import TurndownService from 'turndown';
+import { gfm } from 'turndown-plugin-gfm';
+import { extractTwitter, prepareTwitterPage } from './twitter';
 
 // ============================================================
-// Page content extraction with HTML → Markdown conversion
+// Hybrid extraction: DOM whitelist/blacklist (primary) + Readability (fallback & metadata)
+// Turndown + GFM for HTML → Markdown conversion
 // ============================================================
 
 function getMeta(name: string): string {
@@ -55,12 +60,12 @@ function extractLanguage(): string {
   return document.documentElement.lang || 'en';
 }
 
-function extractImages(): string[] {
+function extractImages(doc: Document = document): string[] {
   const images: string[] = [];
   const ogImage = getMeta('og:image');
   if (ogImage) images.push(ogImage);
 
-  const article = document.querySelector('article, main, [role="main"], .post-content, .content');
+  const article = doc.querySelector('article, main, [role="main"], .post-content, .content');
   if (article) {
     article.querySelectorAll('img').forEach((img) => {
       const src = img.src || img.getAttribute('data-src') || '';
@@ -72,9 +77,9 @@ function extractImages(): string[] {
   return images.slice(0, 10);
 }
 
-function extractCodeBlocks(): string[] {
+function extractCodeBlocks(doc: Document = document): string[] {
   const blocks: string[] = [];
-  document.querySelectorAll('pre code, pre.highlight, .code-block').forEach((el) => {
+  doc.querySelectorAll('pre code, pre.highlight, .code-block').forEach((el) => {
     const text = el.textContent?.trim();
     if (text && text.length > 10) {
       blocks.push(text);
@@ -84,323 +89,465 @@ function extractCodeBlocks(): string[] {
 }
 
 // ============================================================
-// HTML → Markdown converter (inline, no external deps)
+// Site-specific cleaning (remove platform UI noise before extraction)
 // ============================================================
 
-function htmlToMarkdown(element: HTMLElement): string {
-  const lines: string[] = [];
-  processNode(element, lines, 0);
-  // Clean up excessive blank lines
-  return lines
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
-function processNode(node: Node, lines: string[], depth: number): void {
-  if (node.nodeType === Node.TEXT_NODE) {
-    const text = node.textContent || '';
-    // Collapse whitespace within inline text
-    const collapsed = text.replace(/\s+/g, ' ');
-    if (collapsed.trim()) {
-      lines.push(collapsed);
-    }
+function applySiteSpecificCleaning(doc: Document, url: string): void {
+  let hostname = '';
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
     return;
   }
 
-  if (node.nodeType !== Node.ELEMENT_NODE) return;
-  const el = node as HTMLElement;
-  const tag = el.tagName.toLowerCase();
+  // Twitter / X
+  if (hostname.includes('x.com') || hostname.includes('twitter.com')) {
+    const twitterNoiseSelectors = [
+      '[data-testid="User-Name"]',
+      '[data-testid="like"]',
+      '[data-testid="retweet"]',
+      '[data-testid="reply"]',
+      '[data-testid="bookmark"]',
+      '[data-testid="share"]',
+      '[role="group"]',
+      'a[href*="/analytics"]',
+      '[data-testid="app-bar-back"]',
+      '[data-testid="TopNavBar"]',
+    ];
+    twitterNoiseSelectors.forEach((sel) => {
+      doc.querySelectorAll(sel).forEach((el) => el.remove());
+    });
 
-  // Skip unwanted elements
-  if (['nav', 'header', 'footer', 'aside', 'script', 'style', 'noscript',
-       'svg', 'iframe', 'form', 'button'].includes(tag)) return;
-  if (el.classList.contains('sidebar') || el.classList.contains('toc') ||
-      el.classList.contains('comments') || el.classList.contains('advertisement') ||
-      el.getAttribute('role') === 'navigation') return;
-
-  switch (tag) {
-    case 'h1':
-      lines.push('\n# ' + getInlineText(el));
-      lines.push('');
-      break;
-    case 'h2':
-      lines.push('\n## ' + getInlineText(el));
-      lines.push('');
-      break;
-    case 'h3':
-      lines.push('\n### ' + getInlineText(el));
-      lines.push('');
-      break;
-    case 'h4':
-      lines.push('\n#### ' + getInlineText(el));
-      lines.push('');
-      break;
-    case 'h5':
-      lines.push('\n##### ' + getInlineText(el));
-      lines.push('');
-      break;
-    case 'h6':
-      lines.push('\n###### ' + getInlineText(el));
-      lines.push('');
-      break;
-
-    case 'p':
-      lines.push('');
-      lines.push(getInlineMarkdown(el));
-      lines.push('');
-      break;
-
-    case 'pre': {
-      const codeEl = el.querySelector('code');
-      const lang = detectCodeLanguage(el);
-      const code = (codeEl || el).textContent?.trim() || '';
-      if (code) {
-        lines.push('');
-        lines.push('```' + lang);
-        lines.push(code);
-        lines.push('```');
-        lines.push('');
-      }
-      break;
-    }
-
-    case 'code': {
-      // Inline code (not inside pre)
-      if (el.parentElement?.tagName.toLowerCase() !== 'pre') {
-        lines.push('`' + (el.textContent?.trim() || '') + '`');
-      }
-      break;
-    }
-
-    case 'blockquote':
-      lines.push('');
-      const bqText = getInlineMarkdown(el);
-      bqText.split('\n').forEach((line) => {
-        lines.push('> ' + line);
-      });
-      lines.push('');
-      break;
-
-    case 'ul':
-    case 'ol': {
-      lines.push('');
-      let idx = 0;
-      el.querySelectorAll(':scope > li').forEach((li) => {
-        idx++;
-        const prefix = tag === 'ol' ? `${idx}. ` : '- ';
-        const indent = '  '.repeat(depth);
-        const liText = getInlineMarkdown(li as HTMLElement);
-        lines.push(indent + prefix + liText);
-      });
-      lines.push('');
-      break;
-    }
-
-    case 'img': {
-      const src = el.getAttribute('src') || el.getAttribute('data-src') || '';
-      const alt = el.getAttribute('alt') || '';
-      if (src) {
-        lines.push(`![${alt}](${src})`);
-      }
-      break;
-    }
-
-    case 'a': {
-      const href = el.getAttribute('href') || '';
-      const text = getInlineText(el);
-      if (href && text) {
-        lines.push(`[${text}](${href})`);
-      } else {
-        lines.push(text);
-      }
-      break;
-    }
-
-    case 'table': {
-      lines.push('');
-      const rows = el.querySelectorAll('tr');
-      rows.forEach((tr, rowIdx) => {
-        const cells = tr.querySelectorAll('th, td');
-        const cellTexts = Array.from(cells).map((c) => (c.textContent?.trim() || '').replace(/\|/g, '\\|'));
-        lines.push('| ' + cellTexts.join(' | ') + ' |');
-        if (rowIdx === 0) {
-          lines.push('| ' + cellTexts.map(() => '---').join(' | ') + ' |');
+    // Remove standalone profile-image links (anchor wrapping only a profile img)
+    doc.querySelectorAll('a > img').forEach((img) => {
+      const src = img.getAttribute('src') || '';
+      if (src.includes('profile_images') || src.includes('avatar')) {
+        const parent = img.closest('a');
+        if (parent && !parent.textContent?.trim()) {
+          parent.remove();
         }
-      });
-      lines.push('');
-      break;
-    }
-
-    case 'hr':
-      lines.push('');
-      lines.push('---');
-      lines.push('');
-      break;
-
-    case 'br':
-      lines.push('');
-      break;
-
-    case 'strong':
-    case 'b':
-      lines.push('**' + getInlineText(el) + '**');
-      break;
-
-    case 'em':
-    case 'i':
-      lines.push('*' + getInlineText(el) + '*');
-      break;
-
-    case 'del':
-    case 's':
-      lines.push('~~' + getInlineText(el) + '~~');
-      break;
-
-    default:
-      // Recursively process children for div, section, article, span, etc.
-      el.childNodes.forEach((child) => processNode(child, lines, depth));
-      break;
+      }
+    });
   }
+
+  // Medium
+  if (hostname.includes('medium.com')) {
+    doc.querySelectorAll('[data-testid="headerSocialProof"], .metabar, .js-postShareWidget').forEach((el) => el.remove());
+  }
+
+  // Generic: remove fixed/sticky elements (likely toolbars, banners)
+  doc.querySelectorAll('[style*="position: fixed"], [style*="position: sticky"]').forEach((el) => el.remove());
 }
 
-function getInlineText(el: HTMLElement): string {
-  return (el.textContent || '').replace(/\s+/g, ' ').trim();
-}
+// ============================================================
+// Smart DOM extraction (structure-preserving, replaces Readability as primary)
+// ============================================================
 
-function getInlineMarkdown(el: HTMLElement): string {
-  const parts: string[] = [];
-  el.childNodes.forEach((child) => {
-    if (child.nodeType === Node.TEXT_NODE) {
-      parts.push((child.textContent || '').replace(/\s+/g, ' '));
-    } else if (child.nodeType === Node.ELEMENT_NODE) {
-      const childEl = child as HTMLElement;
-      const tag = childEl.tagName.toLowerCase();
-      switch (tag) {
-        case 'strong':
-        case 'b':
-          parts.push('**' + getInlineText(childEl) + '**');
-          break;
-        case 'em':
-        case 'i':
-          parts.push('*' + getInlineText(childEl) + '*');
-          break;
-        case 'code':
-          parts.push('`' + (childEl.textContent?.trim() || '') + '`');
-          break;
-        case 'a': {
-          const href = childEl.getAttribute('href') || '';
-          const text = getInlineText(childEl);
-          parts.push(href ? `[${text}](${href})` : text);
-          break;
-        }
-        case 'img': {
-          const src = childEl.getAttribute('src') || '';
-          const alt = childEl.getAttribute('alt') || '';
-          if (src) parts.push(`![${alt}](${src})`);
-          break;
-        }
-        case 'br':
-          parts.push('\n');
-          break;
-        case 'del':
-        case 's':
-          parts.push('~~' + getInlineText(childEl) + '~~');
-          break;
-        default:
-          parts.push(getInlineText(childEl));
-          break;
-      }
-    }
+function extractMainElement(doc: Document): Element | null {
+  const clone = doc.cloneNode(true) as Document;
+
+  // 1. Remove noise elements (blacklist)
+  const removeSelectors = [
+    'script', 'style', 'noscript', 'iframe', 'svg',
+    'nav', 'header', 'footer', 'aside', 'button',
+    '.ad', '.ads', '.advertisement', '.social-share', '.comments', '.comment-list',
+    '.sidebar', '.menu', '.navigation', '.cookie-banner', '.popup', '.modal',
+    '[role="navigation"]', '[role="banner"]', '[role="complementary"]', '[role="button"]',
+    '#sidebar', '#comments',
+  ];
+  removeSelectors.forEach((sel) => {
+    clone.querySelectorAll(sel).forEach((el) => el.remove());
   });
-  return parts.join('').trim();
-}
 
-function detectCodeLanguage(preEl: HTMLElement): string {
-  const codeEl = preEl.querySelector('code');
-  if (codeEl) {
-    // Check class names like "language-python", "lang-js", "hljs python"
-    const classes = Array.from(codeEl.classList);
-    for (const cls of classes) {
-      const match = cls.match(/^(?:language-|lang-|hljs\s+)?(\w+)$/);
-      if (match && !['hljs', 'code', 'highlight', 'codehilite'].includes(match[1])) {
-        return match[1];
-      }
-    }
-  }
-  // Check data-language attribute
-  const dataLang =
-    preEl.getAttribute('data-language') ||
-    preEl.getAttribute('data-lang') ||
-    codeEl?.getAttribute('data-language') ||
-    '';
-  if (dataLang) return dataLang;
-
-  return '';
-}
-
-// ============================================================
-// Main extraction with Markdown output
-// ============================================================
-
-function findArticleElement(): HTMLElement | null {
-  const selectors = [
+  // 2. Smart content selection (whitelist, priority order)
+  const contentSelectors = [
     'article',
-    '[role="main"] .content',
-    'main .post-content',
-    '.article-body',
+    '[role="main"]',
+    '.post-content', '.article-content', '.entry-content',
+    '#content', '#main',
     '.markdown-body',
-    '.prose',
-    '.entry-content',
     '.post-body',
     'main',
   ];
 
-  for (const selector of selectors) {
-    const el = document.querySelector(selector) as HTMLElement;
-    if (el && (el.textContent?.trim().length || 0) > 100) {
-      return el;
+  for (const selector of contentSelectors) {
+    const element = clone.querySelector(selector);
+    if (element && (element.textContent?.trim().length || 0) > 200) {
+      return element;
     }
   }
-  return document.body;
+
+  // Return null to signal fallback to Readability
+  return null;
 }
 
-function extractContentAsMarkdown(): string {
-  const article = findArticleElement();
-  if (!article) return '';
+// ============================================================
+// Main extraction logic
+// ============================================================
 
-  const clone = article.cloneNode(true) as HTMLElement;
-  // Remove noisy elements
-  clone.querySelectorAll(
-    'nav, .sidebar, .toc, .comments, .share-buttons, .related-posts, ' +
-    '.newsletter, .cookie-banner, .ad, .advertisement, [role="navigation"], ' +
-    '.breadcrumb, .pagination'
-  ).forEach((n) => n.remove());
+// ============================================================
+// DOM pre-processing: normalize code/pre containers before Turndown
+// ============================================================
 
-  return htmlToMarkdown(clone);
+/**
+ * Convert <br> tags to actual newline text nodes inside an element.
+ * This ensures textContent (used by Turndown) preserves line breaks.
+ */
+function brToNewlines(container: Element): void {
+  container.querySelectorAll('br').forEach((br) => {
+    br.replaceWith('\n');
+  });
 }
 
-function extractRawContent(): string {
-  const article = findArticleElement();
-  if (!article) return '';
-  const clone = article.cloneNode(true) as HTMLElement;
-  clone.querySelectorAll('nav, .sidebar, .toc, .comments, aside').forEach((n) => n.remove());
-  return clone.innerHTML;
+/**
+ * Pre-process DOM to normalize code blocks and preserve line breaks.
+ * Must run BEFORE Turndown conversion.
+ */
+function preprocessDOM(doc: Document): void {
+  // 1. Inside <pre> and <code> elements, convert <br> to \n
+  doc.querySelectorAll('pre, code').forEach((el) => {
+    brToNewlines(el);
+  });
+
+  // 2. Detect non-standard code containers and normalize to <pre><code>
+  //    Common patterns: class contains 'code', 'highlight', 'syntax', 'snippet'
+  //    Or inline style has white-space: pre
+  const codeContainerSelectors = [
+    'div[class*="code"]',
+    'div[class*="highlight"]',
+    'div[class*="syntax"]',
+    'div[class*="snippet"]',
+    'div[data-language]',
+    'div[data-code]',
+    'span[class*="code-block"]',
+  ];
+
+  codeContainerSelectors.forEach((sel) => {
+    doc.querySelectorAll(sel).forEach((el) => {
+      // Skip if already contains <pre> (already handled)
+      if (el.querySelector('pre')) return;
+      // Skip if it's too short to be a code block
+      if ((el.textContent?.trim().length || 0) < 10) return;
+
+      // Convert <br> to \n first
+      brToNewlines(el);
+
+      // Try to detect language
+      const lang =
+        el.getAttribute('data-language') ||
+        el.className.match(/language-(\w+)/)?.[1] ||
+        '';
+
+      // Replace element with <pre><code>
+      const pre = doc.createElement('pre');
+      const code = doc.createElement('code');
+      if (lang) code.className = `language-${lang}`;
+      code.textContent = el.textContent || '';
+      pre.appendChild(code);
+      el.replaceWith(pre);
+    });
+  });
+
+  // 3. Handle elements with inline style white-space: pre/pre-wrap
+  //    that aren't already <pre> tags
+  doc.querySelectorAll('[style]').forEach((el) => {
+    const style = el.getAttribute('style') || '';
+    if (
+      (style.includes('white-space') &&
+        (style.includes('pre-wrap') || style.includes('pre;') || style.includes('pre '))) &&
+      el.tagName !== 'PRE' &&
+      !el.closest('pre')
+    ) {
+      brToNewlines(el);
+
+      // If content looks like code (has indentation or braces)
+      const text = el.textContent || '';
+      const looksLikeCode =
+        text.includes('{') ||
+        text.includes('function') ||
+        text.includes('const ') ||
+        text.includes('//') ||
+        /^\s{2,}/m.test(text);
+
+      if (looksLikeCode) {
+        const pre = doc.createElement('pre');
+        const code = doc.createElement('code');
+        code.textContent = text;
+        pre.appendChild(code);
+        el.replaceWith(pre);
+      }
+    }
+  });
+
+  // 4. Global: Inside any block-level element that has <br>,
+  //    ensure the <br> produces a real newline for Turndown
+  //    (already handled by the lineBreaks Turndown rule,
+  //     but this handles edge cases in cloned DOM where
+  //     textContent is extracted directly)
+}
+
+function createTurndownService(): TurndownService {
+  const turndownService = new TurndownService({
+    headingStyle: 'atx',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+  });
+
+  // Use GFM plugin (tables, task lists, strikethrough)
+  turndownService.use(gfm);
+
+  // Custom rule: Handle div-based code blocks (common in some sites)
+  turndownService.addRule('highlightedCode', {
+    filter: function (node) {
+      const el = node as HTMLElement;
+      return (
+        el.nodeName === 'DIV' &&
+        (el.classList.contains('highlight') || el.classList.contains('code-snippet'))
+      );
+    },
+    replacement: function (_content, node) {
+      const el = node as HTMLElement;
+      // Try to extract language
+      const language = el.getAttribute('data-language') || '';
+      return '\n\n```' + language + '\n' + el.textContent?.trim() + '\n```\n\n';
+    },
+  });
+
+  // Custom rule: Ensure absolute image URLs
+  turndownService.addRule('absoluteImages', {
+    filter: 'img',
+    replacement: function (_content, node) {
+      const el = node as HTMLImageElement;
+      const src = el.getAttribute('src');
+      if (!src) return '';
+
+      // Convert relative path to absolute
+      try {
+        const absoluteSrc = new URL(src, window.location.href).href;
+        const alt = el.getAttribute('alt') || '';
+        return `![${alt}](${absoluteSrc})`;
+      } catch {
+        return '';
+      }
+    },
+  });
+
+  // Preserve code language in normal pre > code blocks
+  turndownService.addRule('codeLanguage', {
+    filter: (node) => {
+      return node.nodeName === 'PRE' && node.querySelector('code') !== null;
+    },
+    replacement: function (_content, node) {
+      const preNode = node as HTMLPreElement;
+      const codeNode = preNode.querySelector('code');
+      let lang = '';
+
+      // Try to detect language from class names
+      if (codeNode) {
+        const classList = Array.from(codeNode.classList);
+        for (const cls of classList) {
+          const match = cls.match(/^(?:language-|lang-)?(\w+)$/);
+          if (match && !['hljs', 'code', 'highlight', 'codehilite'].includes(match[1])) {
+            lang = match[1];
+            break;
+          }
+        }
+      }
+
+      const code = codeNode?.textContent?.trim() || '';
+      return `\n\`\`\`${lang}\n${code}\n\`\`\`\n`;
+    },
+  });
+
+  // Custom rule: Convert callout/note/warning divs to blockquotes
+  turndownService.addRule('callouts', {
+    filter: function (node) {
+      if (node.nodeName !== 'DIV') return false;
+      const el = node as HTMLElement;
+      return (
+        el.classList.contains('callout') ||
+        el.classList.contains('note') ||
+        el.classList.contains('warning') ||
+        el.classList.contains('tip') ||
+        el.classList.contains('info')
+      );
+    },
+    replacement: function (content) {
+      return '\n> ' + content.trim().replace(/\n/g, '\n> ') + '\n\n';
+    },
+  });
+
+  // Custom rule: Ensure absolute link URLs
+  turndownService.addRule('absoluteLinks', {
+    filter: function (node) {
+      return node.nodeName === 'A' && !!(node as HTMLAnchorElement).getAttribute('href');
+    },
+    replacement: function (content, node) {
+      const el = node as HTMLAnchorElement;
+      const href = el.getAttribute('href');
+      if (!href || !content.trim()) return content;
+
+      try {
+        const absoluteHref = new URL(href, window.location.href).href;
+        const title = el.getAttribute('title');
+        return title
+          ? `[${content}](${absoluteHref} "${title}")`
+          : `[${content}](${absoluteHref})`;
+      } catch {
+        return content;
+      }
+    },
+  });
+
+  // Filter empty links: <a> tags wrapping only images or whitespace (UI decoration)
+  turndownService.addRule('emptyLinks', {
+    filter: function (node) {
+      if (node.nodeName !== 'A') return false;
+      const el = node as HTMLAnchorElement;
+      const text = el.textContent?.trim() || '';
+      // No text at all — either empty or image-only
+      if (!text) return true;
+      // Only whitespace/newlines with an image inside
+      if (!text && el.querySelector('img')) return true;
+      return false;
+    },
+    replacement: function (_content, node) {
+      const el = node as HTMLElement;
+      const img = el.querySelector('img');
+      if (img) {
+        const src = img.getAttribute('src') || '';
+        const alt = img.getAttribute('alt') || '';
+        // Keep content images, discard profile/avatar images
+        if (alt && !src.includes('avatar') && !src.includes('profile_images')) {
+          try {
+            const absoluteSrc = new URL(src, window.location.href).href;
+            return `![${alt}](${absoluteSrc})`;
+          } catch {
+            return `![${alt}](${src})`;
+          }
+        }
+      }
+      return ''; // Discard UI-noise links
+    },
+  });
+
+  // Ensure <br> tags produce real line breaks (not just trailing spaces)
+  turndownService.addRule('lineBreaks', {
+    filter: 'br',
+    replacement: function () {
+      return '\n';
+    },
+  });
+
+  return turndownService;
+}
+
+// ============================================================
+// Markdown post-processing (normalize output format)
+// ============================================================
+
+function postProcessMarkdown(md: string): string {
+  return md
+    // Fix headings: collapse `## \n\n text` into `## text`
+    .replace(/^(#{1,6})\s*\n+\s*(.+)/gm, '$1 $2')
+    // Collapse 3+ consecutive blank lines to 2
+    .replace(/\n{3,}/g, '\n\n')
+    // Remove standalone number lines (engagement counts: 132, 3.2K, 1M, etc.)
+    .replace(/^\d[\d,.]*[KkMmBb]?\s*$/gm, '')
+    // Remove lines that are just whitespace
+    .replace(/^\s+$/gm, '')
+    // Collapse again after removals
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function extractPageData(): ExtractedPageData {
+  // 1. Clone DOM to avoid side effects
+  const docClone = document.cloneNode(true) as Document;
+
+  // 1.5 Twitter/X Specialized Extraction
+  const twitterData = extractTwitter(docClone, window.location.href);
+  if (twitterData) {
+    return twitterData;
+  }
+
+  // 2. Fix Lazy Load Images (src is empty, data-src has URL)
+  docClone.querySelectorAll('img').forEach((img) => {
+    if (img.dataset.src && !img.src) {
+      img.src = img.dataset.src;
+    }
+    if (img.dataset.original && !img.src) {
+      img.src = img.dataset.original;
+    }
+  });
+
+  // 2.5 Apply site-specific cleaning before extraction
+  applySiteSpecificCleaning(docClone, window.location.href);
+
+  // 2.6 Pre-process DOM: normalize code containers and line breaks
+  preprocessDOM(docClone);
+
+  // 3. Readability — used for metadata enrichment (always attempted)
+  let articleTitle = '';
+  let articleByline = '';
+  let articleExcerpt = '';
+  let articleSiteName = '';
+  let articlePublishedTime = '';
+  let readabilityHtml = '';
+
+  try {
+    // Readability mutates the DOM, so give it a separate clone
+    const readabilityClone = document.cloneNode(true) as Document;
+    const reader = new Readability(readabilityClone);
+    const article = reader.parse();
+    if (article) {
+      articleTitle = article.title || '';
+      articleByline = article.byline || '';
+      articleExcerpt = article.excerpt || '';
+      articleSiteName = article.siteName || '';
+      articlePublishedTime = article.publishedTime || '';
+      readabilityHtml = article.content || '';
+    }
+  } catch (err) {
+    console.warn('Readability metadata extraction failed', err);
+  }
+
+  // 4. PRIMARY: Structure-preserving DOM extraction
+  const turndownService = createTurndownService();
+  let markdownContent = '';
+  let rawHtml = '';
+
+  const mainElement = extractMainElement(docClone);
+  if (mainElement) {
+    rawHtml = mainElement.innerHTML;
+    markdownContent = postProcessMarkdown(turndownService.turndown(rawHtml));
+  }
+
+  // 5. FALLBACK: If DOM extraction produced too little content, use Readability
+  if (markdownContent.trim().length < 100) {
+    if (readabilityHtml) {
+      rawHtml = readabilityHtml;
+      markdownContent = postProcessMarkdown(turndownService.turndown(readabilityHtml));
+    } else {
+      // Last resort: use cleaned body
+      rawHtml = document.body.innerHTML;
+      markdownContent = postProcessMarkdown(turndownService.turndown(rawHtml));
+    }
+  }
+
+  // 6. Combine: manual extraction content + Readability metadata + meta tag fallbacks
   return {
     url: window.location.href,
-    title: extractTitle(),
-    description: extractDescription(),
-    content: extractContentAsMarkdown(),
-    rawHtml: extractRawContent(),
-    codeBlocks: extractCodeBlocks(),
-    images: extractImages(),
-    author: extractAuthor(),
-    publishedDate: extractPublishedDate(),
+    title: articleTitle || extractTitle(),
+    description: articleExcerpt || extractDescription(),
+    content: markdownContent,
+    rawHtml: rawHtml || document.body.innerHTML,
+    codeBlocks: extractCodeBlocks(docClone),
+    images: extractImages(docClone),
+    author: articleByline || extractAuthor(),
+    publishedDate: articlePublishedTime || extractPublishedDate(),
     language: extractLanguage(),
-    siteName: extractSiteName(),
+    siteName: articleSiteName || extractSiteName(),
   };
 }
 
@@ -410,8 +557,23 @@ function extractPageData(): ExtractedPageData {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'EXTRACT_PAGE') {
-    const data = extractPageData();
-    sendResponse({ type: 'EXTRACT_RESULT', payload: data });
+    (async () => {
+      try {
+        // Twitter/X: Click "Show more" if present
+        if (window.location.hostname.includes('twitter.com') || window.location.hostname.includes('x.com')) {
+          try {
+            await prepareTwitterPage();
+          } catch (e) {
+            console.warn('Twitter preparation failed', e);
+          }
+        }
+
+        const data = extractPageData();
+        sendResponse({ type: 'EXTRACT_RESULT', payload: data });
+      } catch (error: any) {
+        sendResponse({ type: 'EXTRACT_RESULT', error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async response
   }
-  return true;
 });

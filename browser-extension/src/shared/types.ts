@@ -164,9 +164,34 @@ export type MessageType =
   | 'EXTRACT_PAGE'
   | 'EXTRACT_RESULT'
   | 'COLLECT_AS'
-  | 'GET_EXTRACTED_DATA';
+  | 'GET_EXTRACTED_DATA'
+  | 'START_PROCESS_MDX'
+  | 'GET_PROCESS_STATUS';
 
 export interface ExtensionMessage {
   type: MessageType;
   payload?: unknown;
+}
+
+// ============================================================
+// Background Processing Task (for popup-close-safe processing)
+// ============================================================
+
+export interface ProcessingTask {
+  id: string;
+  url: string;
+  title: string;
+  contentType: ContentType;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  result?: string;  // Final MDX content
+  error?: string;
+  timestamp: number;
+}
+
+export interface ProcessStatus {
+  taskId: string;
+  status: ProcessingTask['status'];
+  progress?: string;  // Human-readable progress message
+  result?: string;
+  error?: string;
 }

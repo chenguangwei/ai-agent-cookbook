@@ -31,6 +31,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'assets.tina.io',
       },
+      {
+        protocol: 'https',
+        hostname: 'abs.twimg.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pbs.twimg.com',
+      },
     ],
   },
 };

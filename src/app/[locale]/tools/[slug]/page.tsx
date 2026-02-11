@@ -6,7 +6,7 @@ import { Star, ExternalLink, ArrowLeft, BookOpen, Github } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { TinaMarkdownRenderer } from '@/components/markdown/TinaMarkdownRenderer';
+import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getAllTools } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
@@ -22,6 +22,49 @@ async function getTool(locale: string, slug: string) {
   const tools = await getAllTools(locale);
   return tools.find(t => t?.slug === slug) ?? null;
 }
+
+// Custom MDX components for tool content
+const toolMdxComponents = {
+  // Enhanced code block with syntax highlighting and copy button
+  pre: ({ children }: { children: React.ReactNode }) => (
+    <pre className="relative overflow-x-auto rounded-lg bg-slate-900 p-4 my-4">
+      {children}
+    </pre>
+  ),
+  // Enhanced links
+  a: ({ href, children }: { href?: string; children: React.ReactNode }) => {
+    if (href && isValidUrl(href)) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary-600 dark:text-primary-400 hover:underline"
+        >
+          {children}
+        </a>
+      );
+    }
+    return <span className="text-primary-600 dark:text-primary-400">{children}</span>;
+  },
+  // Enhanced images
+  img: ({ src, alt }: { src?: string; alt?: string }) => {
+    if (src) {
+      return (
+        <span className="block my-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={alt || ''}
+            className="max-w-full h-auto rounded-lg"
+            loading="lazy"
+          />
+        </span>
+      );
+    }
+    return null;
+  },
+};
 
 export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
   const { locale, slug } = await params;
@@ -162,11 +205,11 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
 
           {/* Content */}
           {tool.body && (
-            <Suspense fallback={<div>Loading...</div>}>
-              <article className="prose prose-slate dark:prose-invert max-w-none">
-                <TinaMarkdownRenderer content={tool.body} />
-              </article>
-            </Suspense>
+            <article className="prose prose-slate dark:prose-invert max-w-none">
+              <Suspense fallback={<div>Loading content...</div>}>
+                <MDXRemote source={tool.body} components={toolMdxComponents} />
+              </Suspense>
+            </article>
           )}
         </div>
       </main>

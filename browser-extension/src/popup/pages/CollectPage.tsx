@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type {
   ContentType,
   ExtractedPageData,
@@ -7,6 +7,7 @@ import type {
   ShowcaseData,
   LabData,
   Locale,
+  ProcessingTask,
 } from '../../shared/types';
 import { ContentTypeSelector } from '../components/ContentTypeSelector';
 import { FormFields } from '../components/FormFields';
@@ -41,6 +42,11 @@ export function CollectPage() {
   const [llmAvailable, setLlmAvailable] = useState(false);
   const [aiProgress, setAiProgress] = useState('');
 
+  // Background task state (for popup-close-safe processing)
+  const [backgroundTask, setBackgroundTask] = useState<ProcessingTask | null>(null);
+  const [processingProgress, setProcessingProgress] = useState<string>('');
+  const pollingIntervalRef = useRef<number | null>(null);
+
   // Check LLM availability on mount
   useEffect(() => {
     isLLMAvailable().then(setLlmAvailable);
@@ -50,6 +56,91 @@ export function CollectPage() {
   useEffect(() => {
     extractCurrentPage();
   }, []);
+
+  // ============================================================
+  // Poll for background task status (popup-close-safe)
+  // ============================================================
+
+  const startPolling = useCallback(() => {
+    // Clear any existing polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Poll every 2 seconds
+    pollingIntervalRef.current = window.setInterval(async () => {
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'GET_PROCESS_STATUS' });
+        const { task, status: procStatus } = response || {};
+
+        if (task && task.status !== backgroundTask?.status) {
+          setBackgroundTask(task);
+
+          if (procStatus?.progress) {
+            setProcessingProgress(procStatus.progress);
+          }
+
+          // Handle completion
+          if (task.status === 'completed') {
+            setAiProgress('');
+            setProcessingProgress('');
+            if (task.result) {
+              setFormData((prev) => ({ ...prev, content: task.result }));
+            }
+            setMessage('AI processing complete');
+            setStatus('success');
+            stopPolling();
+            setTimeout(() => setStatus('idle'), 2000);
+          }
+
+          // Handle failure
+          if (task.status === 'failed') {
+            setAiProgress('');
+            setProcessingProgress('');
+            setMessage(`AI error: ${task.error || 'Processing failed'}`);
+            setStatus('error');
+            stopPolling();
+          }
+        }
+      } catch (err) {
+        // Background context might be unavailable
+        console.log('Polling error:', err);
+        stopPolling();
+      }
+    }, 2000);
+  }, [backgroundTask]);
+
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  }, []);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
+
+  // Check for existing background task on mount
+  useEffect(() => {
+    const checkExistingTask = async () => {
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'GET_PROCESS_STATUS' });
+        if (response?.task && response.task.status === 'processing') {
+          setBackgroundTask(response.task);
+          setStatus('ai_processing');
+          setProcessingProgress(response.status?.progress || 'Processing in background...');
+          startPolling();
+        }
+      } catch (err) {
+        // Background context unavailable
+      }
+    };
+    checkExistingTask();
+  }, [startPolling]);
 
   // ============================================================
   // Page extraction + optional auto AI clean
@@ -72,11 +163,37 @@ export function CollectPage() {
       } else {
         // Extract from current active tab
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab?.id) {
+
+        if (!tab?.id) {
+          setMessage('No active tab found');
+          setStatus('idle');
+          return;
+        }
+
+        // Check if tab is accessible
+        if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('about:')) {
+          setMessage('Cannot extract from browser pages');
+          setStatus('idle');
+          return;
+        }
+
+        try {
           const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_PAGE' });
           if (response?.payload) {
             pageData = response.payload;
+          } else if (response?.error) {
+            setMessage(`Extraction error: ${response.error}`);
+            setStatus('idle');
+            return;
           }
+        } catch (sendError: any) {
+          if (sendError.message?.includes('Receiving end does not exist')) {
+            setMessage('Content script not loaded. Reload the page and try again.');
+          } else {
+            setMessage(`Connection error: ${sendError.message || 'Unknown error'}`);
+          }
+          setStatus('idle');
+          return;
         }
       }
 
@@ -104,8 +221,8 @@ export function CollectPage() {
         setMessage('Could not extract page content');
         setStatus('idle');
       }
-    } catch {
-      setMessage('Extraction failed');
+    } catch (err: any) {
+      setMessage(`Extraction failed: ${err.message || 'Unknown error'}`);
       setStatus('idle');
     }
   }, []);
@@ -185,10 +302,39 @@ export function CollectPage() {
   }
 
   // ============================================================
-  // AI-powered processing
+  // AI-powered processing (Background Mode for Popup-Close-Safe)
   // ============================================================
 
   async function runAIFullProcess(data: ExtractedPageData, type: ContentType) {
+    try {
+      setStatus('ai_processing');
+      setAiProgress('Starting background processing...');
+
+      // Send to background for processing (popup can close safely after this)
+      const response = await chrome.runtime.sendMessage({
+        type: 'START_PROCESS_MDX',
+        payload: {
+          extractedData: { content: data.content },
+          title: data.title,
+          contentType: type,
+        },
+      });
+
+      if (response.status === 'started') {
+        setBackgroundTask({ ...response.task, status: 'processing' });
+        setAiProgress('AI is processing content in background...');
+        setProcessingProgress('Starting...');
+        startPolling();
+      }
+    } catch (err: any) {
+      // Fallback to inline processing if background fails
+      console.warn('Background processing unavailable, falling back to inline');
+      await runAIFullProcessInline(data, type);
+    }
+  }
+
+  // Fallback inline processing (original implementation)
+  async function runAIFullProcessInline(data: ExtractedPageData, type: ContentType) {
     try {
       setStatus('ai_processing');
       setAiProgress('AI analyzing content and extracting metadata...');
@@ -430,10 +576,38 @@ export function CollectPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Content type selector */}
-      <div className="px-3 pt-3 pb-2">
-        <ContentTypeSelector value={contentType} onChange={handleContentTypeChange} />
+      {/* Header with content type selector and re-extract button */}
+      <div className="px-3 pt-3 pb-2 flex items-center justify-between gap-2">
+        <div className="flex-1">
+          <ContentTypeSelector value={contentType} onChange={handleContentTypeChange} />
+        </div>
+        <button
+          className="text-xs py-1.5 px-2 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-1 flex-shrink-0"
+          onClick={extractCurrentPage}
+          disabled={status === 'extracting'}
+          title="Re-extract content from current page"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {status === 'extracting' ? 'Extracting...' : 'Re-extract'}
+        </button>
       </div>
+
+      {/* Extraction error with retry button */}
+      {!extracted && status === 'idle' && message.includes('Could not extract') && (
+        <div className="mx-3 mb-2 px-3 py-3 rounded-lg bg-red-50 text-red-700 text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span>{message}</span>
+            <button
+              className="py-1 px-2 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors font-medium"
+              onClick={extractCurrentPage}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Preview card + AI toolbar */}
       {extracted && (
@@ -487,11 +661,26 @@ export function CollectPage() {
         </div>
       )}
 
-      {/* AI progress indicator */}
-      {aiProgress && (
+      {/* AI progress indicator (inline mode) */}
+      {aiProgress && !backgroundTask && (
         <div className="mx-3 mb-2 px-3 py-2 rounded-lg bg-purple-50 text-purple-700 text-xs flex items-center gap-2">
           <span className="inline-block w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
           {aiProgress}
+        </div>
+      )}
+
+      {/* Background processing indicator (popup-close-safe) */}
+      {backgroundTask && backgroundTask.status === 'processing' && (
+        <div className="mx-3 mb-2 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-xs flex items-center gap-2">
+          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="flex-1">
+            Processing in background...
+            {processingProgress && <span className="ml-1 opacity-75">({processingProgress})</span>}
+          </span>
+          <span className="text-xs opacity-60">Can close popup</span>
         </div>
       )}
 

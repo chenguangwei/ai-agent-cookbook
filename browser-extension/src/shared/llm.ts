@@ -10,6 +10,50 @@ import type {
 import { getSettings } from './storage';
 
 // ============================================================
+// Constants for content length management
+// ============================================================
+
+const MAX_CHARS = 50000; // ~12.5k tokens, safe for most models
+
+// ============================================================
+// MDX Component Rules for LLM
+// ============================================================
+
+const MDX_COMPONENT_RULES = `
+You have access to the following React components. Use them when the content's semantic meaning matches:
+
+1. <Callout type="info|warning|danger|success">Content</Callout>
+   - Use this when the original text is a blockquote (>), a note, a warning, or a tip.
+   - Infer the 'type' based on the text content (e.g. "Warning:" -> danger, "Note:" -> info).
+
+2. <CodeGroup> ... </CodeGroup>
+   - Use this to wrap multiple consecutive code blocks that are related (e.g. same code in different languages, or file + terminal output).
+
+3. <Steps> ... </Steps>
+   - Use this for numbered lists that represent a tutorial procedure.
+
+4. <Image src="..." alt="..." caption="..." />
+   - Replace standard markdown images with this component if there is a caption or specific layout need.
+
+IMPORTANT constraints:
+- DO NOT import these components. Assume they are globally available.
+- Ensure all JSX tags are strictly closed.
+- Escape curly braces '{' and '}' in normal text as '\\{' and '\\}'.
+`;
+
+const SYSTEM_PROMPT_MDX = `You are an expert technical editor and MDX developer.
+Task: Convert the provided raw Markdown into high-quality, component-rich MDX for a Next.js application.
+
+Process:
+1. Clean: Remove ads, navigation, and irrelevant headers.
+2. Structure: Ensure the title hierarchy starts at H2 (##), assuming the page title is H1.
+3. Componentize: Apply the Component Rules below to enhance the content.
+
+${MDX_COMPONENT_RULES}
+
+Return ONLY the MDX content. No intro, no outro.`;
+
+// ============================================================
 // LLM Client — calls OpenAI-compatible chat completions API
 // ============================================================
 
@@ -109,19 +153,36 @@ Rules:
 Respond with ONLY the summary text, nothing else.`;
 
 /**
- * Clean and format extracted content as proper MDX
+ * Clean and format extracted content as proper MDX (Component-aware)
+ */
+export async function aiToMdx(
+  rawContent: string,
+  title: string
+): Promise<string> {
+  // Handle long content with truncation
+  let contentToProcess = rawContent;
+  if (rawContent.length > MAX_CHARS) {
+    console.warn(`Content too long (${rawContent.length} chars), truncating to ${MAX_CHARS} chars`);
+    contentToProcess = rawContent.slice(0, MAX_CHARS) + '\n\n(Content truncated due to length limit)';
+  }
+
+  return callLLM([
+    { role: 'system', content: SYSTEM_PROMPT_MDX },
+    {
+      role: 'user',
+      content: `Page Title: "${title}"\n\nContent to convert:\n${contentToProcess}`,
+    },
+  ]);
+}
+
+/**
+ * Clean content (backward compatible alias)
  */
 export async function aiCleanContent(
   rawContent: string,
   title: string
 ): Promise<string> {
-  return callLLM([
-    { role: 'system', content: SYSTEM_PROMPT_CLEAN },
-    {
-      role: 'user',
-      content: `Page title: "${title}"\n\nExtracted content to clean:\n\n${rawContent.slice(0, 12000)}`,
-    },
-  ]);
+  return aiToMdx(rawContent, title);
 }
 
 /**
