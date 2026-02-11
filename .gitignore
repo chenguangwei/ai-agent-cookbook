@@ -44,3 +44,5 @@ CLAUDE.md
 
 # tinacms
 public/admin
+tina/__generated__/client.ts
+tina/__generated__/types.ts
