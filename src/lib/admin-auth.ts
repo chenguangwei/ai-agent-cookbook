@@ -49,9 +49,14 @@ export function verifyAdminAuth(request: NextRequest): NextResponse | null {
   if (!username || !password) {
     if (isProduction) {
       // Fail-closed in production: block access
-      return new NextResponse('Admin access is not configured. Set ADMIN_USERNAME and ADMIN_PASSWORD.', {
-        status: 403,
-      });
+      const missing = [];
+      if (!username) missing.push('ADMIN_USERNAME');
+      if (!password) missing.push('ADMIN_PASSWORD');
+
+      return new NextResponse(
+        `Admin access is not configured. Missing: ${missing.join(', ')}. Set these variables in Vercel and REDEPLOY.`,
+        { status: 403 }
+      );
     }
     // Allow access in development
     return null;
