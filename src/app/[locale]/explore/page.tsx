@@ -21,14 +21,16 @@ export const metadata: Metadata = {
 };
 
 interface ExplorePageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ cat?: string; locale?: string; difficulty?: string }>;
 }
 
-export default async function ExplorePage({ searchParams }: ExplorePageProps) {
-  const params = await searchParams;
-  const categoryParam = params.cat;
-  const localeFilter = params.locale;
-  const difficultyFilter = params.difficulty;
+export default async function ExplorePage({ params, searchParams }: ExplorePageProps) {
+  const resolvedParams = await params;
+  const search = await searchParams;
+  const categoryParam = search.cat;
+  const localeFilter = search.locale !== undefined ? search.locale : resolvedParams.locale;
+  const difficultyFilter = search.difficulty;
   const t = await getTranslations('Explore');
   const tCat = await getTranslations('Categories');
 
@@ -94,7 +96,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                     { value: 'zh', label: t('chinese') },
                     { value: 'ja', label: t('japanese') },
                   ]}
-                  currentParams={params}
+                  currentParams={search}
                 />
                 <FilterSelect
                   name="difficulty"
@@ -105,7 +107,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                     { value: 'Intermediate', label: t('intermediate') },
                     { value: 'Advanced', label: t('advanced') },
                   ]}
-                  currentParams={params}
+                  currentParams={search}
                 />
                 <div className="ml-auto text-xs text-slate-500 dark:text-slate-400">
                   {t('tutorialsCount', { count: tutorials.length })}

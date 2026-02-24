@@ -56,8 +56,8 @@ export async function generateMetadata({ params }: TutorialPageProps): Promise<M
 }
 
 export default async function TutorialPage({ params }: TutorialPageProps) {
-  const { slug } = await params;
-  const tutorials = await getAllTutorials();
+  const { slug, locale } = await params;
+  const tutorials = await getAllTutorials(locale);
   const tutorial = tutorials.find((t) => t?.slug === slug);
   const t = await getTranslations('Tutorial');
 

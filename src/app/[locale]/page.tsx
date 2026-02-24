@@ -39,7 +39,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const t = await getTranslations('Home');
   const tCat = await getTranslations('Home.categories');
 
-  const featuredTutorials = await getFeaturedTutorials(4);
+  const featuredTutorials = await getFeaturedTutorials(4, locale);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -160,15 +160,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 </div>
                 <h3 className="font-bold text-lg mb-2 text-slate-900 dark:text-white uppercase tracking-wider font-display">
                   {item.titleKey === 'categories.foundation' ? tCat('foundation') :
-                   item.titleKey === 'categories.workflows' ? tCat('workflows') :
-                   item.titleKey === 'categories.practice' ? tCat('practice') :
-                   tCat('showcase')}
+                    item.titleKey === 'categories.workflows' ? tCat('workflows') :
+                      item.titleKey === 'categories.practice' ? tCat('practice') :
+                        tCat('showcase')}
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed uppercase tracking-tight">
                   {item.titleKey === 'categories.foundation' ? tCat('foundation') :
-                   item.titleKey === 'categories.workflows' ? tCat('workflows') :
-                   item.titleKey === 'categories.practice' ? tCat('practice') :
-                   tCat('showcase')}
+                    item.titleKey === 'categories.workflows' ? tCat('workflows') :
+                      item.titleKey === 'categories.practice' ? tCat('practice') :
+                        tCat('showcase')}
                 </p>
               </Link>
             ))}
