@@ -3,10 +3,25 @@ import client from '../../tina/__generated__/client';
 // Re-export types from generated types for convenience
 export type { Tutorial, Doc, News, PracticeLab, Showcase, Tool } from '../../tina/__generated__/types';
 
+export function normalizeImageUrl(url?: string | null): string {
+  if (!url) return '';
+  const match = url.match(/^https?:\/\/[^\/]+\/.*?(https?:\/\/.*)$/i);
+  if (match && match[1]) {
+    return decodeURIComponent(match[1]);
+  }
+  return url;
+}
+
 export async function getAllTutorials(locale?: string) {
   try {
     const result = await client.queries.tutorialConnection({ last: 100 });
-    const tutorials = result.data.tutorialConnection.edges?.map(e => e?.node).filter(Boolean) ?? [];
+    const tutorials = result.data.tutorialConnection.edges?.map(e => {
+      const node = e?.node;
+      if (node) {
+        return { ...node, thumbnail: normalizeImageUrl(node.thumbnail) };
+      }
+      return null;
+    }).filter(Boolean) ?? [];
     if (locale) {
       return tutorials.filter(t => t?.locale === locale);
     }
@@ -44,7 +59,13 @@ export async function getAllDocs(locale?: string) {
 export async function getAllNews(locale?: string) {
   try {
     const result = await client.queries.newsConnection({ last: 100 });
-    let news = result.data.newsConnection.edges?.map(e => e?.node).filter(Boolean) ?? [];
+    let news = result.data.newsConnection.edges?.map(e => {
+      const node = e?.node;
+      if (node) {
+        return { ...node, imageUrl: normalizeImageUrl(node.imageUrl) };
+      }
+      return null;
+    }).filter(Boolean) ?? [];
     if (locale) {
       news = news.filter(n => n?.locale === locale);
     }
@@ -61,7 +82,13 @@ export async function getAllNews(locale?: string) {
 export async function getAllPracticeLabs(locale?: string) {
   try {
     const result = await client.queries.practiceLabConnection({ last: 100 });
-    const labs = result.data.practiceLabConnection.edges?.map(e => e?.node).filter(Boolean) ?? [];
+    const labs = result.data.practiceLabConnection.edges?.map(e => {
+      const node = e?.node;
+      if (node) {
+        return { ...node, thumbnail: normalizeImageUrl(node.thumbnail) };
+      }
+      return null;
+    }).filter(Boolean) ?? [];
     if (locale) {
       return labs.filter(l => l?.locale === locale);
     }
@@ -74,7 +101,13 @@ export async function getAllPracticeLabs(locale?: string) {
 export async function getAllShowcaseProjects(locale?: string) {
   try {
     const result = await client.queries.showcaseConnection({ last: 100 });
-    const projects = result.data.showcaseConnection.edges?.map(e => e?.node).filter(Boolean) ?? [];
+    const projects = result.data.showcaseConnection.edges?.map(e => {
+      const node = e?.node;
+      if (node) {
+        return { ...node, thumbnail: normalizeImageUrl(node.thumbnail) };
+      }
+      return null;
+    }).filter(Boolean) ?? [];
     if (locale) {
       return projects.filter(p => p?.locale === locale);
     }
@@ -87,7 +120,13 @@ export async function getAllShowcaseProjects(locale?: string) {
 export async function getAllTools(locale?: string) {
   try {
     const result = await client.queries.toolConnection({ last: 100 });
-    const tools = result.data.toolConnection.edges?.map(e => e?.node).filter(Boolean) ?? [];
+    const tools = result.data.toolConnection.edges?.map(e => {
+      const node = e?.node;
+      if (node) {
+        return { ...node, logoUrl: normalizeImageUrl(node.logoUrl) };
+      }
+      return null;
+    }).filter(Boolean) ?? [];
     if (locale) {
       return tools.filter(t => t?.locale === locale);
     }
