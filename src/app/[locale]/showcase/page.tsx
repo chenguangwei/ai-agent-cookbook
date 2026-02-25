@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { getAllShowcaseProjects } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
 function isValidUrl(url: string | null | undefined): url is string {
   return !!url && url !== '#' && url.startsWith('http');
 }

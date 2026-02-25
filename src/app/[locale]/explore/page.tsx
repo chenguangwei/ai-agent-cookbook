@@ -11,6 +11,9 @@ import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: 'Explore Tutorials',
   description: 'Explore our comprehensive collection of AI agent tutorials covering LangChain, CrewAI, AutoGPT, and more.',

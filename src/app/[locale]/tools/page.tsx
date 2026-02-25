@@ -9,6 +9,9 @@ import { TOOL_CATEGORIES, toolCategoryIdToValue, toolCategoryValueToId } from '@
 import { getTranslations } from 'next-intl/server';
 import { ToolCard } from './ToolCard';
 
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
 interface ToolsPageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ cat?: string; pricing?: string; sort?: string }>;

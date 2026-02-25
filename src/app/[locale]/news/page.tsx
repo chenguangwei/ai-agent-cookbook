@@ -6,6 +6,9 @@ import { Footer } from '@/components/layout/Footer';
 import { getAllNews } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
 export default async function NewsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const articles = await getAllNews(locale);

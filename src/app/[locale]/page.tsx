@@ -7,6 +7,9 @@ import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getFeaturedTutorials } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
 const repositorySegments = [
   {
     titleKey: 'categories.foundation',

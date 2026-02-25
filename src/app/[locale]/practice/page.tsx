@@ -6,6 +6,9 @@ import { LabCard } from '@/components/features/LabCard';
 import { getAllPracticeLabs } from '@/lib/tina';
 import { getTranslations } from 'next-intl/server';
 
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
 interface PracticePageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ env?: string; difficulty?: string }>;
