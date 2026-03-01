@@ -17,8 +17,10 @@ export function MdImage({ url, caption, alt }: MdImageProps) {
   const isLocal = url.startsWith('/');
   const isOptimizable = isLocal || OPTIMIZABLE_HOSTS.some((h) => url.includes(h));
 
+  // Use div instead of figure to avoid HTML nesting issues:
+  // <figure> cannot be a descendant of <p>
   return (
-    <figure className="my-8">
+    <div className="my-8">
       {isOptimizable ? (
         <NextImage
           src={url}
@@ -37,10 +39,10 @@ export function MdImage({ url, caption, alt }: MdImageProps) {
         />
       )}
       {caption && (
-        <figcaption className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400">
           {caption}
-        </figcaption>
+        </p>
       )}
-    </figure>
+    </div>
   );
 }

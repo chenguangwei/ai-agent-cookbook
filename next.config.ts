@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
+    // Disable image optimization for external domains that may have CORS restrictions
+    // This is useful for social media images (Twitter/X, etc.)
+    unoptimized: true,
   },
 };
 

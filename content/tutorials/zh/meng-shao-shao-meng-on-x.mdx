@@ -1,0 +1,102 @@
+---
+title: "meng shao (@shao__meng) on X"
+slug: "meng-shao-shao-meng-on-x"
+locale: "en"
+description: "Agent Skill 最佳实践"
+category: "Agentic Workflows"
+tags: ["ReAct"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCFjuUcaEAA18yV.jpg:large"
+featured: false
+date: 2026-03-01
+---
+
+## Agent Skill 最佳实践
+
+https://x.com/shao__meng/status/2027010981013114951
+
+作者 @mgechev 开源的 Skills 编写验证最佳实践，核心流程是：写专业技能、用 LLM 验证、保持极简上下文窗口
+
+推荐目录结构
+skill-name/ 
+├── SKILL. md      # 必备：元数据 + 核心指令
+
+├── scripts/           # 小型确定性 CLI 脚本 
+
+├── references/   # 补充资料
+
+└── assets/          # 模板、静态文件
+
+严禁嵌套子目录、人类文档（README/CHANGELOG）、大库代码。
+
+Frontmatter（Agent 唯一提前可见内容）
+· name：1-64 字符，小写字母+数字+连字符，必须与文件夹名完全一致。
+· description：≤1024 字符，用第三人称 + 负向触发，明确“不适用场景”。
+  · 差例：“React skills.”
+  · 优例：“Creates React components with Tailwind. Use for style/UI updates. Never for Vue/Svelte/vanilla CSS.”
+
+渐进式披露
+· SKILL. md 只写高层次导航与主流程。
+· 细节延迟加载：用“See references/xxx.md”显式指令。
+· 路径必须相对 + 正斜杠（/）。
+
+指令编写规范（面向 LLM）
+· 严格编号步骤 + 决策树。
+· 提供 assets/ 中的具体模板，让 Agent 直接复制结构。
+· 使用第三人称祈使句（“Extract the text...”）。
+· 术语 100% 一致且采用领域原生最精确词汇。
+
+打包确定性脚本
+· 复杂/脆弱操作（如解析、查询）交给 scripts/ 中的小脚本。
+· 脚本必须输出清晰 stdout/stderr，便于 Agent 自判成功与否并自动修复。
+
+LLM 四步验证闭环
+· Discovery：仅用 frontmatter 测试触发准确性 + 优化描述。
+· Logic：模拟完整执行，标记任何幻觉/猜测点。
+· Edge Case：让 LLM 扮演“无情 QA”，提出 3-5 个破坏性问题。
+· Refinement：强制重构为更严格的渐进披露 + 增加错误处理章节。
+
+开源地址
+https://t.co/uAw753E12w
+
+> Author: Minko Gechev (@mgechev)
+> URL: https://x.com/mgechev/status/2026696225248956842
+>
+> Rethinking how we build for the agentic era. Stop writing agent skills like human docs—it wastes tokens and invites hallucinations.
+>
+> Here's a distilled set of core best practices (&lt;5 min read) to help us write better skills.
+>
+> Give it a read: https://t.co/6ep4VXg2zJ
+
+![](https://pbs.twimg.com/media/HCFjuUcaEAA18yV.jpg:large)
+
+## 看到有朋友在询问信息卡的制作方法和提示词，都在我置顶帖子里了，公众号和小红书有系列文章记录，可以看这里，会持续更新：
+
+https://x.com/shao__meng/status/2027024866118164688
+
+https://t.co/QAJOiNd6jm
+
+> Author: meng shao (@shao__meng)
+> URL: https://x.com/shao__meng/status/2013773573706371129
+>
+> 更适合小红书和公众号的多张图文信息卡，提示词我放在这了，感兴趣的朋友自取 🔽
+>
+> 如果想制作 X 的多图（2-4图），可以自行调整提示词种的输出比例，到「AI启蒙小伙伴」的小红书和公众号查看，或者下面链接 🔗
+>
+> 小红书：
+> https://t.co/8F3MvFTisl
+> 公众号：
+> https://t.co/2hi8Mrtotd
+
+## 3
+
+https://x.com/shao__meng/status/2027368761251307665
+
+https://t.co/10iqOI8Wlx
+
+> Author: meng shao (@shao__meng)
+> URL: https://x.com/shao__meng/status/2027368489439334504
+>
+> https://t.co/igDhxNVGEj

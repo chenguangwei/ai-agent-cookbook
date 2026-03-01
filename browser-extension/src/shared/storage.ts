@@ -1,4 +1,4 @@
-import type { Draft, HistoryItem, Settings, StorageSchema, ContentType } from './types';
+import type { Draft, HistoryItem, Settings, StorageSchema, ContentType, ExtractedPageData, ExtractCacheEntry } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { generateId } from './utils';
 
@@ -10,6 +10,7 @@ async function get<K extends keyof StorageSchema>(key: K): Promise<StorageSchema
   const result = await chrome.storage.local.get(key);
   if (key === 'settings') return (result[key] ?? DEFAULT_SETTINGS) as StorageSchema[K];
   if (key === 'drafts' || key === 'history') return (result[key] ?? []) as StorageSchema[K];
+  if (key === 'extractCache') return (result[key] ?? {}) as StorageSchema[K];
   return result[key] as StorageSchema[K];
 }
 
@@ -103,4 +104,38 @@ export async function addHistory(item: Omit<HistoryItem, 'id'>): Promise<History
 
 export async function clearHistory(): Promise<void> {
   await set('history', []);
+}
+
+// ============================================================
+// Extract cache (1-day TTL, max 50 entries)
+// ============================================================
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
+const CACHE_MAX_ENTRIES = 50;
+
+export async function getExtractCacheEntry(url: string): Promise<ExtractCacheEntry | null> {
+  const cache = await get('extractCache');
+  const entry = cache[url];
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) return null;
+  return entry;
+}
+
+export async function setExtractCacheEntry(url: string, data: ExtractedPageData): Promise<void> {
+  const cache = await get('extractCache');
+  cache[url] = { data, timestamp: Date.now() };
+
+  // Prune expired entries
+  const now = Date.now();
+  for (const key of Object.keys(cache)) {
+    if (now - cache[key].timestamp > CACHE_TTL_MS) {
+      delete cache[key];
+    }
+  }
+
+  // Cap at max entries (keep most recent)
+  const entries = Object.entries(cache).sort((a, b) => b[1].timestamp - a[1].timestamp);
+  const pruned = Object.fromEntries(entries.slice(0, CACHE_MAX_ENTRIES));
+
+  await set('extractCache', pruned);
 }

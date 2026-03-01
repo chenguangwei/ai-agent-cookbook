@@ -13,7 +13,7 @@ import { ContentTypeSelector } from '../components/ContentTypeSelector';
 import { FormFields } from '../components/FormFields';
 import { PreviewCard } from '../components/PreviewCard';
 import { submitContent, generateFileContent } from '../../shared/api';
-import { saveDraft, addHistory, getSettings } from '../../shared/storage';
+import { saveDraft, addHistory, getSettings, getExtractCacheEntry, setExtractCacheEntry } from '../../shared/storage';
 import {
   aiCleanContent,
   aiExtractMetadata,
@@ -41,6 +41,8 @@ export function CollectPage() {
   const [message, setMessage] = useState('');
   const [llmAvailable, setLlmAvailable] = useState(false);
   const [aiProgress, setAiProgress] = useState('');
+  const [fromCache, setFromCache] = useState(false);
+  const [cacheTimestamp, setCacheTimestamp] = useState<number | null>(null);
 
   // Background task state (for popup-close-safe processing)
   const [backgroundTask, setBackgroundTask] = useState<ProcessingTask | null>(null);
@@ -146,9 +148,11 @@ export function CollectPage() {
   // Page extraction + optional auto AI clean
   // ============================================================
 
-  const extractCurrentPage = useCallback(async () => {
+  const extractCurrentPage = useCallback(async (forceRefresh = false) => {
     setStatus('extracting');
     setMessage('Extracting page content...');
+    setFromCache(false);
+    setCacheTimestamp(null);
 
     try {
       // Check for pending context menu data first
@@ -161,7 +165,7 @@ export function CollectPage() {
       if (pending?.pendingExtracted) {
         pageData = pending.pendingExtracted;
       } else {
-        // Extract from current active tab
+        // Get current active tab
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
         if (!tab?.id) {
@@ -177,23 +181,40 @@ export function CollectPage() {
           return;
         }
 
-        try {
-          const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_PAGE' });
-          if (response?.payload) {
-            pageData = response.payload;
-          } else if (response?.error) {
-            setMessage(`Extraction error: ${response.error}`);
+        // Check cache unless forceRefresh
+        if (!forceRefresh && tab.url) {
+          const cached = await getExtractCacheEntry(tab.url);
+          if (cached) {
+            pageData = cached.data;
+            setFromCache(true);
+            setCacheTimestamp(cached.timestamp);
+          }
+        }
+
+        // Fetch from page if no cache hit
+        if (!pageData) {
+          try {
+            const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_PAGE' });
+            if (response?.payload) {
+              pageData = response.payload;
+              // Save to cache
+              if (tab.url && pageData) {
+                await setExtractCacheEntry(tab.url, pageData);
+              }
+            } else if (response?.error) {
+              setMessage(`Extraction error: ${response.error}`);
+              setStatus('idle');
+              return;
+            }
+          } catch (sendError: any) {
+            if (sendError.message?.includes('Receiving end does not exist')) {
+              setMessage('Content script not loaded. Reload the page and try again.');
+            } else {
+              setMessage(`Connection error: ${sendError.message || 'Unknown error'}`);
+            }
             setStatus('idle');
             return;
           }
-        } catch (sendError: any) {
-          if (sendError.message?.includes('Receiving end does not exist')) {
-            setMessage('Content script not loaded. Reload the page and try again.');
-          } else {
-            setMessage(`Connection error: ${sendError.message || 'Unknown error'}`);
-          }
-          setStatus('idle');
-          return;
         }
       }
 
@@ -583,9 +604,9 @@ export function CollectPage() {
         </div>
         <button
           className="text-xs py-1.5 px-2 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-1 flex-shrink-0"
-          onClick={extractCurrentPage}
+          onClick={() => extractCurrentPage(true)}
           disabled={status === 'extracting'}
-          title="Re-extract content from current page"
+          title="Re-extract content from current page (bypass cache)"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -593,6 +614,15 @@ export function CollectPage() {
           {status === 'extracting' ? 'Extracting...' : 'Re-extract'}
         </button>
       </div>
+      {/* Cache indicator */}
+      {fromCache && cacheTimestamp && (
+        <div className="mx-3 mb-1 px-2 py-1 rounded bg-amber-50 text-amber-700 text-xs flex items-center gap-1">
+          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Cached · {new Date(cacheTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      )}
 
       {/* Extraction error with retry button */}
       {!extracted && status === 'idle' && message.includes('Could not extract') && (
@@ -601,7 +631,7 @@ export function CollectPage() {
             <span>{message}</span>
             <button
               className="py-1 px-2 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors font-medium"
-              onClick={extractCurrentPage}
+              onClick={() => extractCurrentPage(true)}
             >
               Retry
             </button>

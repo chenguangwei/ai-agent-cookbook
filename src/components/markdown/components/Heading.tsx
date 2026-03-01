@@ -34,9 +34,14 @@ export function createHeadingComponent(level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' |
   return function HeadingComponent({ children }: { children: React.ReactNode }) {
     const id = generateId(children);
     return (
-      <Tag id={id} className={styles}>
-        <a href={`#${id}`} className="no-underline hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-4">
-          {children}
+      <Tag id={id} className={`group ${styles}`}>
+        {children}
+        <a
+          href={`#${id}`}
+          className="ml-2 opacity-0 group-hover:opacity-60 text-slate-400 dark:text-slate-500 no-underline font-normal text-[0.7em] align-middle"
+          aria-label="anchor"
+        >
+          #
         </a>
       </Tag>
     );

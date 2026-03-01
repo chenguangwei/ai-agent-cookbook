@@ -109,6 +109,57 @@ async function submitLab(apiUrl: string, data: LabData): Promise<ApiResponse> {
 }
 
 // ============================================================
+// Content formatting utilities
+// ============================================================
+
+/**
+ * Fix common markdown formatting issues from web extraction
+ */
+function formatContent(content: string): string {
+  if (!content) return content;
+
+  // Note: intentionally no sentence-splitting heuristics here.
+  // Patterns like /([.!?])\s+([A-Z])/ break tweet text, URLs, acronyms (e.g. "U.S. News").
+  return content
+    // Fix image links: [![Image](url)](link) -> ![Image](url)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\]\([^)]+\)/g, '![$1]($2)')
+    // Fix image with no alt: [![Image](url)](link) -> ![](url)
+    .replace(/!\[\]\(([^)]+)\]\([^)]+\)/g, '![$1]($1)')
+    // Collapse 3+ consecutive blank lines to 2
+    .replace(/\n{3,}/g, '\n\n')
+    // Add newline after headings if missing
+    .replace(/(#{1,6}\s+.+)$/gm, '$1\n')
+    // Fix common issues with links that have no text
+    .replace(/\]\(\)/g, '')
+    // Ensure paragraphs have proper spacing - add newline before headings if missing
+    .replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2')
+    // Clean up trailing whitespace
+    .trim();
+}
+
+/**
+ * Truncate description to a reasonable length (first paragraph or ~200 chars)
+ */
+function truncateDescription(description: string, maxLength = 200): string {
+  if (!description) return '';
+
+  // If already short, return as-is
+  if (description.length <= maxLength) return description;
+
+  // Try to截取 first sentence or paragraph
+  const firstParagraph = description.split('\n')[0];
+  if (firstParagraph.length <= maxLength) return firstParagraph;
+
+  // Otherwise truncate at word boundary
+  const truncated = description.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.7) {
+    return truncated.slice(0, lastSpace) + '...';
+  }
+  return truncated + '...';
+}
+
+// ============================================================
 // Generate file content for local/offline mode
 // ============================================================
 
@@ -130,12 +181,15 @@ export function generateFileContent(
 
 function generateTutorialFile(data: TutorialData) {
   const slug = data.slug || slugify(data.title);
+  // Format content and truncate description
+  const formattedContent = formatContent(data.content);
+  const cleanDescription = truncateDescription(data.description || '', 200);
   const lines = [
     '---',
     `title: "${data.title.replace(/"/g, '\\"')}"`,
     `slug: "${slug}"`,
     `locale: "${data.locale}"`,
-    `description: "${data.description.replace(/"/g, '\\"')}"`,
+    `description: "${cleanDescription.replace(/"/g, '\\"')}"`,
     `category: "${data.category}"`,
     `tags: [${data.tags.map((t) => `"${t}"`).join(', ')}]`,
     `techStack: [${data.techStack.map((t) => `"${t}"`).join(', ')}]`,
@@ -147,7 +201,7 @@ function generateTutorialFile(data: TutorialData) {
     `date: ${data.date}`,
     '---',
     '',
-    data.content,
+    formattedContent,
   ].filter((l) => l !== null).join('\n');
 
   return {
@@ -159,12 +213,15 @@ function generateTutorialFile(data: TutorialData) {
 
 function generateNewsFile(data: NewsData) {
   const slug = data.slug || slugify(data.title);
+  // Format content
+  const formattedContent = formatContent(data.content);
+  const cleanSummary = truncateDescription(data.summary || '', 200);
   const lines = [
     '---',
     `title: "${data.title.replace(/"/g, '\\"')}"`,
     `slug: "${slug}"`,
     `locale: "${data.locale}"`,
-    `summary: "${data.summary.replace(/"/g, '\\"')}"`,
+    `summary: "${cleanSummary.replace(/"/g, '\\"')}"`,
     `source: "${data.source}"`,
     `sourceUrl: "${data.sourceUrl}"`,
     `author: "${data.author}"`,
@@ -174,7 +231,7 @@ function generateNewsFile(data: NewsData) {
     `readTime: "${data.readTime}"`,
     '---',
     '',
-    data.content,
+    formattedContent,
   ].filter((l) => l !== null).join('\n');
 
   return {

@@ -447,7 +447,15 @@ function createTurndownService(): TurndownService {
 // ============================================================
 
 function postProcessMarkdown(md: string): string {
+  if (!md) return md;
+
+  // Note: intentionally no sentence-splitting heuristics.
+  // Patterns like /([.!?])\s+([A-Z])/ break URLs, acronyms, proper nouns, etc.
   return md
+    // Fix image links: [![Image](url)](link) -> ![Image](url)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\]\([^)]+\)/g, '![$1]($2)')
+    // Fix image with no alt: [![Image](url)](link) -> ![](url)
+    .replace(/!\[\]\(([^)]+)\]\([^)]+\)/g, '![$1]($1)')
     // Fix headings: collapse `## \n\n text` into `## text`
     .replace(/^(#{1,6})\s*\n+\s*(.+)/gm, '$1 $2')
     // Collapse 3+ consecutive blank lines to 2
@@ -461,12 +469,12 @@ function postProcessMarkdown(md: string): string {
     .trim();
 }
 
-function extractPageData(): ExtractedPageData {
+async function extractPageData(): Promise<ExtractedPageData> {
   // 1. Clone DOM to avoid side effects
   const docClone = document.cloneNode(true) as Document;
 
-  // 1.5 Twitter/X Specialized Extraction
-  const twitterData = extractTwitter(docClone, window.location.href);
+  // 1.5 Twitter/X Specialized Extraction (API-first, DOM fallback)
+  const twitterData = await extractTwitter(docClone, window.location.href);
   if (twitterData) {
     return twitterData;
   }
@@ -568,7 +576,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           }
         }
 
-        const data = extractPageData();
+        const data = await extractPageData();
         sendResponse({ type: 'EXTRACT_RESULT', payload: data });
       } catch (error: any) {
         sendResponse({ type: 'EXTRACT_RESULT', error: error.message });

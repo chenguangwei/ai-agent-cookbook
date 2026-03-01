@@ -150,10 +150,16 @@ export interface Settings {
   llm: LLMSettings;
 }
 
+export interface ExtractCacheEntry {
+  data: ExtractedPageData;
+  timestamp: number;
+}
+
 export interface StorageSchema {
   drafts: Draft[];
   history: HistoryItem[];
   settings: Settings;
+  extractCache: Record<string, ExtractCacheEntry>;
 }
 
 // ============================================================

@@ -155,3 +155,64 @@ export function truncate(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.slice(0, maxLen - 3) + '...';
 }
+
+/**
+ * Fix common markdown formatting issues from web extraction
+ * This addresses issues like:
+ * - Wrong image syntax: [![Image](url)](link) -> ![](url)
+ * - Missing paragraph breaks
+ * - Excessive newlines
+ */
+export function fixMarkdownContent(content: string): string {
+  if (!content) return content;
+
+  let result = content;
+
+  // Fix image links: [![Image](url)](link) -> ![Image](url)
+  result = result.replace(/!\[([^\]]*)\]\(([^)]+)\]\([^)]+\)/g, '![$1]($2)');
+
+  // Fix image with no alt but has link: [![Image](url)](link) -> ![](url)
+  result = result.replace(/!\[\]\(([^)]+)\]\([^)]+\)/g, '![$1]($1)');
+
+  // Fix image with just "Image" as alt: ![Image](url) - keep as is but clean up
+  result = result.replace(/!\[Image\]\(([^)]+)\]/g, '![]($1)');
+
+  // Fix: add newline after headings if missing
+  result = result.replace(/^(#{1,6}\s+.+)$/gm, '$1\n');
+
+  // Fix: ensure there's proper spacing before headings
+  result = result.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+
+  // Fix: remove excessive newlines (3+ -> 2)
+  result = result.replace(/\n{3,}/g, '\n\n');
+
+  // Fix: remove empty links []
+  result = result.replace(/\]\(\)/g, '');
+
+  // Fix: clean up trailing whitespace on each line
+  result = result.split('\n').map(line => line.trimEnd()).join('\n');
+
+  return result.trim();
+}
+
+/**
+ * Truncate description/summary to a reasonable length
+ */
+export function truncateDescription(text: string, maxLength = 200): string {
+  if (!text) return '';
+
+  // If already short, return as-is
+  if (text.length <= maxLength) return text;
+
+  // Try to get first sentence or paragraph
+  const firstParagraph = text.split('\n')[0];
+  if (firstParagraph.length <= maxLength) return firstParagraph;
+
+  // Truncate at word boundary
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.7) {
+    return truncated.slice(0, lastSpace) + '...';
+  }
+  return truncated + '...';
+}
