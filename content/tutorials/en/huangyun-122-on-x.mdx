@@ -1,0 +1,379 @@
+---
+title: "黄赟 (@huangyun_122) on X"
+slug: "huangyun-122-on-x"
+locale: "zh"
+description: "OpenClaw + Obsidian 打造个人数字资产生产线"
+category: "LLM Models"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCQvt6GaoAAnlLz.jpg"
+featured: false
+date: 2026-03-01
+---
+
+# OpenClaw + Obsidian 打造个人数字资产生产线
+
+
+# 只看这段就够了：
+
+
+我们每天会花费大量时间，与大模型对话，会问今天吃什么，今天要做哪些事儿，今天宝玉老师，杨姨，铁锤又发布了什么好玩的东西。
+
+但，很多时候，问完也就止步于此。中间天马行空的思维发散，都成了浮云。
+
+有用的点子，没消化完的知识，没领会到的梗，关掉对话窗口那瞬间，就都长眠于 ChatBox. 说不定杨姨的一个点子让你多赚几百块，宝玉的一个 skill 让你提效 100倍，铁锤的一个陪跑点子让你涨粉数万……
+
+而这些，大模型我确定它看到了，但它没有实时反哺我，因为它没有接收到复盘的指令。一旦开启复盘这个模式，某个下午我将收到：Hey, 黄赟, 你上周爆款迁移这个想法不错，其实宝玉老师有个公众号 Skill 可以帮你自动发文哦，要不要我帮你试试。。
+
+在使用 OpenClaw 2 周后，我发现把对话落到 Obsidian 形成 RAW 文档，及时安排 Agent 去做复盘，非常有利于我发现那些我不知道自己不知道的知识盲区。
+
+最多再看完这一小小段——使用配置：
+
+- 远程 VPS（OpenCloudOS）装有 OpenClaw
+- OpenClaw 对话，产生 Obsidian Vault 目录
+- 远程 VPS 和本地 Mac 安装 Syncthing，实时同步 VPS Vault 的文件变动
+- 本地 Mac 装 Obsidian，做严肃编辑
+- 安全通信：TailScale(可选)
+
+在这要感谢推上范总 @fankaishuoai 的提醒，使用 TailScale 来同步两端的 Obsidian 文件，保障了安全。
+
+感谢要放在文章前面，因为，看到这里，爱动手的同学立马就去做了，后面的配置问问 Claude / GPT，比看文有用。那为什么我还要写出来？DDDD, 领会意思
+
+再让我凑点字数——所需软件:
+
+- OpenClaw / Syncthing (远程 VPS )
+- Visual Studio Code + Remote-SSH 插件（本地 Mac)
+- Obsidian / Telegram / Syncthing （本地 Mac)
+- TailScale (远程 VPS，本地 Mac )
+
+## 不嫌长文的话，开始说正事儿了——
+
+
+安装 OpenClaw, 配置 SSH 连接远程 VPS，连接 Telegram 发送指令，这些都有大量资料可查，不赘述。
+
+啥？你想知道，OpenClaw 怎么写提示词，能做成 Obsidian 文章？你试试这么使唤它：
+
+![](https://pbs.twimg.com/media/HCQxGbDbMAA-dTN.png)
+
+本文重点分享，OpenClaw 在远程 VPS 上生成了 Obsidian Vault 之后，我们本地怎么通过 Syncthing 这个开源软件，安全地与远程 Vault 同步编辑。
+
+关于 Syncthing 这个开源软件，之前推文有提： 
+
+> Quoted tweet
+> 兄弟们，刚发现一个神器，彻底解决"多设备文件不同步"的痛 以前：网盘限速、而 SFTP 传来传去像个原始人 现在 Syncthing 一把嗦，三个场景全覆盖： 1/ Win - Win 局域网秒同步 2/ Win - Mac 跨平台 3/ VPS 小龙虾工作目录实时同步本地，直接改 https://t.co/u1m8ks2Iby 你们现在啥方案？
+> https://x.com/i/web/status/2025182109653238114
+
+下面是我的部署环境，远程 VPS 买的是腾讯海外服务器，199一年。本地用了 Mac.
+
+环境配置VPS 系统OpenCloudOS（RHEL/CentOS 系）VPS 登录方式SSH 密钥登录本地系统macOS本地已安装Obsidian、VS Code + Remote SSH 插件
+
+## 第一步：在 VPS 上安装 Syncthing
+
+
+SSH 登录 VPS，执行以下命令：
+
+# 下载最新版 Syncthing（Linux amd64）
+
+wget https://github.com/syncthing/syncthing/releases/download/v2.0.14/syncthing-linux-amd64-v2.0.14.tar.gz
+
+# 解压
+
+tar -xzf syncthing-linux-amd64-v2.0.14.tar.gz
+
+# 复制到系统路径，并赋予执行权限
+
+cp syncthing-linux-amd64-v2.0.14/syncthing /usr/local/bin/
+chmod +x /usr/local/bin/syncthing
+
+# 验证安装成功
+
+/usr/local/bin/syncthing --version
+
+> [!tip] 注意安装路径 安装路径是 /usr/local/bin/syncthing，后面配置服务文件时需要用到这个路径。
+
+## 第二步：创建 systemd 服务文件
+
+
+> [!warning] 手动安装需要手动创建服务文件 通过二进制包安装的 Syncthing 不会自动创建 systemd 服务文件，必须手动创建，否则 systemctl 命令会找不到服务。
+
+创建服务文件：
+
+nano /etc/systemd/system/syncthing@.service
+
+粘贴以下内容：
+
+[Unit]
+Description=Syncthing - Open Source Continuous File Synchronization for %I
+Documentation=man:syncthing(1)
+After=network.target
+
+[Service]
+User=%i
+ExecStart=/usr/local/bin/syncthing serve --no-browser --no-restart --logflags=0
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=3 4
+RestartForceExitStatus=3 4
+
+[Install]
+WantedBy=multi-user.target
+
+命令参数说明：
+
+参数含义/usr/local/bin/syncthingsyncthing 可执行文件的完整路径serve启动 syncthing 同步服务--no-browser启动时不自动打开浏览器（服务器无桌面环境，必须加）--no-restart进程退出后不自动重启（交给 systemd 管理，避免冲突）--logflags=0简化日志格式
+
+保存退出：Ctrl+X → Y → Enter
+
+## 第三步：启动并验证服务
+
+
+# 重新加载 systemd 配置
+
+systemctl daemon-reload
+
+# 设置开机自启 + 立即启动
+
+systemctl enable syncthing@root.service
+systemctl start syncthing@root.service
+
+# 确认运行状态
+
+systemctl status syncthing@root.service
+
+看到 Active: active (running) 即为成功。
+
+## 第四步：在 Mac 上安装 Syncthing
+
+
+# 安装
+
+brew install syncthing
+
+# 设置开机自启并启动
+
+brew services start syncthing
+
+Mac 端管理界面：打开浏览器访问 http://localhost:8384
+
+## 第五步：通过 SSH 隧道访问 VPS 管理界面
+
+
+VPS 上的 Syncthing 默认只监听本地 127.0.0.1:8384，无法直接从外部访问，需要通过 SSH 隧道转发：
+
+# 在本地 Mac 新开一个终端执行（替换为你的 VPS 信息）
+
+ssh -L 9384:127.0.0.1:8384 your_name@your_vps_ip -N
+
+然后在浏览器打开 http://localhost:9384，即可看到 VPS 端的 Syncthing 管理界面。
+
+> [!note] 关于 -N 参数 -N 表示只建立隧道，不执行远程命令。终端会一直挂着，保持开着即可。关闭终端隧道就断开。
+
+## 第六步：两端互相添加设备
+
+
+获取设备 ID：
+
+- Mac 端：打开 http://localhost:8384 → 右上角 操作 → 显示ID
+- VPS 端：打开 http://localhost:9384 → 同样操作
+
+Mac 端添加 VPS：
+
+1. 打开 http://localhost:8384
+2. 点击右下角 添加远程设备
+3. 粘贴 VPS 的设备 ID
+4. 设备名称填 vps，保存
+
+VPS 端确认连接请求：
+
+1. 打开 http://localhost:9384
+2. 看到 Mac 发来的连接请求，点击 添加设备，确认保存
+
+两端显示对方设备且状态为已连接，配对成功。
+
+## 第七步：配置同步文件夹
+
+
+VPS 端共享 vault 目录：
+
+1. 打开 http://localhost:9384
+2. 点击 添加文件夹
+3. 填写：文件夹标签：obsidian-vault
+文件夹路径：/your_path_to/vault（你的实际路径）
+
+4. 切换到 共享 标签，勾选 Mac 设备
+5. 保存
+
+Mac 端接受同步：
+
+1. 打开 http://localhost:8384
+2. 看到 VPS 发来的文件夹共享请求，点击 添加
+3. 本地路径填：/Users/your_username/obsidian-vault
+4. 保存，开始初次同步
+
+## 第八步：Obsidian 打开同步目录
+
+
+1. 打开 Obsidian
+2. 左下角点击 打开另一个库
+3. 选择 打开本地文件夹
+4. 选择 /Users/your_username/obsidian-vault
+
+## 可选：忽略 Obsidian 冲突文件
+
+
+在 obsidian-vault 目录下创建 .stignore 文件，忽略不需要同步的文件：
+
+// Obsidian 工作区状态，不同设备各自维护
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+// Mac 系统文件
+.DS_Store
+
+## 可选：用 TailScale 加固安全
+
+
+以上 syncthing 有安全隐患：
+
+- Syncthing 的 22000 端口暴露在公网
+- 流量可能经过第三方中继服务器
+- 设备 IP 会上报给全球发现服务器
+
+Tailscale 的作用： 在 VPS 和 Mac 之间建立一个基于 WireGuard 的私有加密网络，所有 Syncthing 流量走这个内网，完全不暴露在公网。
+
+## 架构对比
+
+
+加固前：
+
+Mac ──── 公网 ──── VPS:22000（端口暴露）
+         可能经过第三方中继服务器
+
+加固后：
+
+Mac ──── Tailscale 私有网络（WireGuard 加密）──── VPS
+         100.x.x.x 私有 IP，公网完全不可见
+         Syncthing 只在内网通信
+
+## 第一步：VPS 上安装 Tailscale
+
+
+SSH 登录 VPS，执行：
+
+# 官方一键安装脚本（支持 OpenCloudOS）
+
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# 启动守护进程并设置开机自启
+
+systemctl enable --now tailscaled
+
+# 登录（会输出授权 URL，复制到浏览器打开）
+
+tailscale up
+
+登录后查看分配的 Tailscale IP：
+
+tailscale ip -4
+
+# 返回类似 100.x.x.x 的地址，记录下来
+
+
+## 第二步：Mac 上安装 Tailscale
+
+
+> [!warning] Mac 必须安装 GUI 版本 不能只装 CLI 版本，Mac 的 Tailscale 需要菜单栏 App 来管理 VPN 配置。
+
+# 安装 GUI 版（带菜单栏 App）
+
+brew install --cask tailscale
+
+或直接去官网下载：tailscale.com/download
+
+安装后操作
+
+1. 打开 Launchpad → 点击 Tailscale
+2. 如果菜单栏没有出现图标：打开 系统设置 → 隐私与安全性
+滚动到底部，找到 Tailscale 系统扩展已被阻止
+点击 允许
+弹出 VPN 配置请求时，点击 允许
+重新打开 App：pkill -f Tailscale && open /Applications/Tailscale.app
+
+3. 点击菜单栏图标 → Log in → 用同一个账号登录
+
+验证两端互通
+
+# 在 Mac 上 ping VPS 的 Tailscale IP
+
+ping 100.x.x.x
+
+# 在 VPS 上查看所有设备
+
+tailscale status
+
+能 ping 通，私有网络建立成功。
+
+## 第三步：配置 Syncthing 只走 Tailscale
+
+
+VPS 端
+
+通过 SSH 隧道打开 VPS 的 Syncthing 管理界面：
+
+# Mac 本地执行，建立 SSH 隧道
+
+ssh -L 9384:127.0.0.1:8384 your_vps_name@your_vps_ip -N
+
+浏览器打开 http://localhost:9384
+
+修改监听地址： 设置 → 连接 → 同步协议监听地址，改为：
+
+tcp://100.x.x.x:22000
+
+（替换为 VPS 的 Tailscale IP, 必须要写明 tcp://）
+
+关闭全球发现和中继： 同一页面：
+
+- 取消勾选 全球发现
+- 取消勾选 启用中继
+
+Mac 端
+
+打开 http://localhost:8384
+
+修改 VPS 设备的连接地址： 找到 VPS 设备 → 编辑 → 地址改为：
+
+tcp://100.x.x.x:22000
+
+同样关闭全球发现和中继。
+
+## 第四步：关闭 VPS 上 22000 端口的公网访问
+
+
+# 移除 22000 端口的公网开放规则
+
+firewall-cmd --permanent --remove-port=22000/tcp
+firewall-cmd --reload
+
+# 确认已关闭
+
+firewall-cmd --list-ports
+
+## 第五步：直接用 Tailscale IP 访问 VPS 管理界面（可选）
+
+
+有了 Tailscale 私有网络，可以不再需要 SSH 隧道：
+
+VPS 端 Syncthing → 设置 → GUI → 监听地址改为：
+
+100.x.x.x:8384
+
+（替换为 VPS 的 Tailscale IP）
+
+之后在 Mac 浏览器直接访问 http://100.x.x.x:8384。
+
+> 这是安全的 Tailscale IP 只有你账号下的设备能访问，公网完全不可见。
+
+艾玛，写完了~

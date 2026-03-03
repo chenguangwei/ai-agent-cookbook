@@ -47,3 +47,8 @@ public/admin
 tina/__generated__/client.ts
 tina/__generated__/types.ts
 tina/__generated__/.cache
+.trae
+.agents
+.agent
+.claude
+.windsurf
