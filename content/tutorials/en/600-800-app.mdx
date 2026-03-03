@@ -1,20 +1,20 @@
 ---
-title: "一年 $600–800 万的对冲基金投研团队，我用提示词做成了一个 App"
-slug: "600-800-app"
-locale: "zh"
-description: "一年 $600–800 万的对冲基金投研团队，我用提示词做成了一个 App"
-category: "LLM Models"
-tags: ["Claude"]
+title: 一年 $600–800 万的对冲基金投研团队，我用提示词做成了一个 App
+slug: 600-800-app
+locale: zh
+description: 一年 $600–800 万的对冲基金投研团队，我用提示词做成了一个 App
+category: LLM Models
+tags:
+  - Claude
 techStack: []
-difficulty: "Beginner"
-duration: ""
-thumbnail: "https://pbs.twimg.com/media/HCUCYDAbEAM-3Dk.jpg"
+difficulty: Beginner
+duration: ''
+thumbnail: '/uploadshttps://pbs.twimg.com/media/HCUCYDAbEAM-3Dk.jpg'
 featured: false
-date: 2026-03-01
+date: 2026-03-01T00:00:00.000Z
 ---
 
 # 一年 $600–800 万的对冲基金投研团队，我用提示词做成了一个 App
-
 
 我用提示词做成了一个 AI Mini App：不会代码你也能拥有
 
@@ -28,22 +28,20 @@ date: 2026-03-01
 
 # 先看结果：我就输入一个新闻的标题，它给我吐出一份基金首席投资官的投研Memo
 
+* 输入：Coindesk 20260301一条新闻的标题
 
-- 输入：Coindesk 20260301一条新闻的标题
+![](/uploadshttps://pbs.twimg.com/media/HCTy2Z2bEAAD4R4.png)
 
-![](https://pbs.twimg.com/media/HCTy2Z2bEAAD4R4.png)
+* 输出：一个完整的对冲基金投研Desk生成的报告 👇
 
-- 输出：一个完整的对冲基金投研Desk生成的报告 👇
-
-![](https://pbs.twimg.com/media/HCT0g8FbkAAqJtc.jpg)
-![](https://pbs.twimg.com/media/HCT0pvfakAAdv2Z.jpg)
-![](https://pbs.twimg.com/media/HCT0wiwbEAUT3-C.jpg)
-![](https://pbs.twimg.com/media/HCT01ttbEAE6ZL4.jpg)
+![](/uploadshttps://pbs.twimg.com/media/HCT0g8FbkAAqJtc.jpg)
+![](/uploadshttps://pbs.twimg.com/media/HCT0pvfakAAdv2Z.jpg)
+![](/uploadshttps://pbs.twimg.com/media/HCT0wiwbEAUT3-C.jpg)
+![](/uploadshttps://pbs.twimg.com/media/HCT01ttbEAE6ZL4.jpg)
 
 你先别急着学怎么搭，先确认：这个交付物值不值你收藏。
 
 # 为什么一支“投研 desk”要这么贵？
-
 
 因为钱几乎都烧在人和数据上，而且是“组织化的人力”。
 
@@ -61,64 +59,59 @@ date: 2026-03-01
 
 贵的本质不是信息本身，而是“组织能力”——你花钱买的是：
 
-- 分工（每个人只做自己那块，深度才出得来）
-- 并行（同一时间多路推进，速度才出得来）
-- 口径（统一模板，才能复盘、迭代、交接）
-- 证据（每个判断都能被数据锚点验证）
-- 仲裁（CIO 把分散观点压成“能下单的语言”）
+* 分工（每个人只做自己那块，深度才出得来）
+* 并行（同一时间多路推进，速度才出得来）
+* 口径（统一模板，才能复盘、迭代、交接）
+* 证据（每个判断都能被数据锚点验证）
+* 仲裁（CIO 把分散观点压成“能下单的语言”）
 
 把这套“组织结构”写成提示词工作流，让一个人也能拥有同款交付物。
 
 # 《一个人的 AI 对冲基金》：这只是第一篇
 
-
 这个系列我想做的是：把个人投资从“凭感觉”升级成“可复用、可迭代、可自动运行”的系统。
 
-- 本篇只解决一件事：不会代码的小白，也能快速跑出一份漂亮、可分享的投研交付物。
-- 后续我会逐步升级到：
-数据抓取与计算验证（脚本化、可复现）
-自动化运行（定时跑、推送、复盘）
-打包成 skill，接入 OpenClaw / agent runtime 让它自己跑
+* 本篇只解决一件事：不会代码的小白，也能快速跑出一份漂亮、可分享的投研交付物。
+* 后续我会逐步升级到：
+  数据抓取与计算验证（脚本化、可复现）
+  自动化运行（定时跑、推送、复盘）
+  打包成 skill，接入 OpenClaw / agent runtime 让它自己跑
 
 今天别想太远：先把“交付物”做出来。交付物一出来，体系才有落脚点。
 
 # 对冲基金投研 desk 到底长什么样？
 
-
 你缺的不是信息源，你缺的是组织。
 
 我把投研 desk 拆成 9 个角色（你可以理解成 9 个岗位）：
 
-- Atlas（投研PM/研究秘书）：接收输入 → 拆主题 → 列资产 → 分派问题
-- Macro：利率/美元/流动性
-- Equity Sector：行业轮动/相对强弱
-- Equity Stock：公司模型/催化/风险
-- Crypto Market：风险偏好/叙事/联动
-- Derivatives：funding / OI / 清算 / 拥挤
-- Risk：组合暴露 / 情景压力测试 / 风控动作
-- Quant：口径统一 / 趋势动量 / 关键水平验证
-- CIO：仲裁证据 → 翻译成仓位与交易语言 → 输出最终报告
+* Atlas（投研PM/研究秘书）：接收输入 → 拆主题 → 列资产 → 分派问题
+* Macro：利率/美元/流动性
+* Equity Sector：行业轮动/相对强弱
+* Equity Stock：公司模型/催化/风险
+* Crypto Market：风险偏好/叙事/联动
+* Derivatives：funding / OI / 清算 / 拥挤
+* Risk：组合暴露 / 情景压力测试 / 风控动作
+* Quant：口径统一 / 趋势动量 / 关键水平验证
+* CIO：仲裁证据 → 翻译成仓位与交易语言 → 输出最终报告
 
 # 我怎么把它变成 AI 工作流？
 
-
 一句话：一次输入 → 七路并行 → CIO 汇总 → 单页 HTML 报告。
 
-![](https://pbs.twimg.com/media/HCT2F9IagAA7AAm.jpg)
+![](/uploadshttps://pbs.twimg.com/media/HCT2F9IagAA7AAm.jpg)
 
 工作流结构是：
 
-Input → Atlas →（并行）Macro / Sector / Stock / Crypto / Derivatives&Onchain / Risk / Quant → CIO → Output
+Input → Atlas →（并行）Macro / Sector / Stock / Crypto / Derivatives\&Onchain / Risk / Quant → CIO → Output
 
 # 教程：5分钟跑通（真·小白版）
-
 
 你不需要懂代码，照抄就行。
 
 ## Step 1：建一个 Google Gemini 项目
 
-
--进入 https://gemini.google.com/
+-进入 [https://gemini.google.com/](https://gemini.google.com/)
 
 -点击左侧sidebar的Gem
 
@@ -128,41 +121,37 @@ Input → Atlas →（并行）Macro / Sector / Stock / Crypto / Derivatives&Onc
 
 ## Step 2：按固定节点名建工作流并连线
 
-
 节点名建议直接照抄：
 
-- Input（User Input）
-- Atlas（Generate）
-- Macro（Generate）
-- Equity Sector（Generate）
-- Equity Stock（Generate）
-- Crypto Market（Generate）
-- Derivatives & Onchain（Generate）
-- Risk（Generate）
-- Quant（Generate，可选）
-- CIO（Output/Final Report）
+* Input（User Input）
+* Atlas（Generate）
+* Macro（Generate）
+* Equity Sector（Generate）
+* Equity Stock（Generate）
+* Crypto Market（Generate）
+* Derivatives & Onchain（Generate）
+* Risk（Generate）
+* Quant（Generate，可选）
+* CIO（Output/Final Report）
 
 连线规则：
 
-- Input → Atlas
-- Atlas → 所有分析师模块
-- 所有分析师 → CIO
-- CIO → Output
+* Input → Atlas
+* Atlas → 所有分析师模块
+* 所有分析师 → CIO
+* CIO → Output
 
 打开Advanced Editor进行编辑或者一次性输入提示词。
 
 ## Step 3：提示词（只需要 4大块）
 
-
 你只需要把下面四段分别贴到对应节点。
 
 ## 1/4 基金经理：Atlas（根据用户输入内容分发任务）
 
-
 作用：把你的输入拆成摘要、资产清单、开启哪些模块、以及 CIO 要回答的关键问题。
 
 ## 2/4：分析师通用模板（贴到每个分析师节点顶部）
-
 
 作用：统一输出格式 + 强制“有证据”。
 
@@ -170,36 +159,28 @@ Input → Atlas →（并行）Macro / Sector / Stock / Crypto / Derivatives&Onc
 
 ## 3/4：量化分析师（可选，贴到 Quant 节点）
 
-
 你想做“更像基金”的报告就开，不想复杂可以先不开。
 
 这部分虽好是Cursor脚本+券商量化MCP来搭建才能实现复杂的策略相关计算。以后咱们再讲
 
 暂时可以创建一个免费的Finhub API并填写到提示词里：
 
-https://finnhub.io/
+[https://finnhub.io/](https://finnhub.io/)
 
 ## 4/4：首席投资官CIO的最终投资策略报告
-
 
 作用：把所有模块仲裁成一份“可执行”的投研 memo。
 
 # Final Step：生成mini app
 
-
 如果你只用Gem的简易界面操作；可以一次性把全部提示词输入到对话框里，直接生成mini app；之后在右侧app里输入任何新闻、观点、股票或者代币的代码，就会自动输出报告。
 
 点击Download file:可以下载html文件并直接在浏览器里渲染整个报告。
 
-![](https://pbs.twimg.com/media/HCT8rdkbMAAwZQ5.jpg)
+![](/uploadshttps://pbs.twimg.com/media/HCT8rdkbMAAwZQ5.jpg)
 
 这套东西背后用的是 Google Labs 的 Opal，目前还是实验产品，偶尔会抽风、有 Bug。
 
 但对新手小白来说，它最大的价值就一句话：不用写一行代码，靠提示词先把“投研交付物”跑出来。
 
 更硬核的部分我会放到后面：用 Claude Code 去生成脚本，把取数、计算、验证补齐；再把整套流程打包成可复用的 skill，交给 OpenClaw 的 cron 定时跑——你只需要定主题，它按时把报告送到你面前。
-
-# — 阿尔法 @cryptodaoyi
-
-
-《一个人的 AI 对冲基金》第一篇完
