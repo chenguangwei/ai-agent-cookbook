@@ -22,6 +22,19 @@ import {
 } from './x-format';
 
 // ============================================================
+// Language detection
+// ============================================================
+
+function detectLanguage(text: string): string {
+    // Count CJK characters (Chinese/Japanese/Korean)
+    const cjkMatches = text.match(/[\u3400-\u9FFF\uF900-\uFAFF\u3000-\u303F]/g);
+    const cjkCount = cjkMatches ? cjkMatches.length : 0;
+    const totalChars = text.replace(/\s/g, '').length;
+    if (totalChars > 0 && cjkCount / totalChars > 0.1) return 'zh';
+    return 'en';
+}
+
+// ============================================================
 // Async Preparation (Click "Show more" on page — used before DOM fallback)
 // ============================================================
 
@@ -108,7 +121,7 @@ async function extractViaAPI(url: string): Promise<ExtractedPageData | null> {
                 author: '',
                 publishedDate: '',
                 codeBlocks: [],
-                language: 'en',
+                language: detectLanguage(title + ' ' + body),
                 siteName: 'X (Twitter)',
             };
         } catch (err) {
@@ -139,7 +152,7 @@ async function extractViaAPI(url: string): Promise<ExtractedPageData | null> {
             author: result.authorName,
             publishedDate: result.publishedDate,
             codeBlocks: [],
-            language: 'en',
+            language: detectLanguage(result.title + ' ' + result.body),
             siteName: 'X (Twitter)',
         };
     } catch (err) {
@@ -444,7 +457,7 @@ function extractDomArticle(doc: Document, url: string): ExtractedPageData | null
         author: '',
         publishedDate: '',
         codeBlocks: [],
-        language: 'en',
+        language: detectLanguage(title + ' ' + md),
         siteName: 'X (Twitter)',
     };
 }
@@ -549,7 +562,7 @@ function extractDomThread(doc: Document, url: string): ExtractedPageData | null 
         author: mainTweet.authorName,
         publishedDate: mainTweet.time,
         codeBlocks: [],
-        language: 'en',
+        language: detectLanguage(ogTitle + ' ' + sections),
         siteName: 'X (Twitter)',
     };
 }
