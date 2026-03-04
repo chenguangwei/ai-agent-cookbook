@@ -1,0 +1,145 @@
+---
+title: "《 告别 OpenClaw 天价账单：20分钟搭建私有 API 矩阵，自建Key 超低成本多开 》 --  2 / 3"
+slug: "openclaw-20-api-key-2-3"
+locale: "zh"
+description: "《 告别 OpenClaw 天价账单：20分钟搭建私有 API 矩阵，自建Key 超低成本多开 》 --  2 / 3"
+category: "LLM Models"
+tags: ["OpenAI"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCNog2xbEAAiY3v.jpg"
+featured: false
+date: 2026-03-04
+---
+
+# 《 告别 OpenClaw 天价账单：20分钟搭建私有 API 矩阵，自建Key 超低成本多开 》 --  2 / 3
+
+
+突然发现我的prenium权限已经可以发布文章了，不用在狭窄的推文输入框中编辑了，55555 ~~ 
+
+这篇教程我们会在服务器上搭建完整的服务器池子，使用成熟的api后台管理系统，并通过企业级的方案规避掉gpt的封禁账号风险
+
+一定是在上一篇教程的基础之上，大家不要着急一步一步来，最终都会部署成功的，这篇可以先收藏着.
+上一篇传送门：[《 告别 OpenClaw 天价账单》 --  1 / 3](https://x.com/ResearchWang/status/2027188165451399566?s=20)
+
+回答上一篇中大家的一些问题：
+
+    1. 如何花 20r 买到两个 GPT business 账号？ 
+        答：闲鱼，搜索business账号即可。我买的商家就不放在文章里了，不放心可以私信我，我把我在哪买的推你
+
+    2. 如何实现token自由的原理？
+         答：将多个GPT账号组成一个账号池，通过sui-api集成这些账号的 codex5.3 使用权限，在通过统一的api调度这些账号
+
+   3. 这个方案和openclaw自带的fallbacks池子啥区别？
+        答： fallbacks本质上是openclaw的备选逻辑，在配置模型时你可以配置openai,anthropic,deepseek... 等等等不同模型，openclaw会优先选择openai，没有配置openai/配置出错openai时会调用第二个优先的模型，再不行就会调用第三个...依次向下。和我们这套方案不一样。我们这套方案组建完后，假设后面出现新的 openclaw / xxxx 等新的agent都可以使用我们这次配置好的api
+
+那么开始！继续搭建第二步，现在我们已经有了 ：
+       1⃣ neon数据库： postgresql://neondb_owner:[t-a1b92kbq-pooler.ap-southeast-1.aws.neon.tech](mailto:npg_d3aXx2YbsqTp@ep-gentle-boat-a1b92kbq-pooler.ap-southeast-1.aws.neon.tech)/neondb?sslmode=require&channel_binding=require
+      redis云缓存：缓存 redis-cli --tls -u redis://default:[ZDI5OGNiZWU1NTg2ODc3NjI2ZXAyMTIyNzM@chief-crayfish-12273.upstash.io](mailto:AS_xAAIncDI4OGViYjc0NDNmMTM0ZDI5OGNiZWU1NTg2ODc3NjI2ZXAyMTIyNzM@chief-crayfish-12273.upstash.io):6379
+
+## 第一步，在 Cloudflare 中添加你的域名（免费）
+
+
+1. 在[腾讯云](https://buy.cloud.tencent.com/domain?domain=ResearchWang13&tlds=.com&from=domain-console&position=overview-input-search&_t=1772266557608)中购买域名，选择最便宜的，我选的是space邮箱，只花费10r
+2. 进入 [https://dash.cloudflare.com/](https://dash.cloudflare.com/)，使用google账号登入选择免费的方案
+3. 点击页面中的 "Onboard a domain" 按钮，在输入框中输入 购买的域名以 （ResearchWang13.com）为例，注意：不带 www 或 http://。
+4. 点击 continue 按钮，选择 free plan 
+5. Cloudflare 会自动扫描你的域名是否有绑定过其他 IP，继续点击continue
+6. 直到出现 xxxxx.ns.cloudflare.com ,yyyyy.ns.cloudflare.com ，该页面不要关闭
+7. 这时候我们去[腾讯云管理页面](https://console.cloud.tencent.com/domain/all-domain/manage/domain-mb8bn4sq/basicinfo)中将域名解析修改地址，点击修改 DNS服务器 
+8. 选择 “使用非腾讯云DNS” ，将CF提供的域名解析地址输入，等待提交成功
+9. 返回cloudflare页面，下滑，点击 “I updated my nameservers” 按钮
+10. 后面一路 跳过 ，知道你的[Cloudflare页面](https://dash.cloudflare.com/0e3f60448b5858ee72c3d3e03cbac4ac/home/domains) 显示该域名 active 即可
+
+## 第二步，使用CF免费的Zero Trust做内网穿刺
+
+
+1. 进入 [CF 的Zero Trust页面](https://one.dash.cloudflare.com/0e3f60448b5858ee72c3d3e03cbac4ac/networks/overview) ，点击 Manage Tunnels 按钮 , 点击 Add a Tunnel，随意取一个用户名
+2. 出现很多操作系统，选择 docker ，复制下面命令行 
+docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiMGUzZjYwNDQ4YjU4NThlZTcyYzNkM2UwM2NiYWM0YWMiLCJ0IjoiNDk1NDM1ZWYt
+保存好 eyJh.. 开头的后面这段token
+3. 下滑，点击 next 
+4. 域名选择自己购买的域名，Type 选择 Http ， 端口填写 app:8080，点击Complete setup
+
+## 第三步，在服务器上将全部服务运行起来 (依次执行)
+
+
+1. mkdir -p ~/ResearchWang13 && cd ~/ResearchWang13
+2. vim docker-compose.yml
+3. 将一下内容粘贴进docker-compose.yml文件中
+
+```text
+version: '3.8'
+
+services:
+  app:
+    image: weishaw/sub2api:latest
+    container_name: sub2api_app
+    restart: always
+    environment:
+      # --- Neon 数据库 填你自己的---
+
+      - DB_HOST=ep-gentle-boat-a1b92kbq.ap-southeast-1.aws.neon.tech
+      - DB_PORT=5432
+      - DB_USER=neondb_owner
+      - DB_PASSWORD=
+      - DB_NAME=neondb
+      - DB_SSL=true
+
+      # --- redis 缓存  填你自己的---
+
+      - REDIS_HOST=chief-crayfish-12273.upstash.io
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_TLS=true
+
+      # --- 基础安全配置 ---
+
+      - JWT_SECRET=sk_sub2api_random_secret_key_please_change_me_to_be_safe
+      - ADMIN_PASSWORD=
+      - APP_PORT=8080
+      - APP_ENV=production
+      # --- WARP 代理 ---
+
+      - HTTP_PROXY=socks5://172.17.0.1:40000
+      - HTTPS_PROXY=socks5://172.17.0.1:40000
+      - ALL_PROXY=socks5://172.17.0.1:40000
+
+  # --- Cloudflare Tunnel 隧道 填你自己的---
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: sub2api_tunnel
+    restart: always
+    command: tunnel --no-autoupdate run --token  你的zeroTurn的token
+```
+
+4.    最后运行 docker compose up -d ， 全部显示 Started 就成功了
+
+## 最后一步！在浏览器中配置帐号池子
+
+
+1. 进入 你买的域名 ，我这是 [ResearchWang13](https://researchwang13.space/home) .
+2. 如果进入到 setup 界面 ，就按照上面代码的格式，将值都输入进去，记得要启动 SSL 权限
+3. 点击左侧的分组管理，需要新建一个账号池的分组
+4. 点击左侧的账号管理，点击添加账号，名字随意，选择 openai ，选择Oauth方式
+5. 生成授权连接 ，在服务器的浏览器中打开 生成的链接，登入你已经加入business团队的账号，会生成token，将token填入，点击完成授权
+6. 测试：在账号管理页面，每个账号右侧都有 ... 点击测试链接，选择模型 我选的是 GPT - 5.3 Codex , 测试成功即可
+7. 生成专属的apikey，点击左侧 “API密钥” ，创建密钥，注意额度填0 
+
+![](https://pbs.twimg.com/media/HCPFNNzbEAExabJ.jpg)
+
+8.    最后取服务器上测试代码如下 是否能够正常使用该 api-key ，返回值中包含模型名称即成功
+
+```text
+curl --location 'https://你的域名/v1/responses?/chat/completions' --header 'Authorization: Bearer 你的API ' --header 'Content-Type: application/json' --data '{
+    "model": "gpt-5.3-codex-spark",
+    "input": [{"role": "user", "content": "你好 请问你是什么模型"}]
+	}'
+
+```
+
+文章有点长，但是难度跟着教程一步一步走难度并不大，大家配置的时候有点耐心，最后一章就比较简单了，教大家源码的方式配置openclaw（不使用腾讯云已经配置好的clawbot），模型调用选择我们自己搭建的账号池，不用再心疼token开销了
+
+#BTCUSD #Eth #Clawdbot #token #aivideo #ChatGPT #BusinessGrowth #CryptoCommunity
