@@ -4,7 +4,7 @@ import { Package } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { getAllTools } from '@/lib/tina';
+import { getAllTools } from '@/lib/content';
 import { TOOL_CATEGORIES, toolCategoryIdToValue, toolCategoryValueToId } from '@/lib/tool-categories';
 import { getTranslations } from 'next-intl/server';
 import { ToolCard } from './ToolCard';
@@ -33,7 +33,7 @@ export default async function ToolsPage({ params, searchParams }: ToolsPageProps
   const categoryValue = categoryParam ? toolCategoryIdToValue[categoryParam] : null;
   const currentCategory = TOOL_CATEGORIES.find(c => c.id === categoryParam);
 
-  let tools = await getAllTools(locale);
+  let tools = getAllTools(locale);
 
   // Apply filters
   if (categoryValue) {
@@ -160,7 +160,7 @@ export default async function ToolsPage({ params, searchParams }: ToolsPageProps
 
                     return (
                       <ToolCard
-                        key={tool!.id}
+                        key={tool!.slug}
                         tool={tool!}
                         locale={locale}
                         categoryLabel={categoryLabel || undefined}

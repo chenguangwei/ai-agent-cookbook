@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { LabCard } from '@/components/features/LabCard';
-import { getAllPracticeLabs } from '@/lib/tina';
+import { getAllPracticeLabs } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 // ISR: Revalidate every 60 seconds
@@ -17,7 +17,7 @@ interface PracticePageProps {
 export default async function PracticePage({ params, searchParams }: PracticePageProps) {
   const { locale } = await params;
   const { env, difficulty } = await searchParams;
-  let labs = await getAllPracticeLabs(locale);
+  let labs = getAllPracticeLabs(locale);
   const t = await getTranslations('Practice');
 
   if (env) {
@@ -55,9 +55,8 @@ export default async function PracticePage({ params, searchParams }: PracticePag
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {labs.map((lab) => (
                   <LabCard
-                    key={lab?.id}
+                    key={lab?.title}
                     lab={{
-                      id: lab?.id,
                       title: lab?.title || '',
                       description: lab?.description,
                       environment: lab?.environment,

@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
-import { getAllShowcaseProjects } from '@/lib/tina';
+import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 // ISR: Revalidate every 60 seconds
@@ -24,7 +24,7 @@ interface ShowcasePageProps {
 export default async function ShowcasePage({ params, searchParams }: ShowcasePageProps) {
   const { locale } = await params;
   const { tag } = await searchParams;
-  let projects = await getAllShowcaseProjects(locale);
+  let projects = getAllShowcaseProjects(locale);
   const t = await getTranslations('Showcase');
 
   if (tag) {
@@ -73,7 +73,7 @@ export default async function ShowcasePage({ params, searchParams }: ShowcasePag
                     : ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
 
                   return (
-                    <CardWrapper key={project?.id}>
+                    <CardWrapper key={project?.slug}>
                       <div
                         className={`flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300 ${
                           hasDetailPage ? 'cursor-pointer hover:border-primary-400' : ''

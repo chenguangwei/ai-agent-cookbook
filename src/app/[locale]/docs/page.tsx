@@ -1,62 +1,24 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, ChevronRight, ExternalLink, BookOpen } from 'lucide-react';
+import { BookOpen, ExternalLink, ChevronRight } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import type { TinaMarkdownContent } from 'tinacms/dist/rich-text';
-import { TinaMarkdownRendererClient } from '@/components/markdown';
-import { useTranslations, useLocale } from 'next-intl';
+import { MDXRenderer } from '@/components/markdown';
+import { getAllDocs } from '@/lib/content';
+import { getTranslations } from 'next-intl/server';
 
-interface DocItem {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  lastUpdated?: string | null;
-  body?: TinaMarkdownContent | null;
+interface DocsPageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ doc?: string }>;
 }
 
-export default function DocsPage() {
-  const [docs, setDocs] = useState<DocItem[]>([]);
-  const [activeDoc, setActiveDoc] = useState<DocItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const t = useTranslations('Docs');
-  const locale = useLocale();
+export default async function DocsPage({ params, searchParams }: DocsPageProps) {
+  const { locale } = await params;
+  const { doc: docSlug } = await searchParams;
+  const t = await getTranslations('Docs');
 
-  useEffect(() => {
-    async function fetchDocs() {
-      try {
-        const res = await fetch(`/api/docs?locale=${locale}`);
-        const data = await res.json();
-        setDocs(data);
-        if (data.length > 0) {
-          setActiveDoc(data[0]);
-        }
-      } catch {
-        // Fallback empty
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchDocs();
-  }, [locale]);
-
-  // Group docs by category
-  const categories = [...new Set(docs.map((doc) => doc.category))];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-slate-500">{t('loading')}</div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  const docs = getAllDocs(locale);
+  const categories = [...new Set(docs.map((d) => d.category).filter(Boolean))] as string[];
+  const activeDoc = docs.find((d) => d.slug === docSlug) ?? docs[0] ?? null;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -68,17 +30,6 @@ export default function DocsPage() {
             {/* Left Sidebar - Navigation */}
             <aside className="w-64 flex-shrink-0 hidden lg:block">
               <div className="sticky top-24">
-                {/* Search */}
-                <div className="mb-6">
-                  <label className="flex items-center w-full h-10 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 px-3 focus-within:ring-2 focus-within:ring-primary-500">
-                    <Search className="w-4 h-4 text-slate-400 mr-2" />
-                    <input
-                      className="flex-1 bg-transparent border-none text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
-                      placeholder={t('searchPlaceholder')}
-                    />
-                  </label>
-                </div>
-
                 {/* Navigation */}
                 <nav className="flex flex-col gap-6">
                   {categories.map((category) => (
@@ -88,17 +39,17 @@ export default function DocsPage() {
                       </h4>
                       <ul className="flex flex-col gap-1">
                         {docs.filter((doc) => doc.category === category).map((doc) => (
-                          <li key={doc.id}>
-                            <button
-                              onClick={() => setActiveDoc(doc)}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                activeDoc?.id === doc.id
+                          <li key={doc.slug}>
+                            <Link
+                              href={`?doc=${doc.slug}`}
+                              className={`block w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                activeDoc?.slug === doc.slug
                                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
                                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                               }`}
                             >
                               {doc.title}
-                            </button>
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -110,7 +61,7 @@ export default function DocsPage() {
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
-              {activeDoc && (
+              {activeDoc ? (
                 <>
                   {/* Breadcrumb */}
                   <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
@@ -129,23 +80,25 @@ export default function DocsPage() {
 
                   {/* Document Content */}
                   <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
-                    <div>
-                      <h1 className="flex items-center gap-3 text-3xl font-bold text-slate-900 dark:text-white mb-8">
-                        <BookOpen className="w-8 h-8 text-primary-600" />
-                        {activeDoc.title}
-                      </h1>
+                    <h1 className="flex items-center gap-3 text-3xl font-bold text-slate-900 dark:text-white mb-8">
+                      <BookOpen className="w-8 h-8 text-primary-600" />
+                      {activeDoc.title}
+                    </h1>
 
-                      {activeDoc.body && (
-                        <TinaMarkdownRendererClient content={activeDoc.body} />
-                      )}
-                    </div>
+                    {activeDoc.body && (
+                      <div className="prose prose-slate dark:prose-invert max-w-none">
+                        <MDXRenderer content={activeDoc.body} />
+                      </div>
+                    )}
 
                     {/* Footer */}
                     <div className="flex items-center justify-between pt-8 mt-8 border-t border-slate-200 dark:border-slate-800">
                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {t('lastUpdated', { date: activeDoc.lastUpdated
-                          ? new Date(activeDoc.lastUpdated).toLocaleDateString()
-                          : 'N/A' })}
+                        {t('lastUpdated', {
+                          date: activeDoc.lastUpdated
+                            ? new Date(activeDoc.lastUpdated).toLocaleDateString()
+                            : 'N/A',
+                        })}
                       </div>
                       <a
                         href="#"
@@ -157,6 +110,10 @@ export default function DocsPage() {
                     </div>
                   </article>
                 </>
+              ) : (
+                <div className="text-slate-500 dark:text-slate-400 text-center py-16">
+                  {t('noDocs')}
+                </div>
               )}
             </div>
           </div>

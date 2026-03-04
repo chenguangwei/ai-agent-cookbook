@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Clock, ArrowUpRight, Rss } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { getAllNews } from '@/lib/tina';
+import { getAllNews } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 // ISR: Revalidate every 60 seconds
@@ -11,7 +11,7 @@ export const revalidate = 60;
 
 export default async function NewsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const articles = await getAllNews(locale);
+  const articles = getAllNews(locale);
   const t = await getTranslations('News');
 
   const categories = [
@@ -60,7 +60,7 @@ export default async function NewsPage({ params }: { params: Promise<{ locale: s
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => (
               <article
-                key={article?.id}
+                key={article?.slug}
                 className="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300"
               >
                 {/* Image */}

@@ -4,7 +4,7 @@ import { Search, ArrowUpRight, Terminal, Activity, Database, Sparkles, Command }
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
-import { getFeaturedTutorials } from '@/lib/tina';
+import { getFeaturedTutorials } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 // ISR: Revalidate every 60 seconds
@@ -114,7 +114,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             {featuredTutorials.map((tutorial) => (
               <Link
                 href={`/tutorial/${tutorial?.slug}`}
-                key={tutorial?.id}
+                key={tutorial?.slug}
                 className="group flex flex-col gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
               >
                 <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">

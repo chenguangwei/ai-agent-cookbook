@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllTutorials } from '@/lib/tina';
+import { getAllTutorials } from '@/lib/content';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
 
@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Tutorial pages
-  const tutorials = await getAllTutorials();
+  const tutorials = getAllTutorials();
   const tutorialPages: MetadataRoute.Sitemap = tutorials.map((tutorial) => ({
     url: `${BASE_URL}/${tutorial?.locale || 'en'}/tutorial/${tutorial?.slug}`,
     lastModified: tutorial?.date ? new Date(tutorial.date) : now,

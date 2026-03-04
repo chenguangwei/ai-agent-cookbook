@@ -105,7 +105,8 @@
     "home": "Home",
     "docs": "Docs",
     "editOnGithub": "Edit on GitHub",
-    "lastUpdated": "Last updated: {date}"
+    "lastUpdated": "Last updated: {date}",
+    "noDocs": "No documentation available."
   },
   "Categories": {
     "frameworks": "Frameworks",

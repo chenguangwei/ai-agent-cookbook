@@ -6,10 +6,9 @@ import { Star, ExternalLink, BookOpen, Github } from 'lucide-react';
 
 interface ToolCardProps {
   tool: {
-    id: string;
     title: string;
     slug: string;
-    description: string;
+    description?: string | null;
     category?: string | null | undefined;
     tags?: (string | null)[] | null | undefined;
     logoUrl?: string | null | undefined;

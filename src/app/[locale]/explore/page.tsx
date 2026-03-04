@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
-import { getAllTutorials } from '@/lib/tina';
+import { getAllTutorials } from '@/lib/content';
 import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
@@ -44,7 +44,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
   );
 
   // Fetch and filter tutorials
-  let tutorials = await getAllTutorials();
+  let tutorials = getAllTutorials();
 
   if (categoryValue) {
     tutorials = tutorials.filter((t) => t?.category === categoryValue);
@@ -123,7 +123,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                   {tutorials.map((tutorial) => (
                     <Link
                       href={`/tutorial/${tutorial?.slug}`}
-                      key={tutorial?.id}
+                      key={tutorial?.slug}
                       className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
                     >
                       {/* Thumbnail */}

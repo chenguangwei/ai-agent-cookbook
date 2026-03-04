@@ -105,7 +105,8 @@
     "home": "首页",
     "docs": "文档",
     "editOnGithub": "在 GitHub 上编辑",
-    "lastUpdated": "最后更新: {date}"
+    "lastUpdated": "最后更新: {date}",
+    "noDocs": "暂无文档。"
   },
   "Categories": {
     "frameworks": "框架",

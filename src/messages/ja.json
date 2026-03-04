@@ -105,7 +105,8 @@
     "home": "ホーム",
     "docs": "ドキュメント",
     "editOnGithub": "GitHubで編集",
-    "lastUpdated": "最終更新: {date}"
+    "lastUpdated": "最終更新: {date}",
+    "noDocs": "ドキュメントがありません。"
   },
   "Categories": {
     "frameworks": "フレームワーク",
