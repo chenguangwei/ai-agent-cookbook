@@ -85,6 +85,10 @@ export default defineConfig({
         slug: s.string(),
         locale: s.enum(['en', 'zh', 'ja']),
         contentType: s.string().optional(),
+        author: s.object({
+          name: s.string().optional(),
+          avatar: s.string().optional(),
+        }).optional(),
         description: s.string().optional(),
         tags: s.array(s.string()).default([]),
         stars: s.number().optional(),

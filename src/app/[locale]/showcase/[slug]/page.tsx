@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,8 +5,8 @@ import { Star, GitFork, ExternalLink, ArrowLeft, Globe } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { TinaMarkdownRenderer } from '@/components/markdown/TinaMarkdownRenderer';
-import { getAllShowcaseProjects } from '@/lib/tina';
+import { MDXRenderer } from '@/components/markdown';
+import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 interface ShowcaseDetailPageProps {
@@ -167,11 +166,11 @@ export default async function ShowcaseDetailPage({ params }: ShowcaseDetailPageP
           </div>
 
           {/* Content */}
-          <Suspense fallback={<div>Loading...</div>}>
+          {project.body && (
             <article className="prose prose-slate dark:prose-invert max-w-none">
-              <TinaMarkdownRenderer content={project.body} />
+              <MDXRenderer content={project.body} />
             </article>
-          </Suspense>
+          )}
         </div>
       </main>
 

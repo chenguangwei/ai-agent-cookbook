@@ -7,7 +7,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { getAllTools } from '@/lib/tina';
+import { getAllTools } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 interface ToolDetailPageProps {
