@@ -13,9 +13,22 @@ const OPTIMIZABLE_HOSTS = [
   'assets.tina.io',
 ];
 
+// Normalize TinaCMS image URLs that contain nested URLs
+// e.g., https://assets.tina.io/xxxhttps://pbs.twimg.com/xxx -> https://pbs.twimg.com/xxx
+function normalizeImageUrl(url: string): string {
+  if (!url) return url;
+  // Match pattern: https://assets.tina.io/xxxhttps://...
+  const match = url.match(/^https?:\/\/[^\/]+\/.*?(https?:\/\/.*)$/i);
+  if (match && match[1]) {
+    return decodeURIComponent(match[1]);
+  }
+  return url;
+}
+
 export function MdImage({ url, caption, alt }: MdImageProps) {
-  const isLocal = url.startsWith('/');
-  const isOptimizable = isLocal || OPTIMIZABLE_HOSTS.some((h) => url.includes(h));
+  const normalizedUrl = normalizeImageUrl(url);
+  const isLocal = normalizedUrl.startsWith('/');
+  const isOptimizable = isLocal || OPTIMIZABLE_HOSTS.some((h) => normalizedUrl.includes(h));
 
   // Use div instead of figure to avoid HTML nesting issues:
   // <figure> cannot be a descendant of <p>
@@ -23,7 +36,7 @@ export function MdImage({ url, caption, alt }: MdImageProps) {
     <div className="my-8">
       {isOptimizable ? (
         <NextImage
-          src={url}
+          src={normalizedUrl}
           alt={alt || caption || ''}
           width={800}
           height={450}
@@ -33,7 +46,7 @@ export function MdImage({ url, caption, alt }: MdImageProps) {
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={url}
+          src={normalizedUrl}
           alt={alt || caption || ''}
           className="rounded-xl border border-slate-200 dark:border-slate-700 max-w-full h-auto"
         />
