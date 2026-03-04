@@ -1,0 +1,603 @@
+---
+title: "OpenClaw 终极指南：云端还是Mac Mini，AI 模型最省方案，必备 Skills，使用场景"
+slug: "openclaw-mac-mini-ai-skills"
+locale: "zh"
+description: "OpenClaw 终极指南：云端还是Mac Mini，AI 模型最省方案，必备 Skills，使用场景…"
+category: "LLM Models"
+tags: ["OpenAI", "Claude", "GPT-4", "Llama", "Ollama"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCaGnbgbEAAUuLz.jpg"
+featured: false
+date: 2026-03-03
+---
+
+# OpenClaw 终极指南：云端还是Mac Mini，AI 模型最省方案，必备 Skills，使用场景…
+
+
+OpenClaw相关的攻略已经不少了，但都有点碎片化，很多朋友听说了却不知道从哪里入手。本文试图做一份最完整的中文指南，帮你回答以下几个核心问题：
+
+1.
+
+OpenClaw 到底是什么？跟 ChatGPT / Claude 有什么区别？
+2. 安装在 Mac Mini 还是云端 VPS？MaxClaw 零门槛方案值得用吗？
+3.
+
+AI 模型怎么选最省钱？如何实现任务和模型自动分层？
+4.
+
+SOUL、MEMORY、HEARTBEAT 三大文件怎么配？必装哪些 Skills？
+5.
+
+OpenClaw 能做哪些事情？有哪些真实的使用场景？
+6. 安全问题怎么处理？
+7. 个人投资者怎么用 OpenClaw？
+
+声明：本文所有讨论都不是投资建议，只是一份技术工具的使用指南。另外本文由我和 OpenClaw 一起完成，可以直接丢给你的 Agent 学习。
+
+## 【目录】
+
+
+1.
+
+OpenClaw 是什么？一句话解释
+2. 核心概念：为什么它和 ChatGPT 不一样
+3. 安装方案大比拼：Mac Mini vs 云端 VPS vs 托管平台 vs MaxClaw
+4.
+
+AI 模型选择指南：省钱的秘密（含分层模型实战、API 聚合路由方案）
+5. 如何善用 SOUL、MEMORY、HEARTBEAT 三大文件
+6. 必备 Skills：让你的 AI 员工真正能干活
+7. 12 个真实使用场景
+8. 安全指南：必须做的 5 件事
+9. 我的配置方案和建议（含给内容创作者和投资者的建议）
+
+## 1.
+
+
+OpenClaw 是什么？一句话解释
+
+OpenClaw = 一个 24/7 运行在你自己设备上的 AI 员工，通过 WhatsApp / Telegram / iMessage 跟你沟通，可以帮你发邮件、管日程、写代码、看网页、管理文件，甚至帮你砍价买车。
+
+它不是一个 AI 模型（不是 ChatGPT，不是 Claude），而是一个开源的 AI 代理框架。你可以把它理解为一个「数字员工的操作系统」——它本身不会思考，但它连接了你选择的 AI 大脑（Claude、GPT、Gemini、DeepSeek 等），加上你的各种工具（邮箱、日历、文件系统、浏览器），就变成了一个真正能「干活」的 AI 助手。
+
+关键信息
+
+- 创始人：Peter Steinberger，奥地利程序员，PSPDFKit 创始人
+- 发布时间：2025 年 11 月（原名 Clawdbot → Moltbot → OpenClaw）
+- 开源协议：MIT License（完全免费使用）
+- GitHub Stars：截至 2026 年 2 月已超过 20 万颗星
+- 重要事件：2026 年 2 月 14 日，Peter 宣布加入 OpenAI，项目移交给开源基金会
+
+为什么叫 OpenClaw？
+
+最早叫 Clawdbot（谐音 Claude + bot），被 Anthropic 提出商标投诉后改名 Moltbot（龙虾主题🦞），最终定名 OpenClaw。社区里大家亲切地叫它「Molty」。
+
+## 2. 核心概念：为什么它和 ChatGPT 不一样
+
+
+我用一个简单的比喻：
+
+ChatGPT / Claude = 一个很聪明的人，坐在那里等你提问
+
+OpenClaw = 一个很聪明的人 + 一张办公桌 + 一台电脑 + 你的所有账号密码，24 小时在线帮你干活
+
+区别在于：
+
+![](https://pbs.twimg.com/media/HCZdL9laoAAYC_X.jpg)
+
+核心架构（非技术人员版）
+
+OpenClaw 的架构其实很简单，三个部分：
+
+1.
+
+Gateway（网关）：你设备上跑的一个程序，相当于 OpenClaw 的「大脑调度中心」，负责接收消息、调用 AI、执行任务。一旦启动就在后台持续运行。
+2.
+
+Channel（通道）：你和 OpenClaw 交流的方式。它支持 WhatsApp、Telegram、iMessage、Discord、Slack 等。你发消息给它，它就开始干活。
+3.
+
+Skills（技能）：OpenClaw 能做的事情，通过安装不同的 Skill 来扩展能力。比如「管理 GitHub」「控制智能家居」「搜索网页」等。社区有 100+ 个预置技能，你也可以自己写。
+
+还有一个很酷的功能叫 Heartbeat（心跳）：OpenClaw 每隔一段时间（默认 30 分钟）会自动醒来，检查一个你设定的待办清单，决定有没有需要主动找你的事情。这就是它「主动性」的来源。
+
+## 3. 安装方案大比拼：Mac Mini vs 云端 VPS vs 托管平台
+
+
+这是社区里争论最激烈的话题。我把三种方案做了一个详细对比：
+
+方案 A：Mac Mini（推荐指数 ⭐⭐⭐⭐⭐ 适合 Apple 用户）
+
+Mac Mini M4 已经成了 OpenClaw 社区的「官方推荐硬件」，网上有报道说因为 OpenClaw 的热度导致 Mac Mini 一度缺货。
+
+优势：
+
+- iMessage 集成：Mac 独有的杀手级功能，用 iMessage 跟你的 AI 员工对话，体验最无缝iMessage 就是美国人的微信
+
+- Apple 全家桶联动：HomeKit 智能家居控制、Apple Notes、Reminders、Calendar 一站整合。有用户给家里每个人都配了一个 AI 助手，全家共享 Apple 生态
+- 适合当「AI 家庭服务器」：放在客厅或书房，连接智能家居（有人做了 Jarvis 语音克隆 + Home Assistant 控制全屋灯光和空调），帮孩子搭 Minecraft 服务器并通过聊天界面实时接受孩子的请求，自动提醒孩子考试日程——一台 Mac Mini 变成全家的 AI 管家
+- 能耗极低：Mac Mini M4 待机功率只有 3-5 瓦，一年电费约 30-50 元人民币，7×24 运行毫无压力
+- 隐私性最强：所有数据都在你家里的设备上，不经过任何第三方服务器
+- 长期成本最低：一次性购买后，只需支付 API 费用
+- Silicon Valley 的真实需求验证：OpenClaw 导致硅谷 Mac Mini 一度缺货，有人甚至特意买了专门跑 OpenClaw 的 Mac Mini，还给它起了名字
+
+劣势：
+
+- 一次性成本高：Mac Mini M4 16GB 起价 $599（约 4300 元人民币）
+- 不是真正的 24/7：停电、断网、macOS 强制更新都会中断
+- 不能远程扩容：内存是焊死的，买了 16GB 就是 16GB
+- 安全配置需要自己搞：端口转发、防火墙、SSL 证书
+
+硬件选择建议：
+
+- Mac Mini M4 16GB（$599）：够用了！如果你用云端 API（Claude、GPT），16GB 完全足够，因为 AI 计算是在远端进行的
+- Mac Mini M4 Pro 24GB（$1,399）：如果你想在本地跑一些小模型（通过 Ollama），可以考虑
+- 二手 M1/M2 Mac Mini：$400-500 左右就能买到，性能用来跑 OpenClaw + 云端 API 完全没问题，性价比最高的选择
+
+方案 B：云端 VPS（推荐指数 ⭐⭐⭐⭐ 适合技术人员）
+
+VPS 就是你在数据中心租一台虚拟服务器，远程运行 OpenClaw。
+
+优势：
+
+- 真正的 24/7 运行：数据中心有备用电源和冗余网络
+- 成本低：$4-12/月（约 30-85 元人民币/月）
+- 安全隔离：就算被攻击，也只影响一台空的服务器，不影响你的个人电脑
+- 可扩展：需要更多资源？点一下就能升级
+- DigitalOcean 提供一键部署：$6/月起，几分钟就能搞定
+
+劣势：
+
+- 没有 iMessage（必须要 macOS 硬件）
+- 没有本地文件访问：你的电脑上的文件它碰不到
+- 需要 Linux 基础：SSH、Docker、防火墙配置
+- 数据在第三方：隐私性不如本地
+
+推荐的 VPS 服务商：
+
+- Google Cloud：新用户有 $300 免费额度，足够跑 OpenClaw 好几个月，是零成本试水云端部署的最佳选择（我目前就用的这个方案）
+- Hetzner：$4/月起，欧洲服务器，性价比极高
+- Contabo：$4/月起，同样便宜
+- DigitalOcean：$6/月起，有 OpenClaw 一键部署模板，最省心
+- Oracle Cloud：有免费层，可以白嫖跑 Gateway
+
+最低配置要求：2 vCPU、4GB RAM、40GB SSD 就够了。
+
+> Quoted tweet
+> https://t.co/JUkejnZVKV
+> https://x.com/i/web/status/2019693762868588782
+
+方案 C：托管平台（推荐指数 ⭐⭐⭐ 适合完全不想折腾的人）
+
+已经有不少第三方公司推出了 OpenClaw 托管服务：
+
+- OpenClaw Cloud：$39.90/月，官方托管
+- RunMyClaw：$30/月，专用服务器 + 零知识密钥安全
+- ZeroClaw Cloud：按需定价，Kubernetes 级别的安全隔离
+- xCloud：$24/月
+
+优势：零配置，自动更新，有技术支持 劣势：最贵，隐私性最差，仍需自付 API 费用
+
+方案 D：大模型厂商托管方案（推荐指数 ⭐⭐⭐⭐ 适合想要零配置 + 低成本的用户）
+
+除了第三方托管平台，一些大模型厂商开始直接提供基于 OpenClaw 的托管服务。最有代表性的是 MiniMax 的 MaxClaw。
+
+MaxClaw 是什么？
+
+MaxClaw 是 MiniMax（国内 AI 六小龙之一，港股上市公司）在 2026 年 2 月 25 日推出的官方云托管 AI Agent。它基于 OpenClaw 开源框架，搭载 MiniMax M2.5 模型（2290 亿参数 MoE 架构，每个 Token 只激活约 100 亿参数），实现了在保持高智能的同时，推理成本只有 Claude Sonnet 的 1/7 到 1/20。
+
+怎么用？ 打开 [agent.minimax.io](http://agent.minimax.io/) → 点击「MaxClaw」→ 10 秒内完成部署。没有终端、没有配置文件、没有报错信息。
+
+优势：
+
+- 真正的零门槛：不需要服务器、Docker、API Key，10 秒部署完成
+- 成本极低：M2.5 模型的推理价格远低于 Claude 和 GPT 系列
+- 内置长期记忆：Agent 会记住你的偏好和工作习惯，越用越懂你
+- 10,000+ 预置专家 Agent：涵盖开发、内容创作、金融分析等垂直领域
+- 支持主流办公平台：Telegram、Discord、Slack、飞书、钉钉
+- 内置实用技能：图片生成、视频创作、网页搜索、应用部署、爆款内容追踪等
+
+劣势：
+
+- 锁定 M2.5 模型：不能换成 Claude、GPT 或其他模型。如果你需要 Claude Opus 的深度推理能力，MaxClaw 做不到
+- 数据在 MiniMax 服务器上：对隐私要求极高的用户需要权衡
+- 灵活性有限：相比自建 OpenClaw 的完全可控，MaxClaw 是「精装修拎包入住」——省心但不能随意改造
+
+适合谁？ 不想折腾技术、预算敏感、主要用中文工作的用户。特别是如果你只是想快速体验「24/7 AI 员工」的感觉，MaxClaw 是目前门槛最低的入口。
+
+方案 E：混合方案（Peter 创始人推荐的渐进路径）
+
+OpenClaw 官方建议的部署节奏：
+
+- 第 1 个月：在你的笔记本电脑上跑，熟悉系统
+- 第 2 个月：把配置 Docker 化
+- 第 3 个月：部署到 VPS 实现 24/7 运行
+
+而且 OpenClaw 支持混合架构：Gateway 跑在云端 VPS 保证 24/7 在线，你的 Mac 作为「Node（节点）」连接上去，提供屏幕控制、摄像头、iMessage 等本地硬件功能。
+
+我的建议
+
+![](https://pbs.twimg.com/media/HCZdgDpbgAARkJG.jpg)
+
+## 4.
+
+
+AI 模型选择指南：省钱的秘密
+
+这部分是很多人最关心的。OpenClaw 是免费的，但 AI 模型的 API 调用 Token 要钱。
+
+4.1 核心概念：Token 是什么？
+
+Token 是 AI 模型计费的基本单位。简单理解：1 个英文单词 ≈ 1-2 个 Token，1 个中文字 ≈ 2-3 个 Token。你每发一条消息、AI 每回一条消息，都在消耗 Token。
+
+4.2 各模型 API 价格对比（2026 年 2 月）
+
+![](https://pbs.twimg.com/media/HCZdpBza0AArvU-.jpg)
+
+4.3 不同使用量的月费估算
+
+![](https://pbs.twimg.com/media/HCZdvK-aoAAnqhS.jpg)
+
+看到了吗？模型选择对成本的影响是 100 倍以上！ 用 GPT-4o-mini 一个月可能就几块钱，但用 Claude Opus 可能要几百美金。
+
+4.4 最省钱的策略：分层模型
+
+这是社区里高手们总结出来的最佳实践：
+
+Layer 1：廉价模型处理 90% 的日常任务
+
+- GPT-4o-mini、Gemini 3 Flash、Kimi K2.5
+- 日历管理、邮件草稿、天气查询、简单聊天
+- 月费：$1-5
+
+Layer 2：中档模型处理复杂工作
+
+- Claude Sonnet 4.5、GPT-4o
+- 代码编写、长文分析、策略规划
+- 月费：$10-30
+
+Layer 3：顶级模型只在关键时刻使用
+
+- Claude Opus 4.6（只在需要深度推理时调用）
+- 月费：按需
+
+在 OpenClaw 里如何实现分层？3 种方法，从简单到高级
+
+OpenClaw 提供了多种方式来实现「任务自动匹配模型」，你不需要每次手动切换。
+
+方法 1：Fallback 链（最简单，适合新手）
+
+设置主模型和备选模型。当主模型被限流或出错时，自动切换到备选模型。这是最基础的分层——虽然不是按任务复杂度分层，但确保了你始终有模型可用：
+
+方法 2：Heartbeat 用便宜模型、对话用好模型（中级，推荐）
+
+OpenClaw 的 Heartbeat（心跳）每 30 分钟跑一次，但大部分时候只是检查一下「有没有要干的事」然后回一句 HEARTBEAT_OK。这种简单检查完全没必要用贵的模型。你可以单独给 Heartbeat 指定一个便宜模型，主对话继续用好模型：
+
+光这一步就能省很多钱——Heartbeat 一天跑 48 次，如果每次都用 Sonnet，一个月单心跳就可能花 $15-20；换成 GPT-4o-mini 后，心跳成本降到几毛钱。
+
+方法 3：多 Agent + Sub-Agent 分工（高级，效果最好）
+
+这是 OpenClaw 最强大的分层方式。你可以在一个 Gateway 里配置多个 Agent，每个 Agent 用不同的模型、不同的工作空间，互不干扰。比如：
+
+- 「秘书」Agent：用 GPT-4o-mini，负责日历、提醒、简单问答
+- 「分析师」Agent：用 Claude Sonnet，负责市场研究、内容分析
+- 「顾问」Agent：用 Claude Opus，只在需要深度推理时被召唤
+
+主 Agent 还可以通过 Sub-Agent（子代理）功能，把重复性或批量任务分配给更便宜的模型去跑：
+
+这样，主 Agent 用 Sonnet 做决策和规划，但它派出去跑腿的 Sub-Agent 都用 GPT-4o-mini，成本立刻降一个数量级。
+
+4.5 更聪明的省钱方式：API 聚合路由
+
+分层模型的思路是对的，但手动切换模型太麻烦。好消息是，现在有「智能路由器」可以自动帮你选最便宜且够用的模型。
+
+方案 A：OpenRouter（最省心的 SaaS 方案）
+
+OpenRouter 是目前最大的 AI 模型聚合网关，相当于「模型界的 Stripe」：一个 API Key 接入 500+ 个模型，统一计费，自动故障转移。OpenClaw 已经内置了 OpenRouter 支持，配置非常简单。
+
+- 费用：在模型原价基础上加收 5-5.5% 手续费
+- 亮点：openrouter/auto 模式会根据你的提示自动选择性价比最高的模型——简单的心跳检查用便宜模型，复杂推理自动升级
+- 适合：不想管理多个 API Key、追求简单稳定的用户
+
+方案 B：ClawRouter（我目前在用的方案，专为 OpenClaw 设计的本地路由）
+
+ClawRouter 是 BlockRunAI 专门为 OpenClaw 生态开发的 Agent 原生路由器，比 OpenRouter 更进一步——它在你的本地运行，<1 毫秒延迟，对每个请求进行 15 个维度的评分，自动路由到最便宜且能胜任的模型。
+
+核心逻辑是把请求分成 4 个等级：SIMPLE（简单查询）→ MEDIUM（一般任务）→ COMPLEX（复杂分析）→ REASONING（深度推理），每个等级匹配对应的模型。
+
+实际效果：混合平均成本约 $2/百万 Token，而如果全部用 Claude Opus 是 $25/百万 Token，省了约 90%。
+
+![](https://pbs.twimg.com/media/HCZeFBebsAAUADr.jpg)
+
+ClawRouter 还有一个 Free 模式，使用开源模型 GPT-OSS-120B 作为兜底，钱包余额为零时也能正常运行。
+
+我的建议： 如果你知道怎么用稳定币，推荐 ClawRouter ；否则先用 OpenRouter 的 Auto 模式。
+
+> Quoted tweet
+> 推荐一个我在使用的算力服务 ClawRouter 最近用OpenClaw Agent的朋友越来越多了，最大的痛点还是模型费用，Opus太烧钱了，还有速率限制 ClawRouter会根据你的需求在不同模型间进行调配，实测下来 7 天用了 $7 左右，比全部用 Opus 4.5 节省 95% 而且还有一个好处，USDC + x402 随充随用 安装方法👇 https://t.co/xMZu6g7YJu
+> https://x.com/i/web/status/2026128618737537293
+
+4.6 免费方案：本地模型
+
+如果你有一台带 GPU 的电脑（或者 Mac Mini M4 Pro 以上），可以通过 Ollama 或 LM Studio 跑本地模型，API 费用为零。
+
+但注意：本地模型的智能程度目前还比不上 Claude Sonnet 或 GPT-4o，适合简单任务。
+
+4.7 ⚠️ 重要提醒：Claude 订阅不能用于 OpenClaw
+
+2026 年 1 月，Anthropic 明确禁止了用 Claude Pro/Max 订阅的 OAuth Token 来驱动 OpenClaw 等第三方工具。如果你想用 Claude 模型，必须使用 Anthropic API Key（按量付费），不能使用 $20/月或 $200/月的订阅账号。
+
+违反这个规定可能导致账号被封。
+
+## 5. 如何善用 SOUL、MEMORY、HEARTBEAT 三大文件
+
+
+如果 API Key 是 OpenClaw 的「燃料」，那这三个文件就是它的「性格、记忆和作息表」。它们是 OpenClaw 最独特的设计——用纯文本的 Markdown 文件来定义你的 AI 员工是谁、记住了什么、以及什么时候该主动干活。
+
+你可以直接用文本编辑器打开这些文件修改（它们就在 ~/.openclaw/workspace/ 目录下），也可以通过聊天告诉 OpenClaw「更新你的 [SOUL.md](http://soul.md/)，加上XXX」，它会自己改。
+
+[SOUL.md](http://soul.md/)——你 AI 员工的「性格说明书」
+
+[SOUL.md](http://soul.md/) 定义了 Agent 的人格、语气、价值观和不可逾越的底线。每次 Agent 醒来，第一件事就是读这个文件——它靠读 [SOUL.md](http://soul.md/) 来「知道自己是谁」。
+
+一个好的 [SOUL.md](http://soul.md/) 应该包含：
+
+- 你给它起的名字和角色定位：比如「你叫 Molty，你是 Star 的个人助理」
+- 语气和风格：比如「用中文回复，简洁直接，不要用过多的emoji」
+- 工作边界和规则：比如「发送任何超过 $100 的操作前必须先问我确认」「永远不要删除邮件，只能归档」
+- 重要的决策原则：比如「我是内容创作者，帮我做决策时优先考虑内容质量而非效率」
+
+实际的例子：
+
+关键提醒：不要在 [SOUL.md](http://soul.md/) 里放 API Key、手机号码等敏感信息——它会成为 prompt 的一部分，有泄露风险。
+
+[MEMORY.md](http://memory.md/) + memory/ 日志——你 AI 员工的「长期记忆」
+
+OpenClaw 有两层记忆系统：
+
+[MEMORY.md](http://memory.md/)：手动维护的长期记忆，存放最重要的、不会变的事实。比如「Star 住在马来西亚吉隆坡」「Star 的播客叫 Day1Global Podcast」。这个文件只在主对话（DM）里加载。
+
+memory/YYYY-MM-DD.md（每日日志）：这是自动生成的。当一次对话的上下文快要超出模型能处理的范围时，OpenClaw 会自动把对话「蒸馏」成一份摘要，保存到当天的日志文件里。下次醒来时，它会读取今天和昨天的日志来恢复上下文。
+
+OpenClaw 还内置了**向量搜索（memory_search）**功能——当 Agent 需要回忆更早的事情时，它可以语义搜索所有历史记忆。
+
+实用建议：
+
+- 定期检查 [MEMORY.md](http://memory.md/)，删除过时的信息，补充新的重要事实
+- 不要在 [MEMORY.md](http://memory.md/) 里放隐私信息（有用户发现 Agent 不小心把手机号码发到了社交平台）
+- 可以在 [SOUL.md](http://soul.md/) 里加一条规则：「如果 [MEMORY.md](http://memory.md/) 里的信息过时了，主动提醒我更新」
+
+[HEARTBEAT.md](http://heartbeat.md/)——你 AI 员工的「待办清单」
+
+Heartbeat（心跳）是 OpenClaw 主动性的核心。它每隔一段时间（默认 30 分钟）自动醒来，读取 [HEARTBEAT.md](http://heartbeat.md/) 里的待办清单，判断有没有需要主动找你的事。如果没有，它就回一句「HEARTBEAT_OK」继续睡觉；如果有，它就主动给你发消息。
+
+一个实用的 [HEARTBEAT.md](http://heartbeat.md/)：
+
+几个关键配置：
+
+- heartbeat.every：检查频率，默认 30 分钟。如果你用 Anthropic 的 OAuth 认证，默认是 1 小时
+- heartbeat.target：消息发到哪里。"none" 是不发（默认），"last" 是发到你上次聊天的通道
+- heartbeat.activeHours：活跃时间窗口，避免半夜被 AI 吵醒
+- heartbeat.model：前面省钱策略里提到的，给心跳指定便宜模型
+
+进阶玩法：[HEARTBEAT.md](http://heartbeat.md/) 是可以被 Agent 自己修改的。你可以告诉它「把每日投资早报加到你的心跳清单里」，它会自动更新这个文件。
+
+三个文件的协作关系
+
+简单总结：[SOUL.md](http://soul.md/) 决定「我是谁」，[MEMORY.md](http://memory.md/) 决定「我记得什么」，[HEARTBEAT.md](http://heartbeat.md/) 决定「我什么时候该主动干活」。 三者配合，就构成了一个有性格、有记忆、有主动性的 AI 员工。
+
+还有几个相关文件值得了解：
+
+- [USER.md](http://user.md/)：关于你（主人）的信息，让 Agent 更了解你的偏好
+- [AGENTS.md](http://agents.md/)：Agent 的操作指南，放稳定不变的工作规则
+- [IDENTITY.md](http://identity.md/)：Agent 的名字、emoji 和主题色
+- [TOOLS.md](http://tools.md/)：可用工具的备注说明
+
+## 6. 必备 Skills：让你的 AI 员工真正能干活
+
+
+OpenClaw 装完之后，默认只能聊天——它有大脑，但没有手脚。Skills（技能）就是给它装上手脚的过程。
+
+Skills 的本质是一个包含指令的 Markdown 文件（[SKILL.md](http://skill.md/)），告诉 Agent 如何使用某个工具。社区技能市场 ClawHub（[clawhub.com](http://clawhub.com/)）目前有 3,000+ 个 Skills 可供安装，安装方式也很简单：
+
+你甚至可以直接把一个 Skill 的 GitHub 链接发给 Agent，让它自己安装配置。
+
+🔴 第一优先级：网页搜索和浏览（没有这个，Agent 是瞎的）
+
+没有网页搜索能力的 AI Agent，只能靠训练数据里的旧知识回答问题。这是装完 OpenClaw 后第一个要解决的事。
+
+内置工具：web_search + web_fetch
+
+OpenClaw 自带两个基础网页工具（不需要额外安装 Skill）：
+
+- web_search：搜索网页，返回 URL 列表和摘要。支持 4 个搜索引擎，按优先级自动检测：Brave → Gemini → Perplexity → Grok。你需要至少配置其中一个的 API Key
+- web_fetch：访问具体的网页 URL，把内容抓取回来给 Agent 阅读
+
+要启用它们，在配置文件里打开 web 工具组就行。但这两个内置工具有个问题：现在很多网站会屏蔽机器人访问，web_fetch 经常抓不到内容。
+
+推荐增强方案：Firecrawl
+
+Firecrawl 是一个专门为 AI 设计的网页抓取服务，能绕过大部分反爬限制，把复杂的网页 HTML 转换成干净的 Markdown 文本。配置 Firecrawl API Key 后，它会自动作为 web_fetch 的增强备选。同时安装 Firecrawl CLI Skill，你的 Agent 就能一步到位地「搜索 + 抓取全文」：
+
+另一个免费方案：web-search Skill（DuckDuckGo）
+
+如果你不想额外付费，社区有一个基于 DuckDuckGo 的免费搜索 Skill：
+
+它通过 DuckDuckGo 的 API 搜索网页、新闻、图片和视频，支持时间范围过滤和地区设置，输出格式支持 Text / Markdown / JSON。免费，不需要 API Key。
+
+另一个选择：Tavily Search（专门给 AI 优化的搜索引擎）
+
+Tavily 会自动清理广告和冗余内容，只返回核心结果给 AI，效果比 DuckDuckGo 好但需要 API Key：
+
+搜索方案对比：
+
+![](https://pbs.twimg.com/media/HCZfSz-agAAejeP.jpg)
+
+我的建议：先装免费的 web-search Skill 作为兜底，再配置 Brave Search 的 API Key（有免费额度）作为内置搜索引擎，如果你经常需要 Agent 做深度研究，再加上 Firecrawl。
+
+🟡 第二优先级：浏览器自动化（让 Agent 能操作网页）
+
+搜索只能「看」网页，但如果你想让 Agent「操作」网页——填表单、点按钮、下载文件——就需要浏览器自动化 Skill：
+
+- Agent Browser（ClawHub 下载量 Top 10，43 颗星）：让 Agent 直接控制浏览器导航网页、填写表单、提取数据。这就是前面「帮你砍价买车」案例里用到的核心能力
+- Browserbase：云端无头浏览器服务，能处理 CAPTCHA 验证和复杂的 JavaScript 渲染
+
+🟢 第三优先级：提升效率的实用 Skills
+
+以下是 ClawHub 上下载量最高、社区验证最充分的 Skills：
+
+![](https://pbs.twimg.com/media/HCZfaWybcAAIDkO.jpg)
+
+## 进阶：给你的 Agent 配上加密钱包，体验 Agent Payment
+
+
+> Quoted tweet
+> https://t.co/hmNdmJWx3b
+> https://x.com/i/web/status/2020666947969708097
+
+⚠️ Skill 安全提醒
+
+2026 年 1 月的 ClawHavoc 事件中，335 个来自同一攻击者的恶意 Skill 被植入了窃取密码的恶意软件。安装任何 Skill 前：
+
+1. 检查作者是谁，项目有多少 GitHub Stars
+2. 在 ClawHub 页面查看 VirusTotal 安全扫描报告
+3. 只给 Skill 最小必要权限
+4. 不确定的 Skill 开启沙盒模式（sandbox: true）运行
+
+## 7. 12 个真实使用场景（按价值排序）
+
+
+OpenClaw 最让人兴奋的是它的真实使用场景，不是 Demo，是真的在帮人干活。以下案例全部来自社区真实分享。
+
+场景 1：帮你砍价买车，省了 $4,200
+
+最出圈的案例——工程师 AJ Stuyvenberg 让他的 OpenClaw 帮他买一辆 2026 Hyundai Palisade。AI 自动搜索了本地经销商库存，填写联系表格，然后花了几天时间让经销商互相竞价，最后省了 $4,200 美金。他本人在睡觉。这个案例用到了 Mac Mini 上的浏览器控制、邮件和 iMessage 功能。
+
+场景 2：说「帮我打理生活」然后去睡觉
+
+@ImSh4yy 在车库的 Mac Mini 上装了 OpenClaw，跟它说了一句「handle my life」就去睡了。早上醒来发现：收件箱清理好了、文件整理好了、重要邮件已经起草了回复。另一个用户 @Tuteth_ 更夸张——下载后让它跑了 8 个小时，自己去公园陪孩子了，回来看到一堆活都干完了。
+
+场景 3：Mac Mini 变身全家 AI 管家
+
+@ryanseamons 在家里的 Mac Mini 上给家庭每个成员都配了一个 AI 助手。@danpeguine 则让 OpenClaw 帮忙通知他和妻子儿子的学校考试日程。还有人做了 Jarvis 语音克隆，用 Home Assistant 控制全屋的灯光、空调和空气净化器。一台 Mac Mini = 智能家居中枢 + 家庭日程秘书 + 孩子的 Minecraft 服务器管理员。
+
+场景 4：15,000 封邮件一夜清零
+
+一个开发者用 OpenClaw 连接 himalaya 邮件客户端，一夜处理了 15,000 封积压邮件：退订垃圾邮件、按紧急程度分类、对重要的自动起草回复。关键是它还有持久记忆——学会了你的邮件处理偏好后，下次就更快了。
+
+场景 5：自动值夜班——3 点钟的 Bug 也能搞定
+
+GitHub Actions 构建失败 → 自动拉日志 → 诊断问题 → 生成修复 PR → 通知开发者。配合 Sentry 错误监控，一个团队把 OpenClaw 设成了 3 班倒（6am-noon, noon-6pm, 6pm-midnight），真正的 7×24 自动运维。有企业反馈 IT 效率提升了 40%。
+
+场景 6：每日投资早报
+
+每天早上 6:30，OpenClaw 自动给你发一条消息：天气、今日日程、待办优先级、行业新闻摘要、你关注的股票/加密货币动态。ARK Invest 的 Cathie Wood 的首席 AI 分析师就在用 OpenClaw，Wood 本人说「用了一个周末就能感觉到他变得有条理多了」。
+
+场景 7：帮父母经营茶叶生意
+
+@danpeguine 用 OpenClaw 帮他父母管理茶叶生意：排员工班次、跟进 B2B 客户、生成发票、整理账目。另一个用户的 OpenClaw 管理着整个房地产业务的入站客户端，通过 CRM API 自动跟进线索。
+
+场景 8：手机上遥控编程
+
+出门在外，给 Telegram 发一条「fix tests」，OpenClaw 在家里的 Mac Mini 上自动跑测试、修 bug、提交代码。@localghost 说他散步的时候就完成了一个新功能的部署——从想法到上线，他只是发了几条消息。
+
+场景 9：内容创作者的自动化军团
+
+每天 7 点自动扫描 X 上的热门话题，分析互动模式，然后生成内容草稿。有人建了完整的 RSS → 内容改写 → 分平台排版 → 定时发布的 Pipeline，每周省 15 小时。还有人用 OpenClaw 做了一个自动 SEO Agent，配合冷启动外联，每月自动预约 60 个销售通话。
+
+场景 10：保险理赔和税务准备
+
+用自然语言让 OpenClaw 帮你提交保险理赔、预约维修、准备税务文件。有个用户的 OpenClaw 甚至意外替他和保险公司起了争执，结果保险公司因此重新调查了案件而不是直接拒赔——意外的胜利😂
+
+场景 11：构建个人知识图谱
+
+一个开发者把自己的 ChatGPT 聊天记录全部导入 OpenClaw，提取了 49,079 条原子事实和 57 个实体，构建了一个完整的个人知识图谱。每天凌晨 4 点自动做头脑风暴，早上 8 点发送每日简报。
+
+场景 12：Agent 自己写营销页面然后部署
+
+@tokifyi 让 OpenClaw 去搜索自己的使用案例。它找到了一个仓库，把案例整理成了一个营销页面，然后自己部署上线了。Bot 已经在给自己写推广了。
+
+## 8. 安全指南：必须做的 5 件事
+
+
+这是整篇文章最重要的部分。OpenClaw 很强大，但「强大」也意味着「危险」。
+
+2026 年 1 月，安全研究人员发现了一个严重漏洞（CVE-2026-25253），允许一键远程代码执行。Cisco 的 AI 安全团队测试了一个第三方 OpenClaw Skill，发现它在用户不知情的情况下进行了数据窃取和提示注入攻击。社区技能市场 ClawHub 上被发现了 341 个恶意 Skill。
+
+你必须做的 5 件事：
+
+① 更新到最新版本
+
+确保你运行的是 v2026.1.29 或更新版本，修复了关键的 RCE 漏洞。
+
+② 运行安全审计
+
+在终端输入安全审计命令，然后按照它的建议逐项修复。
+
+③ 限制权限
+
+给 OpenClaw 最小必要权限。比如：可以读日历，但不能删日历；可以读邮件，但发送需要你确认。
+
+④ 不要暴露到公网
+
+把 Gateway 绑定到 127.0.0.1（只允许本机访问），设置认证 Token，用 Tailscale 等工具做加密隧道。目前有超过 2 万个 OpenClaw 实例暴露在公网上，这是非常危险的。
+
+⑤ 谨慎安装社区 Skill
+
+不要随便安装来路不明的 Skill。ClawHub 上的 Skill 缺乏充分审核，有恶意代码的风险。只安装你理解的、知名开发者的 Skill。
+
+## 9. 我的配置方案和建议
+
+
+给内容创作者的建议
+
+作为内容创作者，我认为 OpenClaw 最大的价值是：
+
+1. 数据汇总自动化：让它每周自动拉取 YouTube、X、Substack 的数据
+2. 热点监控：定时搜索特定话题的最新动态（比如预测市场、人形机器人）
+3. 邮件和 DM 管理：自动分类，对重要的消息提醒你
+4. 内容排期提醒：基于你的内容日历发送提醒
+5. 初稿辅助：把语音备忘录转成文字初稿
+
+给非技术人员的入门路径
+
+如果你完全不懂代码，我建议：
+
+1. 先从 MaxClaw 或托管平台开始（MaxClaw 零门槛，RunMyClaw / OpenClaw Cloud 也很简单），体验一下 OpenClaw 的价值
+2. 连接 Telegram 或 WhatsApp 作为交流通道
+3. 从简单场景开始：日历管理、每日早报、天气提醒
+4. 用便宜的模型：GPT-4o-mini 就够应付大部分日常需求，或者直接用 OpenRouter Auto 模式
+5. 等你觉得值得投入后，再考虑买 Mac Mini 或自建 VPS
+
+给个人投资者的建议 💰
+
+如果你是个人投资者（美股、加密货币等），OpenClaw 可能是你目前能用上的最实用的 AI Agent 场景之一：
+
+1. 每日投资简报自动推送：让 OpenClaw 每天早上自动抓取市场数据、你关注的标的动态、宏观新闻，发到你的 Telegram。ARK Invest 的分析师都在用 OpenClaw 做这件事
+2. 接入投资数据源：连接你的钱包、交易所 API，做持仓追踪和风险提醒。社区已经有人做了 Polymarket 预测市场的自动交易 Bot
+3. 研究和分析自动化：用 OpenClaw 的 Chain（顺序）和 Parallel（并行）Agent 模式，自动做行业研究和竞品分析
+
+我们 Day1Global 也在做这个方向，[brief.day1global.xyz](https://brief.day1global.xyz/) 是我们搭建的每日投资情报看板，覆盖美股和加密市场的核心数据。如果你不想自己从零搭建投资早报的 Agent，可以直接订阅我们的 Daily Briefing 作为信息源，再用 OpenClaw 做个性化的二次加工和推送。
+
+btw，从内容创作者的角度，「OpenClaw + 投资数据」这个组合本身就是一个很好的内容方向，所以我们做了【美股研报深度分析】这个 skill, 已经在 Github 上有 300+ ⭐️，欢迎使用
+
+> Quoted tweet
+> 美股财报深度分析 Skill 来啦，已经传到 Github 仓库 访问 github. com/star23/Day1Global-Skills 下载里面的 tech-earnings-deepdive.skill ，扔给 claude 或者你的 OpenClaw 龙虾就行 另外还附送了 3 个 skills, 可以一起使用 直达链接放在评论区，欢迎来给 Star 哈哈👇 https://t.co/uke1VMMySv
+> https://x.com/i/web/status/2027610223310209325
+
+## 最后
+
+
+OpenClaw 让我想到了字节跳动的故事（嗯我真的很喜欢这个类比）。一开始大家看到今日头条，觉得只是一个新闻 App；最后它变成了「推荐引擎」，重新定义了内容分发。
+
+OpenClaw 现在看起来只是一个「聊天机器人」，但它真正在做的事情是——让每个人都能拥有一个 AI 员工。当 AI Agent 可以 24/7 运行、有持久记忆、能主动行动、还开源可控的时候，这就不只是一个工具了，而是一种新的生产力形态。
+
+当然，OpenClaw 目前还非常早期，安全问题、成本控制、能力边界都还在快速迭代中。但正如 Peter Thiel 那句话——「What important truth do very few people agree with you on?」——我认为 个人 AI Agent 将在 2-3 年内成为像智能手机一样的标配，而 OpenClaw 是目前这条赛道上跑得最远的开源项目。
+
+对内容创作者来说，这也是一个很好的内容方向。OpenClaw 的中文资料还非常稀缺，如果你是技术博主或者 AI 内容创作者，这个领域有很大的内容空白可以去填补。
+
+如果你也在用 OpenClaw，或者有任何问题，欢迎留言交流。
+
+声明：本文只是工具使用指南，不构成任何投资建议。OpenClaw 有安全风险，请在充分了解后谨慎使用。

@@ -1,0 +1,151 @@
+---
+title: "手把手教你配置 OpenClaw 多 Agent × TG 群组自动化系统，内含彩蛋"
+slug: "openclaw-agent-tg"
+locale: "zh"
+description: "🦞 手把手教你配置 OpenClaw 多 Agent × TG 群组自动化系统，内含彩蛋"
+category: "LLM Models"
+tags: ["Claude", "Multi-Agent"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCc8JBCb0AANYMs.jpg"
+featured: false
+date: 2026-03-03
+---
+
+# 🦞 手把手教你配置 OpenClaw 多 Agent × TG 群组自动化系统，内含彩蛋
+
+
+杰尼君第一个小龙虾，就是死在了多Agent配置上，全网搜索了一下，也没人讲清楚，最后自己慢慢摸索出来的TG群聊多Agent配置。
+
+首先杰尼君目前用的 Claude Sonnet 4.6，前段时间踩坑，很大因素是因为模型，之前用的 GPT CODEX，各种错误和BUG，选择一个聪明靠谱的大模型，非常重要！
+
+建议先看完全文再做配置，踩坑点可以提前注意，文末有彩蛋。
+
+───
+
+提前设计好框架，杰尼君的框架如下
+
+【架构设计】
+
+一主三副，各司其职：
+
+• 🦞 龙虾总管 = 调度中枢，监听群消息，分发任务
+
+• 📊 大饼 = 市场分析 + 每日晨报（定时稳定）
+
+• 🎨 冰冰 = 推文润色 + PPT + 信息图（按需创作）
+
+• 💻 姨太 = 代码 + 量化 + 自动化（技术执行）
+
+每个 Agent → 独立 TG Bot → 独立 workspace → 共享 skills 库
+
+───
+
+【TG 群组配置核心步骤】
+
+1. @BotFather 创建4个独立 Bot，拿到4个 token，再对每个子 Bot 执行 /setprivacy → 选 Disable，让 Bot 能读取群内所有消息（否则只能读到 @ 自己的消息）
+
+![](https://pbs.twimg.com/media/HCd2KrfaoAA0xY8.jpg)
+
+2.  openclaw.json 里配置4个 account（channels 部分），以下代码为杰尼君代码，可以直接喂给你的主机器人，让他学习代码自己配置即可：
+
+3. openclaw.json 里配置子 Agent，以下代码为杰尼君代码，可以直接喂给你的主机器人，让他学习代码自己配置即可，机器人名称/ID/工作目录自己修改：
+
+4.  bindings 数组绑定 Agent ↔️ Bot：
+
+5. 开启跨 Agent 通信：
+
+6. 把4个 Bot 全部拉进同一个群，再用TG @userinfobot 去获取该群组ID
+
+7. 关键！ 务必关闭子 Agent 的 TG Bot commands 权限，此步骤包含在第二步骤了，这里Highlight一下：
+
+⚠️ 否则TG的菜单项过多，TG 服务器会报响应错误，导致 Gateway 重启后各种 1006 错误（此 Bug 卡死了杰尼君一个小龙虾）
+
+Step 8： 权限设计：主机器人设 requireMention: false（可主动回复群消息），子机器人设 requireMention: true（被艾特才回复），此步代码也包含在第二步中了。
+
+───
+
+【💥 最容易踩的坑 TOP 5】
+
+坑1：代码尽量喂给主机器人，让他自己修改，防止你手动改配置文件，遇到一些空格类型错误导致整体报错，每次修改Json文件前，务必备份，出现错误可以及时回复！！
+
+坑2：私聊调教 ≠ 群聊记忆
+
+同一个 Agent 的私聊/群聊/cron 是完全独立的 session
+
+在私聊调教好的格式，群里完全不知道
+
+→ 解决：把所有规范写进 SOUL.md，每个 session 启动都加载，实在不行让私聊机器人出一份教程，再发进群聊里。
+
+坑3：子 Agent 默认不能互相通信
+
+龙虾总管想给大饼发调度指令 → 报 forbidden
+
+需要在 openclaw.json 开启：
+
+坑4：Gateway 重启 = 缓存清空 = 高成本
+
+重启后所有 170k tokens 以原价重新加载
+
+→ 避免频繁重启，改配置务必一次到位
+
+坑5：skills 目录最好设置为软链接共享，自然语言告诉主机器人，让他设置装一，其他机器人就自动都有，如果子机器人说没有，让主机器人写个教程教子机器人即可。
+
+坑6：Subagent 容易超时
+
+因为主机器人调取Subagent的默认响应时间可能只有几秒，时间不够Subagent完成任务，结果主机器人就以为没有响应，
+
+正确做法：让主机器人把和Subagent的等待响应时间设置长一些。
+
+───
+
+【多 Agent 协作省 Token 的核心：STATE.yaml 模式】
+
+错误做法： 龙虾总管把大饼的研究结果(2000字)原文转发给冰冰
+
+→ 每份内容被读3次，Token 翻3倍
+
+正确做法：
+
+龙虾总管全程只传路径，省 Token 80%
+
+───
+
+【最终成果】
+
+✅ 4个 Bot 同时在线于同一 TG 群
+
+✅ 龙虾总管调度，子 Agent 独立完成任务
+
+✅ STATE.yaml 去中心化协作，省 Token 80%
+
+![](https://pbs.twimg.com/media/HCdprczbIAASWzr.jpg)
+
+彩蛋：
+
+可以把以下案例文档发到群聊里，让主机器人学习借鉴，快速理解多 Agent 协作模式：
+
+https://github.com/hesamsheikh/awesome-openclaw-usecases/blob/main/usecases/multi-agent-team.md
+
+https://github.com/hesamsheikh/awesome-openclaw-usecases/blob/main/usecases/autonomous-project-management.md
+
+https://github.com/hesamsheikh/awesome-openclaw-usecases/blob/main/usecases/content-factory.md
+
+https://github.com/hesamsheikh/awesome-openclaw-usecases/blob/main/usecases/overnight-mini-app-builder.md
+
+杰尼君机器人的回复：
+
+![](https://pbs.twimg.com/media/HCdllF6bMAAeg1Q.jpg)
+
+📌 社群 & 关注
+
+关注 机灵的杰尼君，获取更多币圈一手资讯：
+
+- 推特[@Meta8mate](https://x.com/@Meta8mate)：[https://x.com/Meta8Mate](https://x.com/Meta8Mate)
+- 微博大号@深情的杰尼君 https://weibo.com/u/7900952897
+- 微博小号@冷静的杰尼君 https://weibo.com/u/8456645938
+- Telegram 群：[http://t.me/Jienibaby](http://t.me/Jienibaby)
+- 微信：Jieni177
+- QQ群：771717443 （进群联系小王助理获取核心群资格）
+- 杰尼社群大全：[https://linktr.ee/Meta588](https://linktr.ee/Meta588)
