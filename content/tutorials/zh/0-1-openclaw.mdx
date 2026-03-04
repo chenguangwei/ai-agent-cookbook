@@ -1,0 +1,165 @@
+---
+title: "从0到1完整搭建OpenClaw多角色团队"
+slug: "0-1-openclaw"
+locale: "zh"
+description: "从0到1完整搭建OpenClaw多角色团队"
+category: "LLM Models"
+tags: []
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCc_zS9bQAA1Wee.jpg"
+featured: false
+date: 2026-03-04
+---
+
+# 从0到1完整搭建OpenClaw多角色团队
+
+
+大家在上一篇 [《告别 OpenClaw 天价账单：20分钟搭建私有 API 矩阵，自建Key 超低成本多开》](https://x.com/ResearchWang/status/2027683428154675476)中总共花费20r使用GPT-business账号搭建好账号池了，已经是极低的成本使用openclaw了，这里给大家提个醒：经我测试下来，一个business账号在5个小时内对话尽量在100次以内，如果想搭建多Bot的团队协作，强烈建议多买几个business账号或者使用多个不同的模型（gemini，GLM等等也是可以通过[上一篇教程](https://x.com/ResearchWang/status/2027683428154675476)进行配置的）
+
+ps：上一篇组件账号池的文章已经有5w观看了，闲鱼的老板都看到我了，我和他提了能不能给点优惠，他们同意了，商家链接我就不挂出来了，大家要是买business账号的话可以私我，和商家说 "ResearchWang13" 来的可以便宜一点哦~
+
+## 📚 目录
+
+
+- 什么是多 Bot 团队协作
+- 新手阶段：基础概念与前置准备
+- 进阶阶段：目录规划与 Agent 创建
+- 中级阶段：核心架构与完整配置
+- 高级阶段：记忆规范与多团队隔离
+- 实践任务清单
+- 常见问题解答
+- 选型建议与下一步
+
+## 什么是多 Bot 团队协作
+
+
+将多个独立的 Telegram Bot 组建成一个分工协作的 Agent 团队。通过合理的架构配置，你可以让不同的 Bot 扮演不同的角色（如主脑、程序员、研究员等），实现复杂任务的自动化流转。
+
+三种协作模式核心对比：
+
+- 模式 A（主脑 + 专才）： 主脑负责统一调度和派发任务，专才互相独立。适合需要严格流程控制的流水线作业。
+- 模式 B（独立共享）： 没有主脑，专才直接面向用户并共享记忆。适合任务边界清晰，用户明确知道该找谁的场景。
+- 模式 C（混合推荐）： 主脑负责调度，专才之间共享记忆，且用户可绕过主脑直接联系专才。这是生产级推荐方案，兼顾了前两者的优点，避免了单点故障。
+
+## 阶段1：基础概念与前置准备
+
+
+第一步：明晰你的前置需求
+
+在组建团队之前，每个 Bot 都需要进行基础的注册和身份获取。你需要确定团队的角色分配（例如：一个主脑，三个专才：coder, researcher, writer）。
+
+第二步：获取凭证
+
+在 Telegram 的 BotFather 中为每个角色创建新机器人（/newbot），并保存所有的 botToken。同时，你需要获取你个人的 Telegram 数字 ID 以便配置权限。
+
+> 🔨 实践任务 1：获取 Bot Token 与个人 ID
+
+- ✅ 完成标准： 成功记录所有角色的 botToken 以及你自己的 Telegram 数字 ID。
+
+## 阶段2：目录规划与 Agent 创建
+
+
+第三步：规划目录结构
+
+合理的目录结构是多 Bot 协作的基础。核心原则是：专才们的 workspace 指向同一个目录（共享记忆），但 agentDir 各自独立（独立身份）。
+
+> 🔨 实践任务 2：创建工作区目录
+
+在你的终端中参考以下结构建立文件夹：
+
+- ✅ 完成标准： 理解共享 workspace（记忆）与独立 agentDir（身份）的区别，并在本地建立好基础文件夹。
+
+第四步：创建 Agent 实例
+
+在 OpenClaw 中注册你的团队成员。
+
+## 阶段三：核心架构与完整配置
+
+
+第五步：选择并应用协作模式（推荐模式 C）
+
+打开 openclaw.json，根据你的需求写入对应的配置。这里以**推荐的模式 C（混合模式）**为例：主脑独立 workspace，专才共享 workspace，开启 agentToAgent，并允许你直接联系专才。
+
+> 🔨 实践任务 3：配置模式 C
+
+编辑你的 openclaw.json 文件：
+
+(注：如果想使用模式 A 或 B，请根据对应逻辑修改 workspace 共享状态及 dmPolicy 权限设置)
+
+- ✅ 完成标准： 成功将团队配置写入 openclaw.json 并保存。
+
+## 阶段四：记忆规范与多团队隔离
+
+
+第六步：配置各 Agent 的 SOUL.md
+
+为确保团队成员各司其职，你需要为它们设定人设（SOUL.md）。
+
+主脑 SOUL.md（放在 workspace-main/SOUL.md）:
+
+专才 SOUL.md（放在 workspace-team-a/SOUL.md 或各自 agentDir 下）:
+
+第七步：启动与验证
+
+> 🔨 实践任务 4：启动团队并验证
+
+使用以下命令确保所有配置生效并正常运行：
+
+- ✅ 完成标准： 控制台无报错，且各个 Bot 均能正常响应对应的 Telegram 消息。
+
+## 实践任务清单
+
+
+新手阶段（必做）
+
+- 任务 1: 获取所有 Bot Token 及你的个人 Telegram ID
+
+进阶阶段（推荐）
+
+- 任务 2: 按照规范建立共享与独立的目录结构，并注册 Agent
+
+中级阶段（进阶）
+
+- 任务 3: 在 openclaw.json 中完成模式 C（混合模式）的核心配置
+
+高级阶段（挑战）
+
+- 任务 4: 为主脑和专才编写 SOUL.md，重启网关并验证多 Bot 通讯正常
+
+## 常见问题解答
+
+
+Q1: 模式 C 里专才并发写记忆会冲突吗？偶发，但实际影响小，一般不会同时写同一行。建议在写记忆时加上 agent 标识（如 [coder] 修复了xxx问题...），可以有效减少混淆。
+
+Q2: 我能绕过主脑直接联系专才吗？在模式 C 中可以。专才的 dmPolicy: "allowlist" 允许你通过数字 ID 直接 DM。而在模式 A 中，专才设置为 dmPolicy: "disabled"，必须强制通过主脑。
+
+Q3: agentToAgent 开了之后，专才能主动联系主脑吗？能，allow 列表是双向的。专才也可以用 sessions_send 主动给主脑发消息汇报进度。
+
+Q4: 专才共享 workspace，SOUL.md 不就一样了吗？是的，共享 workspace 意味着 SOUL.md 也共享。如果你需要给专才设定截然不同的人格，建议把 SOUL.md 放在它们各自的 agentDir 下，或者在 JSON 配置里用 systemPrompt 字段单独定义。
+
+Q5: 升级 OpenClaw 后配置会丢吗？不会，openclaw.json 是你个人的本地文件，官方升级不会覆盖它。
+
+## 选型建议与下一步
+
+
+不知道该怎么选？可以参考以下路径：
+
+- 刚开始，Bot 较少（2-3 个）： 选择 模式 B，配置简单，上手极快。
+- 任务复杂，需要流程控制： 选择 模式 A，强管控，适合标准工作流。
+- 生产级、长期稳定运营： 直接上 模式 C（混合），灵活且容错率高。
+- 有多个独立业务线团队： 各团队内部用模式 C，如果需要彻底物理隔离互不干扰，建议启动两个独立的 gateway 实例，各自跑各自的进程（代价是资源消耗翻倍）。
+
+完成 openclaw多角色 的配置后，你的 OpenClaw 已经可以变成一个公司团队了。你可以尝试让这个团队去完成一下你的小任务了。配置多bot的大致思路就是这些，之后无非就是一些升级 soul.md , 学习更多 skill 让每一只openclaw获取更强的技术技能了~~ 
+
+ [#Clawdbot](https://x.com/search?q=%23Clawdbot&src=hashtag_click) [#token](https://x.com/search?q=%23token&src=hashtag_click)
+
+## Thread
+
+
+### 大家要是不会搭 可以加我微信沟通哦~
+
+https://x.com/ResearchWang/status/2028662904938234089
+
+_No text or media._
