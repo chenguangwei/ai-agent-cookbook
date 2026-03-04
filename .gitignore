@@ -42,11 +42,14 @@ next-env.d.ts
 CLAUDE.md
 **/CLAUDE.md
 
-# tinacms
+# tinacms (being removed)
 public/admin
 tina/__generated__/client.ts
 tina/__generated__/types.ts
 tina/__generated__/.cache
+
+# velite generated output
+.velite/
 .trae
 .agents
 .agent
