@@ -126,6 +126,51 @@ export type ThreadTweetsMarkdownOptions = {
     includeTweetUrls?: boolean;
 };
 
+// Process body text to handle code fences (```)
+// X may use different escape patterns for code blocks
+function processBodyWithCodeBlocks(body: string): string[] {
+    if (!body) return [];
+
+    // First, decode HTML entities that X may use for escaping
+    let decoded = body
+        .replace(/&amp;#96;/g, '`')
+        .replace(/&amp;#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+
+    const lines = decoded.split(/\r?\n/);
+    const result: string[] = [];
+    let inCodeBlock = false;
+    let codeLanguage = '';
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        // Check for code fence start
+        if (trimmed.startsWith('```')) {
+            if (!inCodeBlock) {
+                // Opening fence
+                inCodeBlock = true;
+                codeLanguage = trimmed.slice(3).trim() || 'text';
+                result.push('```' + codeLanguage);
+            } else {
+                // Closing fence
+                inCodeBlock = false;
+                result.push('```');
+            }
+        } else {
+            result.push(line);
+        }
+    }
+
+    // Close any unclosed code block
+    if (inCodeBlock) {
+        result.push('```');
+    }
+
+    return result;
+}
+
 function formatTweetMarkdown(
     tweet: any,
     index: number,
@@ -150,7 +195,10 @@ function formatTweetMarkdown(
     const quoted = unwrapTweetResult(tweet?.quoted_status_result?.result);
 
     const bodyLines: string[] = [];
-    if (body) bodyLines.push(...body.split(/\r?\n/));
+    if (body) {
+        // Process body to handle code fences
+        bodyLines.push(...processBodyWithCodeBlocks(body));
+    }
 
     const quotedLines = formatQuotedTweetMarkdown(quoted);
     if (quotedLines.length > 0) {
@@ -301,7 +349,8 @@ export async function formatThreadResult(thread: ThreadResult, requestedUrl: str
 
     const description = parseTweetText(firstTweet);
     const publishedDate = firstTweet?.legacy?.created_at ?? '';
-    const titleStr = author ? `${author} on X` : 'X Post';
+    const articleTitle = typeof articleEntity?.title === 'string' ? articleEntity.title.trim() : '';
+    const titleStr = articleTitle || (author ? `${author} on X` : 'X Post');
 
     return {
         markdown,
@@ -590,19 +639,42 @@ function renderContentBlocks(
         return [...new Set(linkLines)];
     };
 
+    // Handle MARKDOWN atomic entities — X stores code blocks (and other markdown)
+    // inside atomic blocks with entity type "MARKDOWN". The markdown text is in
+    // value.data.text (or .markdown / .content as fallbacks).
+    const collectMarkdownLines = (block: any): string[] => {
+        const ranges: any[] = Array.isArray(block.entityRanges) ? block.entityRanges : [];
+        const result: string[] = [];
+        for (const range of ranges) {
+            if (typeof range?.key !== 'number') continue;
+            const entry = resolveEntityEntry(range.key, entityMap, lookup);
+            const value = entry?.value;
+            if (!value || value.type !== 'MARKDOWN') continue;
+            const mdText: string =
+                typeof value.data?.text === 'string' ? value.data.text :
+                typeof value.data?.markdown === 'string' ? value.data.markdown :
+                typeof value.data?.content === 'string' ? value.data.content : '';
+            if (mdText) result.push(...processBodyWithCodeBlocks(mdText));
+        }
+        return result;
+    };
+
     for (const block of blocks) {
         const type = typeof block?.type === 'string' ? block.type : 'unstyled';
         const rawText = typeof block?.text === 'string' ? block.text : '';
         const ranges: any[] = Array.isArray(block.entityRanges) ? block.entityRanges : [];
+
         const text =
-            type !== 'atomic' && type !== 'code-block'
+            type !== 'atomic' && type !== 'code-block' && type !== 'preformatted'
                 ? renderInlineLinks(rawText, ranges, entityMap, lookup, mediaLinkMap)
                 : rawText;
 
-        if (type === 'code-block') {
+        // Handle multiple code block type variants
+        if (type === 'code-block' || type === 'preformatted') {
             if (!inCodeBlock) {
                 if (lines.length > 0) lines.push('');
-                lines.push('```');
+                const lang: string = block?.data?.language ?? block?.data?.lang ?? '';
+                lines.push('```' + lang);
                 inCodeBlock = true;
             }
             lines.push(text);
@@ -620,6 +692,9 @@ function renderContentBlocks(
             }
             listKind = null;
             orderedIndex = 0;
+
+            const markdownLines = collectMarkdownLines(block);
+            if (markdownLines.length) { pushBlock(markdownLines, 'code'); continue; }
 
             const tweetLines = collectTweetLines(block);
             if (tweetLines.length) pushBlock(tweetLines, 'quote');
@@ -762,11 +837,12 @@ export async function formatArticleMarkdown(
             lines.push(...rendered);
         }
     } else if (typeof article.plain_text === 'string') {
+        // Fallback: plain_text may contain code blocks - process them
         if (lines.length > 0) lines.push('');
-        lines.push(article.plain_text.trim());
+        lines.push(...processBodyWithCodeBlocks(article.plain_text.trim()));
     } else if (typeof article.preview_text === 'string') {
         if (lines.length > 0) lines.push('');
-        lines.push(article.preview_text.trim());
+        lines.push(...processBodyWithCodeBlocks(article.preview_text.trim()));
     }
 
     // Append unused media entities at the end

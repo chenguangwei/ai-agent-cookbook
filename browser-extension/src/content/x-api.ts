@@ -568,20 +568,24 @@ export function extractArticleIdFromTweet(tweet: any): string | null {
 
 // Resolve the full article entity from the first tweet in a thread.
 // Returns the article entity if the tweet contains or links to an X article.
+// Always tries to fetch the full article when an ID is available — the embedded
+// entity in a tweet is often a truncated preview that omits code blocks and later content.
 export async function resolveArticleEntityFromTweet(tweet: any): Promise<any | null> {
     if (!tweet) return null;
     const embedded = extractArticleEntityFromTweet(tweet);
-    if (embedded && hasArticleContent(embedded)) return embedded;
 
     const articleId = extractArticleIdFromTweet(tweet);
-    if (!articleId) return embedded ?? null;
-
-    try {
-        const fetched = await fetchXArticle(articleId);
-        return fetched ?? embedded ?? null;
-    } catch {
-        return embedded ?? null;
+    if (articleId) {
+        try {
+            const fetched = await fetchXArticle(articleId);
+            if (fetched && hasArticleContent(fetched)) return fetched;
+        } catch {
+            // Fall through to embedded content
+        }
     }
+
+    if (embedded && hasArticleContent(embedded)) return embedded;
+    return embedded ?? null;
 }
 
 // --- Internal helpers (for GraphQL response unwrapping) ---
