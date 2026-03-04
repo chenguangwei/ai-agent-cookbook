@@ -7,8 +7,8 @@ import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { TableOfContents } from '@/components/features/TableOfContents';
 import { Button } from '@/components/ui/button';
-import { TinaMarkdownRenderer } from '@/components/markdown';
-import { getAllTutorials, getTutorialBySlug } from '@/lib/tina';
+import { MDXRenderer } from '@/components/markdown';
+import { getAllTutorials, getTutorialBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 
@@ -153,7 +153,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
               {/* MDX Content */}
               <div className="mb-12">
                 {tutorial.body && (
-                  <TinaMarkdownRenderer content={tutorial.body} />
+                  <MDXRenderer content={tutorial.body} />
                 )}
               </div>
 
