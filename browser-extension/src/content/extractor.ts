@@ -161,12 +161,17 @@ function extractMainElement(doc: Document): Element | null {
 
   // 2. Smart content selection (whitelist, priority order)
   const contentSelectors = [
+    '[itemprop="articleBody"]',          // schema.org (Hexo NexT, WordPress, many blogs)
     'article',
     '[role="main"]',
     '.post-content', '.article-content', '.entry-content',
+    '.article-entry', '.post-body', '.post-article',   // Hexo themes
+    '.article-body', '.blog-post', '.content-body',
+    '.notion-page-content',              // Notion
+    '.prose',                            // Tailwind typography
+    '#article-content', '#post-content',
     '#content', '#main',
     '.markdown-body',
-    '.post-body',
     'main',
   ];
 

@@ -1,0 +1,685 @@
+---
+title: "从 0 到 1 复刻一个 Claude Code 这样的 Agent"
+slug: "0-1-claude-code-agent"
+locale: "zh"
+description: "从 0 到 1 复刻一个 Claude Code 这样的 Agent"
+category: "Frameworks"
+tags: ["OpenAI", "Claude", "ReAct", "Python", "CrewAI", "ChromaDB"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://plantegg.github.io/images/951413iMgBlog/dev-agent-2677082.jpg"
+featured: false
+date: 2026-03-05
+---
+
+# 从 0 到 1 复刻一个 Claude Code 这样的 Agent
+
+
+![dev-agent](https://plantegg.github.io/images/951413iMgBlog/dev-agent-2677082.jpg)
+
+> 基于 DBA 运维 Agent 的实战开发过程，结合 ReAct 论文原理，帮助你理解 Claude Code 这类 Agent 的工作本质，并具备自己动手构建一个专属 Agent 的能力。
+
+* * *
+
+## 为什么要了解 Agent
+
+
+我们日常使用 Claude Code 这样的工具时，可能觉得它很神奇——丢一个问题进去，它就能帮你定位问题、修改代码、甚至操作服务器。但如果你不理解它背后的运行原理，就很难把 AI 真正融入自己的工作流。
+
+了解 Agent 的意义有两个层面：
+
+1.  **理解原理，提升使用效率**：知道 Claude Code 怎么工作的，你就知道怎么更好地跟它协作，什么该交给它，什么需要你来把控。
+2.  **自己动手，定制专属工具**：当你理解了 Agent 的本质之后，你完全可以基于公司提供的 API 和模型，开发一个专属于自己业务场景的 Agent——比如一个 MySQL 运维 Agent、一个监控告警分析 Agent。
+
+本文的目标就是：**通过开发一个极简的 MySQL 运维 Agent，彻底搞懂 Claude Code 这类工具是怎么工作的。以后再看到小龙虾/Claude code/kiro 这样的 agent/智能体就犹如庖丁解牛**
+
+* * *
+
+## 一、从”一问一答”到”自主解决问题”
+
+
+### 网页聊天 vs Agent 的本质区别
+
+
+以前我们在网页上使用大模型，交互方式是**一问一答**：你丢一个问题，模型基于训练数据吐一个答案，仅此而已。模型不知道你的服务器状况，不知道你的数据库配置，也没办法帮你执行任何命令。
+
+Claude Code 的方式完全不同。它拿到你的问题之后，会带着一堆**工具**（比如执行 bash 命令、读写文件、查看 CPU 等），反复跟大模型交互：
+
+1.  把你的问题 + 工具列表发给大模型
+2.  大模型分析后说：”帮我执行一下 `top` 命令”
+3.  Claude Code 执行 `top`，把结果塞回去
+4.  大模型看到结果，又说：”再帮我看一下磁盘”
+5.  继续执行，继续把结果塞回去
+6.  反复迭代十几轮，直到大模型说：”信息够了，我来给你最终结论”
+
+**对用户来说，你只输入了一句话，然后等着就行。** 但背后 Agent 可能已经跟模型来回跑了十几轮。
+
+### 2025 年 AI 为什么突然”厉害了”
+
+
+很多人感觉从 2025 年下半年开始，AI 工具突然变得非常实用——能帮你写代码、部署服务、定位故障。但这里有一个常见的误解：**不是模型本身变强了多少，而是 Agent 这个”客户端”变强了。**
+
+以前的模型只能基于训练数据回答问题，现在的 Agent 可以不断地给模型”喂”新信息——实时的系统状态、数据库查询结果、日志内容。模型不再是闭卷考试，而是变成了”开卷 + 有助手帮你翻书”的模式。
+
+* * *
+
+## 二、两个必须记住的基本原则
+
+
+### 原则一：模型没有记忆
+
+
+这一点非常关键，虽然很多人在各种文章中看到过，但可能理解不够深刻。
+
+**大模型是没有任何记忆的。** 不管你是同一个账户、同一次会话，前后两次提问之间，模型不会记住或关联它们。你觉得它”记住了”上一轮的内容，那是因为 Agent 帮它做了一件事：**把前面所有的对话历史、工具执行结果，全部打包成一个巨大的 prompt，每次都完整地发给模型。**
+
+所以你会看到，每一轮交互，Agent 发给模型的内容会越来越长——第一轮可能 1000 字，第五轮可能 5000 字，第十轮可能上万字。这就是为什么 token 消耗会这么快。
+
+### 原则二：模型永远不会执行工具
+
+
+大模型自己**不会**也**不能**执行任何工具。它只做一件事：根据你的问题和已有信息，**告诉 Agent 应该调用什么工具、参数是什么**。
+
+真正去执行 SSH 命令、跑 MySQL 查询的是 Agent 程序本身。执行完之后，Agent 也不理解这些返回结果（可能成功了、可能报错了），它只是原样把结果丢给模型，让模型来判断下一步该怎么做。
+
+* * *
+
+## 三、什么是 Agent
+
+
+**Agent（智能体）= 让模型持续思考、持续调用外部工具、直到解决用户问题的程序。**
+
+Claude Code、OpenCode 这些都是 Agent，它们只是一个客户端工具，背后需要一个大模型来完成推理工作。
+
+用一张图来理解：
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+<span class="line">10</span>
+<span class="line">11</span>
+<span class="line">12</span>
+<span class="line">13</span>
+</pre></td><td class="code"><pre><span class="line">       你的代码（Agent 框架）</span>
+<span class="line">       ┌──────────────────────────────────────────┐</span>
+<span class="line">       │                                          │</span>
+<span class="line">用户 ─►│  循环 {                                  │</span>
+<span class="line">       │    1. 把问题 + 工具列表 发给 LLM          │</span>
+<span class="line">       │    2. LLM 返回: 我要调用 XX 工具          │</span>
+<span class="line">       │    3. Agent 执行工具，拿到结果             │</span>
+<span class="line">       │    4. 把结果喂回给 LLM                    │</span>
+<span class="line">       │    5. LLM 判断：信息够了吗？               │</span>
+<span class="line">       │       - 不够 → 回到 1                     │</span>
+<span class="line">       │       - 够了 → 输出 Final Answer          │</span>
+<span class="line">       │  }                                        │</span>
+<span class="line">       └──────────────────────────────────────────┘</span>
+</pre></td></tr></tbody></table>
+
+**核心区别：**
+
+*   **普通 LLM 调用**：一问一答，模型只能靠训练数据回答
+*   **Agent 模式**：模型可以主动调工具获取实时信息，多轮推理后给出答案
+
+这里还有一个细节值得注意：Agent 启动时会把**所有工具的定义**（名称、用途、参数说明）都一次性发给模型。比如你配了 GitHub、MCP、bash 等几十个工具，不管你的问题跟哪个工具有没有关系，全部都会带上。这就是为什么你一打开 Claude Code，上下文消耗就已经很高了——因为光工具定义就占了几万字。
+
+* * *
+
+## 四、ReAct：Agent 的核心工作模式
+
+
+ReAct（Reasoning + Acting）是目前 Agent 最主流的工作模式，来自 2022 年发表的论文 *[ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)*。
+
+### 核心循环
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+<span class="line">10</span>
+</pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────┐</span>
+<span class="line">│                    ReAct 循环                        │</span>
+<span class="line">│                                                     │</span>
+<span class="line">│   Thought ──► Action ──► Observation ──► Thought    │</span>
+<span class="line">│   (思考)      (行动)      (观察)         (再思考)    │</span>
+<span class="line">│      │                                     │        │</span>
+<span class="line">│      └─────── 信息不够，继续循环 ◄──────────┘        │</span>
+<span class="line">│                                                     │</span>
+<span class="line">│               信息够了 ──► Final Answer              │</span>
+<span class="line">└─────────────────────────────────────────────────────┘</span>
+</pre></td></tr></tbody></table>
+
+核心理念是：大模型先**思考**（Thought）当前需要什么信息，然后决定一个**行动**（Action）让 Agent 去执行，Agent 执行后返回**观察结果**（Observation），模型再根据新信息继续思考。这个循环不需要你写任何 if-else 逻辑——**模型自己决定调什么工具、调几次、什么时候停。**
+
+以前我们写自动化程序，靠的是模板匹配和条件判断，需要穷举各种场景，所以做起来很麻烦、动不动就要改。现在 Agent 把所有判断逻辑交给了模型，模型来决定下一步做什么。
+
+### 实际运行示例
+
+
+以”检查 MySQL 主从复制状态”为例，Agent 的实际思考过程：
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+<span class="line">10</span>
+<span class="line">11</span>
+<span class="line">12</span>
+<span class="line">13</span>
+<span class="line">14</span>
+<span class="line">15</span>
+<span class="line">16</span>
+<span class="line">17</span>
+<span class="line">18</span>
+<span class="line">19</span>
+<span class="line">20</span>
+<span class="line">21</span>
+<span class="line">22</span>
+<span class="line">23</span>
+<span class="line">24</span>
+<span class="line">25</span>
+<span class="line">26</span>
+<span class="line">27</span>
+</pre></td><td class="code"><pre><span class="line">[LLM #1]</span>
+<span class="line">  Thought: 需要检查主从状态，先看 SHOW SLAVE STATUS</span>
+<span class="line">  Action: mysql_query</span>
+<span class="line">  Action Input: {"query": "SHOW SLAVE STATUS"}</span>
+<span class="line">  → 工具返回: [无结果集]（说明不是从库）</span>
+<span class="line"></span>
+<span class="line">[LLM #2]</span>
+<span class="line">  Thought: 不是从库，看看是不是主库</span>
+<span class="line">  Action: mysql_query</span>
+<span class="line">  Action Input: {"query": "SHOW MASTER STATUS"}</span>
+<span class="line">  → 工具返回: mysql-bin.000007 | 180681919 | ... | GTID:1-1833162</span>
+<span class="line"></span>
+<span class="line">[LLM #3]</span>
+<span class="line">  Thought: 是主库。再看有没有从库连上来</span>
+<span class="line">  Action: mysql_query</span>
+<span class="line">  Action Input: {"query": "SHOW SLAVE HOSTS"}</span>
+<span class="line">  → 工具返回: [无结果集]（没有从库连接）</span>
+<span class="line"></span>
+<span class="line">[LLM #4]</span>
+<span class="line">  Thought: 主库正常但无从库，再查半同步状态和错误日志</span>
+<span class="line">  Action: ssh_command</span>
+<span class="line">  Action Input: {"command": "tail -50 /data0/mysql_3306/log/error.log"}</span>
+<span class="line">  ...</span>
+<span class="line"></span>
+<span class="line">[LLM #6]</span>
+<span class="line">  Thought: I now know the final answer</span>
+<span class="line">  Final Answer: ## 诊断报告 ...</span>
+
+</pre></td></tr></tbody></table>
+
+在这个过程中，模型自己判断了：先查从库状态 → 发现不是从库 → 转查主库状态 → 确认是主库 → 检查从库连接 → 查日志。**你完全不需要预设这些逻辑，模型根据每一步的返回自行决策。**
+
+* * *
+
+## 五、Agent 开发三要素
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+</pre></td><td class="code"><pre><span class="line">┌────────────────────────────────────────────┐</span>
+<span class="line">│              Agent = LLM + Tools + Prompt   │</span>
+<span class="line">│                                            │</span>
+<span class="line">│  ┌─────────┐  ┌─────────┐  ┌───────────┐  │</span>
+<span class="line">│  │   LLM   │  │  Tools  │  │  Prompt   │  │</span>
+<span class="line">│  │  大模型  │  │  工具集  │  │ 角色定义  │  │</span>
+<span class="line">│  │  (大脑)  │  │  (手脚)  │  │  (指令)   │  │</span>
+<span class="line">│  └─────────┘  └─────────┘  └───────────┘  │</span>
+<span class="line">└────────────────────────────────────────────┘</span>
+</pre></td></tr></tbody></table>
+
+| 要素 | 你需要做什么 | 本项目示例 |
+| --- | --- | --- |
+| LLM | 选模型、配 API 地址 | Claude Sonnet 4.5 via API 网关 |
+| Tools | 写 Python 函数，让模型能调用 | ssh\_command / mysql\_query / write\_file |
+| Prompt | 告诉模型它是谁、能做什么 | “你是 DBA 专家，只读诊断…” |
+
+> **80% 的开发工作在写 Tools。** LLM 和 Prompt 通常很快就定了。
+
+* * *
+
+## 六、Step by Step 开发流程
+
+
+### Step 1：明确场景，定义工具边界
+
+
+先回答三个问题：
+
+*   Agent 要解决什么问题？→ MySQL/Linux 远程只读诊断
+*   需要哪些工具？→ SSH 执行命令、MySQL 查询、写报告文件
+*   安全边界是什么？→ 只读，不能执行写操作
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+</pre></td><td class="code"><pre><span class="line">场景：DBA 日常诊断</span>
+<span class="line">  ├── 需要 SSH 执行命令 → ssh_command 工具</span>
+<span class="line">  ├── 需要查 MySQL   → mysql_query 工具</span>
+<span class="line">  └── 需要保存报告   → write_file 工具</span>
+</pre></td></tr></tbody></table>
+
+工具代码中的**注释（description）非常重要**——模型就是靠这些描述来决定什么时候调用哪个工具、传什么参数。这些注释不是给人看的，是给模型看的。
+
+为了安全起见，我们还需要给工具加上黑白名单，比如 MySQL 工具只允许 `SHOW`、`SELECT` 等只读操作，禁止 `DROP`、`DELETE`、`TRUNCATE` 等危险命令。
+
+### Step 2：搭项目结构
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-built_in">mkdir</span> -p ~/q/agent/tools</span>
+<span class="line"><span class="hljs-built_in">touch</span> ~/q/agent/{config.yaml,main.py,crew.py,requirements.txt}</span>
+<span class="line"><span class="hljs-built_in">touch</span> ~/q/agent/tools/{__init__.py,ssh_tool.py,mysql_tool.py,write_file_tool.py}</span>
+</pre></td></tr></tbody></table>
+
+### Step 3：写工具（核心工作量）
+
+
+每个工具就是一个 Python 类，继承 `BaseTool`，实现 `_run` 方法：
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+<span class="line">10</span>
+<span class="line">11</span>
+<span class="line">12</span>
+<span class="line">13</span>
+<span class="line">14</span>
+<span class="line">15</span>
+<span class="line">16</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">from</span> crewai.tools <span class="hljs-keyword">import</span> BaseTool</span>
+<span class="line"><span class="hljs-keyword">from</span> pydantic <span class="hljs-keyword">import</span> BaseModel, Field</span>
+<span class="line"></span>
+<span class="line"><span class="hljs-keyword">class</span> <span class="hljs-title hljs-class_">MySQLQueryInput</span>(<span class="hljs-title hljs-class_ hljs-inherited__">BaseModel</span>):</span>
+<span class="line">    query: <span class="hljs-built_in">str</span> = Field(description=<span class="hljs-string">"要执行的 SQL 查询语句"</span>)</span>
+<span class="line"></span>
+<span class="line"><span class="hljs-keyword">class</span> <span class="hljs-title hljs-class_">MySQLQueryTool</span>(<span class="hljs-title hljs-class_ hljs-inherited__">BaseTool</span>):</span>
+<span class="line">    name: <span class="hljs-built_in">str</span> = <span class="hljs-string">"mysql_query"</span></span>
+<span class="line">    description: <span class="hljs-built_in">str</span> = <span class="hljs-string">"执行 MySQL 只读查询..."</span>  <span class="hljs-comment"># 模型靠这段话决定什么时候用这个工具</span></span>
+
+<span class="line">    args_schema: <span class="hljs-type">Type</span>[BaseModel] = MySQLQueryInput</span>
+<span class="line"></span>
+<span class="line">    <span class="hljs-keyword">def</span> <span class="hljs-title hljs-function_">_run</span>(<span class="hljs-params">self, query</span>):</span>
+<span class="line">        <span class="hljs-comment"># 1. 安全检查（只读白名单）</span></span>
+
+<span class="line">        <span class="hljs-comment"># 2. 执行查询</span></span>
+
+<span class="line">        <span class="hljs-comment"># 3. 返回格式化结果（字符串）</span></span>
+
+<span class="line">        <span class="hljs-keyword">return</span> <span class="hljs-string">"结果文本"</span></span>
+</pre></td></tr></tbody></table>
+
+**工具开发要点：**
+
+*   `description` 写清楚——模型靠它判断何时调用
+*   `_run` 返回纯文本——模型只能处理文本
+*   做好安全拦截——模型可能尝试危险操作
+*   加超时控制——防止 `tail -f` 等命令无限阻塞
+
+### Step 4：配置 LLM 连接
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-comment"># config.yaml</span></span>
+
+<span class="line"><span class="hljs-attr">llm:</span></span>
+<span class="line">  <span class="hljs-attr">model:</span> <span class="hljs-string">"openai/claude-sonnet-4-5-20250929"</span></span>
+<span class="line">  <span class="hljs-attr">base_url:</span> <span class="hljs-string">"https://your-api-gateway/v1"</span></span>
+<span class="line">  <span class="hljs-attr">api_key:</span> <span class="hljs-string">"sk-xxx"</span></span>
+</pre></td></tr></tbody></table>
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">from</span> crewai <span class="hljs-keyword">import</span> LLM</span>
+<span class="line">llm = LLM(</span>
+<span class="line">    model=<span class="hljs-string">"openai/claude-sonnet-4-5-20250929"</span>,</span>
+<span class="line">    base_url=<span class="hljs-string">"https://your-api-gateway/v1"</span>,</span>
+<span class="line">    api_key=<span class="hljs-string">"sk-xxx"</span></span>
+<span class="line">)</span>
+</pre></td></tr></tbody></table>
+
+> 注意：如果 API 网关是 OpenAI 兼容协议，模型名需要加 `openai/` 前缀让 litellm 走 OpenAI 通道。
+
+### Step 5：组装 Agent
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+<span class="line">10</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">from</span> crewai <span class="hljs-keyword">import</span> Agent, Task, Crew</span>
+<span class="line"></span>
+<span class="line">agent = Agent(</span>
+<span class="line">    role=<span class="hljs-string">"DBA 运维专家"</span>,</span>
+<span class="line">    goal=<span class="hljs-string">"诊断 MySQL 和 Linux 运行状况"</span>,</span>
+<span class="line">    backstory=<span class="hljs-string">"你是资深 DBA，精通 MySQL 5.7/8.0..."</span>,</span>
+<span class="line">    tools=[ssh_tool, mysql_tool, write_tool],</span>
+<span class="line">    llm=llm,</span>
+<span class="line">    verbose=<span class="hljs-literal">True</span>,</span>
+<span class="line">)</span>
+</pre></td></tr></tbody></table>
+
+### Step 6：跑起来
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+</pre></td><td class="code"><pre><span class="line">task = Task(</span>
+<span class="line">    description=<span class="hljs-string">"用户问题: %s"</span> % user_input,</span>
+<span class="line">    expected_output=<span class="hljs-string">"诊断结果和建议（中文）"</span>,</span>
+<span class="line">    agent=agent,</span>
+<span class="line">)</span>
+<span class="line">crew = Crew(agents=[agent], tasks=[task])</span>
+<span class="line">result = crew.kickoff()</span>
+<span class="line"><span class="hljs-built_in">print</span>(result)</span>
+</pre></td></tr></tbody></table>
+
+* * *
+
+## 七、实战：一次完整的诊断过程
+
+
+我们给 Agent 一个实际任务：”分析 SQL 响应时间以及内存资源”。
+
+Agent 开始工作后，debug 模式下可以看到完整的交互过程：
+
+**第 1 轮**：模型收到问题，决定先查慢查询配置
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+</pre></td><td class="code"><pre><span class="line">Action: mysql_query → SHOW GLOBAL VARIABLES LIKE '%slow%'</span>
+<span class="line">Observation: slow_query_log=ON, long_query_time=0.5</span>
+</pre></td></tr></tbody></table>
+
+**第 2 轮**：模型知道了慢查询阈值是 0.5 秒，继续查慢查询数量
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+</pre></td><td class="code"><pre><span class="line">Action: mysql_query → SHOW GLOBAL STATUS LIKE 'Slow_queries'</span>
+<span class="line">Observation: Slow_queries=21</span>
+</pre></td></tr></tbody></table>
+
+**第 3 - 8 轮**：模型继续查询 QPS、线程状态、锁信息、查询缓存…
+
+**第 9 - 12 轮**：模型觉得还需要看系统资源，自动通过 SSH 执行 `top`、`free` 等命令
+
+**第 18 轮**：模型终于认为信息足够了，输出 Final Answer：
+
+*   慢查询数量：21 条，阈值 0.5 秒
+*   QPS 统计和慢查询占比
+*   锁等待分析
+*   内存使用状况
+*   综合评分和优化建议
+
+**整个过程中，你只输入了一行命令，但 Agent 已经自动完成了 18 轮诊断。** 这就是 Agent 的魅力所在。
+
+* * *
+
+## 八、踩坑记录
+
+
+实际开发中遇到的问题和解决方案（这部分经验非常重要，第一次把代码写出来能直接跑通的概率几乎为零）：
+
+| 问题 | 原因 | 解决 |
+| --- | --- | --- |
+| MySQL root 连接被拒 | root 只允许 socket 连接 | 改为 SSH + mysql CLI 方式 |
+| 模型报 prefill 错误 | 部分后端不支持 assistant prefill | 换用支持的模型版本 |
+| 找不到 litellm | `openai/` 前缀需要 litellm 做路由 | `pip install 'litellm<1.60'` |
+| chromadb 报 sqlite3 版本太低 | 系统自带 sqlite 版本不够 | `pip install pysqlite3-binary` + monkey-patch |
+| numpy 不兼容 CPU | numpy 2.x 需要新指令集 | `pip install 'numpy<2'` |
+| `tail -f` 导致工具永远不返回 | paramiko `recv_exit_status()` 无限阻塞 | 改用 channel 级非阻塞读取 + deadline 超时 |
+| `SHOW SLAVE STATUS\G` 报错 | `\G` 是 mysql CLI 交互命令，batch 模式不支持 | 模型自动修正去掉 `\G` 重试 |
+| debug 日志不输出 | 框架覆盖了自定义 logger | monkey-patch 保护自定义 logger |
+
+> **关键经验：模型第一次生成的代码几乎不可能直接跑通。** 你需要提供一个真实的调试环境（一台可以 SSH 的机器、一个可以连的 MySQL 实例），让 AI 在真实环境中反复调试。这个调试和验证的过程，才是开发 Agent 中最关键的一步。你需要做的是**给 AI 搭好舞台**——准备好机器、配好免密、提供连接信息，然后让它自己去试、去修、去迭代。
+
+* * *
+
+## 九、调试技巧
+
+
+### 加 –debug 看完整的 LLM 交互
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+</pre></td><td class="code"><pre><span class="line">python3 main.py --host 10.0.0.1 --debug <span class="hljs-string">"检查MySQL版本"</span></span>
+</pre></td></tr></tbody></table>
+
+输出每次发给模型的完整 prompt 和模型的完整回复，能清楚看到：
+
+*   模型在”想”什么（Thought）
+*   模型决定调什么工具（Action）
+*   工具返回了什么（Observation）
+*   Token 消耗量
+
+### 先单独测试工具
+
+
+不要一上来就跑完整 Agent，先验证每个工具独立可用：
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">from</span> tools.ssh_tool <span class="hljs-keyword">import</span> SSHCommandTool</span>
+<span class="line">ssh = SSHCommandTool(host=<span class="hljs-string">"10.0.0.1"</span>, cmd_timeout=<span class="hljs-number">10</span>)</span>
+<span class="line"><span class="hljs-built_in">print</span>(ssh._run(<span class="hljs-string">"uptime"</span>))</span>
+<span class="line"></span>
+<span class="line"><span class="hljs-keyword">from</span> tools.mysql_tool <span class="hljs-keyword">import</span> MySQLQueryTool</span>
+<span class="line">mysql = MySQLQueryTool(host=<span class="hljs-string">"10.0.0.1"</span>, mysql_password=<span class="hljs-string">"xxx"</span>)</span>
+<span class="line"><span class="hljs-built_in">print</span>(mysql._run(<span class="hljs-string">"SELECT VERSION()"</span>))</span>
+</pre></td></tr></tbody></table>
+
+### 关键公式
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+</pre></td><td class="code"><pre><span class="line">Agent 效果 = 模型能力 × 工具质量 × Prompt 清晰度</span>
+</pre></td></tr></tbody></table>
+
+*   模型不够强 → 换更大的模型
+*   工具返回乱码 → 格式化输出
+*   模型不知道用哪个工具 → 改 description
+*   模型反复出错重试 → 加 –debug 看 prompt，调 backstory
+
+* * *
+
+## 十、进阶思考：从个人效率到团队赋能
+
+
+### 第一阶段：用好现有工具
+
+
+把 Claude Code 这样的工具融入日常工作，让以前花两三个小时的任务，现在 5 分钟搞定。这是最基础的提效。
+
+### 第二阶段：定制专属 Agent
+
+
+结合自己的业务场景，开发专属 Agent。比如 DBA 运维 Agent，可以进一步接入更多数据源：
+
+*   **监控数据**：接入 Prometheus，让 Agent 能查看历史指标趋势
+*   **日志平台**：接入 SLS 等日志服务，让 Agent 能自动拉取和分析错误日志
+*   **元数据库**：接入 DBA 平台的元数据，让 Agent 通过实例名自动查到机器、端口、配置
+*   **即时通讯**：接入飞书、Telegram 等，让团队成员直接在群里向 Agent 提问
+
+**工具越丰富，Agent 能做的事情就越多。** 你最了解自己的日常工作，最清楚哪些环节可以让 Agent 来接手。
+
+### 第三阶段：理解原理，看透产品
+
+
+当你真正理解了 Agent 的运行原理之后，再去看市面上各种 AI 产品，你会发现：
+
+*   它们的核心原理都是一样的——ReAct 循环 + 工具调用
+*   产品之间的差异主要在于：提供了哪些工具、交互界面做成什么样、安全策略怎么设计
+*   有些产品把命令行工具做成了白屏化的界面，降低了使用门槛，所以对非技术人员更友好
+*   有些产品默认不做授权确认，用起来更”丝滑”，但在生产环境需要注意安全风险
+
+理解了本质，你就能站在更高的视角去评估和选择工具，而不是被产品的外表所迷惑。
+
+* * *
+
+## 完整提示词参考
+
+
+如果你想自己复刻这个 MySQL 运维 Agent，只需要将以下提示词依次交给 Claude Code：
+
+**起始提示词（创建项目）：**
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+</pre></td><td class="code"><pre><span class="line">我想基于 CrewAI 来实现一个我自己的 DBA 运维 agent，~/q/agent/</span>
+<span class="line">我提供 ip+端口+账户+密码，agent 能通过 ssh 访问 ip 所在的机器，</span>
+<span class="line">也能够通过 mysql client 拉取所要的信息（只能是读，不能对实例做任何修改），</span>
+<span class="line">请帮我实现这样一个 agent，用 python 代码，可以提供一个配置文件配置好默认的账号+密码/端口；</span>
+<span class="line">我想在控制台完整输出 agent 发给 LLM 的提示词，以及完整的 LLM 返回内容，以便我学习</span>
+</pre></td></tr></tbody></table>
+
+**调试提示词（非常关键）：**
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+</pre></td><td class="code"><pre><span class="line">&lt;目标IP&gt; 是我的部署机器，ssh root 免密了，请帮我部署并调试，</span>
+<span class="line">需要被调试的 mysql 机器是 &lt;MySQL IP&gt; &lt;端口&gt;</span>
+<span class="line">mysql -uroot -S /data0/mysql_${port}/data/mysql.sock -p&lt;密码&gt;</span>
+<span class="line">从部署机器 ssh root@&lt;MySQL IP&gt; 也是免密了</span>
+</pre></td></tr></tbody></table>
+
+**修复 Bug 示例：**
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+</pre></td><td class="code"><pre><span class="line">请帮我修复当执行 ssh_command 比如 tail -100 /data0/mysql_3306/log/slow-queries.log</span>
+<span class="line">因为没有足够多 slow query 的产生导致 tool 一直不返回，请增加超时时间比如 10 秒（可配置）</span>
+</pre></td></tr></tbody></table>
+
+**增加工具示例：**
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+</pre></td><td class="code"><pre><span class="line">非常好，现在帮我加一个写文件的 tool，然后可以将大模型的输出写入到某个文件中；</span>
+<span class="line">同时帮我生成一份 README.md 里面要有 --debug 时输出的解读</span>
+</pre></td></tr></tbody></table>
+
+* * *
+
+## 项目架构
+
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+</pre></td><td class="code"><pre><span class="line">用户输入 → main.py (CLI) → crew.py (CrewAI Agent)</span>
+<span class="line">                                ├── SSHCommandTool  (paramiko → 目标机)</span>
+<span class="line">                                └── MySQLQueryTool  (paramiko SSH → mysql CLI → unix socket)</span>
+<span class="line">                                         ↓</span>
+<span class="line">                            LLM: Claude Sonnet 4.5 via API 网关</span>
+</pre></td></tr></tbody></table>
+
+**使用方式：**
+
+<table><tbody><tr><td class="gutter"><pre><span class="line">1</span>
+<span class="line">2</span>
+<span class="line">3</span>
+<span class="line">4</span>
+<span class="line">5</span>
+<span class="line">6</span>
+<span class="line">7</span>
+<span class="line">8</span>
+<span class="line">9</span>
+<span class="line">10</span>
+</pre></td><td class="code"><pre><span class="line"><span class="hljs-built_in">cd</span> /data0/scripts/agent</span>
+<span class="line"></span>
+<span class="line"><span class="hljs-comment"># 交互式模式</span></span>
+
+<span class="line">python3 main.py --host &lt;目标IP&gt; --mysql-port 3306</span>
+<span class="line"></span>
+<span class="line"><span class="hljs-comment"># 单次命令</span></span>
+
+<span class="line">python3 main.py --host &lt;目标IP&gt; --mysql-port 3306 <span class="hljs-string">"检查主从复制状态"</span></span>
+<span class="line"></span>
+<span class="line"><span class="hljs-comment"># 调试模式（查看完整 LLM 交互）</span></span>
+
+<span class="line">python3 main.py --host &lt;目标IP&gt; --mysql-port 3306 --debug <span class="hljs-string">"分析慢查询"</span></span>
+</pre></td></tr></tbody></table>
+
+* * *
+
+## 总结
+
+
+| 你以为的 | 实际上的 |
+| --- | --- |
+| 大模型自己变强了 | Agent 不断喂信息让模型”开卷考试” |
+| 模型会记住上下文 | 每次都把完整历史重新发一遍 |
+| 模型会执行命令 | 模型只返回”要执行什么”，Agent 去执行 |
+| 开发 Agent 很难 | 核心就是写好工具 + 描述清楚 + 调试验证 |
+| 代码必须人写 | 提示词 → AI 生成 → 人验证迭代 |
+
+**一句话概括：Agent 就是一个死循环，把你的问题和工具带给模型，模型指挥 Agent 执行，执行结果再喂回模型，直到模型说”够了，这是最终答案”。**
+
+理解了这个本质，你就理解了 Claude Code、以及市面上所有 AI Agent 产品的工作原理。
