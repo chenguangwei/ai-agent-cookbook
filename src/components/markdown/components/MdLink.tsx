@@ -2,13 +2,14 @@ import React from 'react';
 import NextLink from 'next/link';
 import { ExternalLink } from 'lucide-react';
 
-export function MdLink({ url, children }: { url: string; children: React.ReactNode }) {
-  const isExternal = url.startsWith('http');
+export function MdLink({ href, children }: { href?: string; children: React.ReactNode }) {
+  if (!href) return <>{children}</>;
+  const isExternal = href.startsWith('http');
 
   if (isExternal) {
     return (
       <a
-        href={url}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="text-primary-600 dark:text-primary-400 hover:underline inline-flex items-center gap-1"
@@ -20,7 +21,7 @@ export function MdLink({ url, children }: { url: string; children: React.ReactNo
   }
 
   return (
-    <NextLink href={url} className="text-primary-600 dark:text-primary-400 hover:underline">
+    <NextLink href={href} className="text-primary-600 dark:text-primary-400 hover:underline">
       {children}
     </NextLink>
   );
