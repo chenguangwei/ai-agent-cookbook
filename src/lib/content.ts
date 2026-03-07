@@ -22,6 +22,13 @@ export function getFeaturedTutorials(limit = 4, locale?: string): Tutorial[] {
   return [...all.filter(t => t.featured), ...all.filter(t => !t.featured)].slice(0, limit)
 }
 
+export function getRecentTutorials(limit = 3, locale?: string): Tutorial[] {
+  const all = getAllTutorials(locale)
+  return [...all]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, limit)
+}
+
 export function getAllDocs(locale?: string): Doc[] {
   const result = locale ? docs.filter(d => d.locale === locale) : [...docs]
   return result.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))

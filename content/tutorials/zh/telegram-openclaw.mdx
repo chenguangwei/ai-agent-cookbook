@@ -1,0 +1,431 @@
+---
+title: "五步用Telegram创建 OpenClaw 多角色群聊！附邪修大法！（实战分享+学不会打我）"
+slug: "telegram-openclaw"
+locale: "zh"
+description: "五步用Telegram创建 OpenClaw 多角色群聊！附邪修大法！（实战分享+学不会打我）"
+category: "LLM Models"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCvMfSWaUAI7gW5.jpg"
+featured: false
+date: 2026-03-07
+---
+
+# 五步用Telegram创建 OpenClaw 多角色群聊！附邪修大法！（实战分享+学不会打我）
+
+
+> TIPS：不是人人都需要多个OpenClaw 龙虾，根据自己的业务需求来创建，并不是越多越好，切记。
+
+对了，我这个是你默认已经安装好OpenClaw了！怎么安装可以看看别人发的教程哈！
+
+如果你对配置小龙虾还不了解，可以查看上期：OpenClaw养成记，从0开始！安装后必看！（40天实战经验+含角色提示词）容：https://x.com/berryxia/status/2028668902465733084
+
+## 先说结论
+
+
+![](https://pbs.twimg.com/media/HCvMYysaUAQ4QzG.jpg)
+
+你以为搭建一个多角色 AI 团队，需要多个机器人账号、多台服务器？
+
+不需要。
+
+一个 Gateway，一个 Bot，加上几个 Telegram 群组，你就能让产品经理、QA、工程师、内容创作者等多个角色同时在线，互不干扰，还能互相调用。
+
+这不是魔法，这是 OpenClaw 的群组路由机制在起作用。
+
+## 两种架构，按需选择
+
+
+![](https://pbs.twimg.com/media/HCvMnYeboAAk4Sk.jpg)
+
+架构一：单Bot多群组（推荐入门）
+
+```plaintext
+一个 Bot Token
+    ├── 群组A → Agent A（产品经理）
+    ├── 群组B → Agent B（工程师）
+    └── 群组C → Agent C（QA）
+```
+
+优点：配置简单，一个Bot搞定一切
+适用：个人使用、小团队
+
+```plaintext
+架构二：多Bot多Agent（高级玩法）
+Gateway
+    ├── Bot A (糯糯) → 默认 Agent
+    ├── Bot B (团团) → life Agent（生活助手）
+    └── Bot C (爱爱) → ai Agent（技术专家）
+```
+
+优点：每个Bot独立人格，记忆隔离，场景分离
+适用：多场景、多角色、需要隔离记忆
+
+## 痛点是什么？
+
+
+![](https://pbs.twimg.com/media/HCvNHKVaQAAHk3W.jpg)
+
+你肯定遇到过这种场景：
+
+想在 Telegram 里同时跑多个 AI 角色——一个写代码，一个写测试用例，一个做产品分析。但网上的教程告诉你：每个角色都要创建一个 Bot，都要配置一套 Token，都要跑一个 Gateway……
+
+配置到第三个 Bot 的时候，你已经开始怀疑人生了。
+
+还有一种更隐蔽的坑：视频教程。
+
+9分钟的"保姆级教程"，信息密度极高，你得不停地暂停、倒退、截图。好不容易跟着做完，发现漏了一个步骤，又得重来。
+
+这篇文章，就是为了解决这个问题而存在的。
+
+## 核心原理（一句话讲清楚）
+
+
+> Gateway：OpenClaw 的"大脑"，负责接收消息、调用 LLM、返回结果。可以理解为 AI 的本地代理服务器。
+
+一个 Gateway 可以托管多个 Agent，每个 Agent 通过"群组路由"绑定到不同的 Telegram 群。
+
+![](https://pbs.twimg.com/media/HCvNSwXasAAVxko.jpg)
+
+你在群 A 发消息，Gateway 知道该交给"产品经理 Agent"处理；你在群 B 发消息，Gateway 知道该交给"工程师 Agent"处理。
+
+关键在于：它们共享同一个 Bot 账号，但拥有独立的记忆、权限和工作空间。
+
+## 五步搞定配置
+
+
+![](https://pbs.twimg.com/media/HCvNWrsbUAE3pBm.jpg)
+
+第一步：创建主 Bot（5分钟）
+
+这一步是基础。你需要创建一个"主控 Bot"，它就是所有子 Agent 的"宿主"。
+
+1. 在 Telegram 搜索 @BotFather，发送 /newbot
+
+![创建主BOT](https://pbs.twimg.com/media/HCvN3whaUAIH7n5.jpg)
+
+1. 给 Bot 起个名字（比如 lifezhushou）
+2. 设置用户名（必须以 bot 结尾，比如 lifezhushou_bot）
+3. 复制返回的 Token（长得像 123456:ABC-DEF...）
+
+![主要保存Token 不要泄密](https://pbs.twimg.com/media/HCvOGXeaUAkyOFJ.jpg)
+
+注意：不要泄露次Token 值！
+
+然后用这个 Token 把 Bot 接入 OpenClaw：
+
+PS：甚至你可以直接发给OpenClaw 让他帮你进行即可
+
+```plaintext
+openclaw config
+
+# 进入 Channels → Telegram → 粘贴 Token
+
+```
+
+最后一步配对：
+
+```plaintext
+
+# 在 Telegram 与 Bot 私聊，发送 /start 获取 Pairing Code
+
+openclaw pairing approve telegram <你的Pairing Code>
+```
+
+> Pairing Code：类似"验证码"，用于确认你有权限操作这个 Bot。一次配对，永久生效。
+
+PS：这里有一个更简单的邪修办法，就是你可以直接让你现在创建好的这个 OpenClaw 把我的这个内容发给他，让他直接学习操作步骤。
+
+![](https://pbs.twimg.com/media/HCvdrNUbsAAVDb-.jpg)
+
+创建群聊时，他会引导你一步一步地完成，这是最方便的（如果你不会找这些东西的话）。
+
+第二步：开启群组权限（千万别跳过！）
+
+这是最容易踩坑的地方。
+
+默认情况下，Bot 开启了"隐私模式"，只能看到 @ 它的消息。如果你不关掉，Bot 在群里就是个"聋子"。
+
+回到 @BotFather
+
+设置BotSetting
+
+![设置BotSetting](https://pbs.twimg.com/media/HCvPA9qbgAEJgZn.jpg)
+
+群聊隐私设置
+
+![群聊隐私设置](https://pbs.twimg.com/media/HCvPFECasAAQqzv.jpg)
+
+关闭隐私模式
+
+![关闭隐私模式](https://pbs.twimg.com/media/HCvPJu9a0AEmHsC.jpg)
+
+```plaintext
+/mybots → 选择你的 Bot → Bot Settings
+  → Allow Groups: Enable（允许加群）
+  → Group Privacy: Disable（关闭隐私模式）
+```
+
+> 重点：改完之后，必须把 Bot 从群里踢出去，再重新拉进来。不重新拉，设置不生效。这是很多人配了半天没反应的根本原因。
+
+第三步：创建群组，拿到 Group ID
+
+![](https://pbs.twimg.com/media/HCvPVFAaUAAmD4Y.jpg)
+
+每个子 Agent 需要一个专属群组。群组的 ID 就是"路由地址"。
+
+1. 新建一个 Telegram 群（建议用角色命名，比如 虾友们）
+2. 把主 Bot 拉进群
+3. 在群里 @ 你的 Bot，问：当前群组的 ID 是什么？
+
+![Group ID 信息](https://pbs.twimg.com/media/HCvPccEaUAAGNNi.jpg)
+
+1. Bot 会回复一串负数，比如 -1001234567890
+
+把这个 ID 复制保存好，下一步要用。
+
+> Group ID：Telegram 群组的唯一标识符，负数开头。Bot 通过这个 ID 知道消息来自哪个群。
+
+第四步：用 Prompt 自动创建子 Agent（核心步骤）
+
+![](https://pbs.twimg.com/media/HCvPoxKaUAkK799.jpg)
+
+这是整个流程最关键的一步。
+
+回到主 Bot 的私聊窗口，发送下面这段 Prompt。你只需要把括号里的内容替换成自己的信息：
+
+```plaintext
+你现在是我的 OpenClaw 主控 Agent，请严格按照以下步骤为我创建一个全新的独立子 Agent：
+
+1. Agent 基本信息：
+- Name: 【子 Agent 名称，例如 产品经理】
+- Model: 【模型，例如  Claude-3-6-sonnet或GLM5】
+- Workspace: 新建独立 workspace（名称同 Name）
+- Personality: 【角色描述，例如"你是资深产品经理，擅长需求分析、用户研究和产品规划"】
+
+2. 配置路由 Bindings：
+- 使用 accountId: "main"
+- 绑定两种 peer 类型：
+  - peer.kind: "group", peer.id: 【你的 Group ID】
+  - peer.kind: "channel", peer.id: 【同上】
+- 所有消息路由到这个新 Agent
+
+3. 群组策略：
+- requireMention: false（群内无需 @ 就能直接回复）
+- groupPolicy: "open"（所有人消息可见）
+- allowFrom: ["*"]（开放权限）
+
+4. 防抢消息：
+- 为主 Agent 添加 client: "direct" + 你的 Telegram 用户 ID 白名单
+
+请立即执行以上配置，完成后回复确认信息。
+```
+
+发送后等待 10-30 秒，主 Agent 会自动创建子 Agent 并返回确认信息。
+
+> Workspace：每个 Agent 的"独立办公室"，里面有它自己的记忆、文件、配置。Agent 之间互不干扰。
+
+第五步：测试，然后加更多角色
+
+![创建完多角色](https://pbs.twimg.com/media/HCvP3gRbQAAczUW.jpg)
+
+去刚才创建的群组，直接发一条消息：
+
+```plaintext
+分别帮我手机今天的最新AI新闻
+```
+
+如果子 Agent 正常回复了，恭喜你，第一个角色配置成功！
+
+接下来，重复第三步和第四步，创建更多角色：
+
+- QA Agent：擅长写测试用例、找 Bug
+- 工程师 Agent：写代码、做架构
+- 内容 Agent：写推文、做文案
+
+每个角色一个群，互不干扰。
+
+更酷的是，你可以在主 Bot 私聊里"调度"它们协作：
+
+```plaintext
+让A角色去和B角色进行分别执行A给出的任务或者不同的任务给你提交。
+包括写代码、写文案、都可以
+```
+
+主 Agent 会自动调用对应的子 Agent，把结果汇总给你。
+
+## 高级玩法：多Bot配置
+
+
+当你需要更清晰的场景分离时，可以配置多个Bot，每个绑定不同的Agent。
+
+配置示例
+
+```plaintext
+{
+  "channels": {
+    "telegram": {
+      "accounts": {
+        "main": {
+          "botToken": "主Bot Token",
+          "groups": { "*": { "requireMention": false } }
+        },
+        "life": {
+          "botToken": "生活助手Bot Token",
+          "groups": { "*": { "requireMention": true } }
+        },
+        "xiaoxiamiss": {
+          "botToken": "技术专家Bot Token",
+          "groups": { "*": { "requireMention": true } }
+        }
+      }
+    }
+  }
+}
+```
+
+场景：群里有多个Bot，如何避免混乱？
+
+方案一：默认响应者
+
+![](https://pbs.twimg.com/media/HCvQji2aIAAzlXS.jpg)
+
+- 不指定时 → 糯糯（默认）回答
+- @团团 → 团团回答
+- @爱爱 → 爱爱回答
+
+方案二：全部需要@
+
+- 所有Bot都设置 requireMention: true
+- 叫谁谁回答
+
+## 权限管理
+
+
+私聊权限
+
+```plaintext
+{
+  "dmPolicy": "pairing"  // 需要配对码才能私聊
+}
+```
+
+群组权限
+
+```plaintext
+{
+  "groupPolicy": "allowlist",  // 白名单模式
+  "allowFrom": [
+    1867306242,        // 用户ID
+    -5095174939        // 群组ID
+  ]
+}
+```
+
+开放给更多人
+
+![自己可以不看告诉OpenClaw去做](https://pbs.twimg.com/media/HCvQ6XZaUAQkHt9.png)
+
+## 记忆隔离
+
+
+![](https://pbs.twimg.com/media/HCvRCwIbMAAEw6N.jpg)
+
+每个Agent有独立的workspace，记忆互不干扰：
+
+```plaintext
+workspace-life/
+  ├── IDENTITY.md      # 团团的身份
+
+  ├── MEMORY.md        # 团团的长期记忆
+
+  └── memory/          # 团团的日记
+
+
+workspace-ai/
+  ├── IDENTITY.md      # 爱爱的身份
+
+  ├── MEMORY.md        # 爱爱的长期记忆
+
+  └── memory/          # 爱爱的日记
+
+```
+
+## 遇到问题怎么办？
+
+
+群里发消息，Bot 不回复
+
+![](https://pbs.twimg.com/media/HCvRIt6aUAgLfJh.jpg)
+
+检查清单：
+
+![](https://pbs.twimg.com/media/HCvRO0IaUAUsAGZ.png)
+
+Bot之间抢消息
+
+检查 requireMention 配置：
+
+- false：不需要@也能响应
+- true：必须@才响应
+
+> 建议：只让一个Bot设为 false，其他都 true
+
+想看详细日志
+
+```plaintext
+openclaw logs --follow
+```
+
+实时查看所有消息路由情况，定位问题很方
+
+![OpenClaw 超级速查表](https://pbs.twimg.com/media/HCvR6i8aUAEOVFn.jpg)
+
+## 常见场景配置
+
+
+场景一：个人助理 + 技术顾问
+
+- 糯糯（默认）：日常对话、生活助手
+- 爱爱（需@）：技术问题、代码开发
+
+场景二：团队协作
+
+- 群A - 产品经理：需求分析、用户研究
+- 群B - 工程师：代码实现、架构设计
+- 群C - QA：测试用例、Bug分析
+
+场景三：多语言服务
+
+- Bot A：中文客服
+- Bot B：英文客服
+- Bot C：日文客服
+
+## Gateway Token 获取
+
+
+如果需要通过API访问Gateway：
+
+```plaintext
+cat ~/.openclaw/openclaw.json | grep -A2 '"auth"'
+
+```
+
+Token用于：
+
+- API调用
+- 远程管理
+- 第三方集成
+
+## 写在最后
+
+
+AI 时代，一个人就是一个团队。
+
+以前，你想同时跑产品经理、QA、工程师，得配三套环境，搞三个 Bot。现在，一个 Gateway 搞定。
+
+这不是技术炫耀，这是效率革命。
+
+如果你正在用 AI 做产品、写代码、搞内容，这个配置方式值得花 15 分钟试试。配置完成后，你的 Telegram 就变成了一个"AI 作战室"，随时召唤不同角色协同工作。

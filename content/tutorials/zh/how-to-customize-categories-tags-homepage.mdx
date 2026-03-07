@@ -1,0 +1,338 @@
+---
+title: "如何自定义分类、标签与首页内容"
+slug: "how-to-customize-categories-tags-homepage"
+locale: "zh"
+description: "完整操作指南：掌握平台分类系统的工作原理，学会新增/修改教程分类、工具分类、标签集合，以及自定义首页展示内容。"
+category: "智能体工作流"
+tags: ["内容管理", "贡献指南", "分类"]
+techStack: ["Next.js", "TypeScript"]
+difficulty: "初级"
+duration: "15 分钟阅读"
+thumbnail: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=800"
+featured: false
+date: "2026-03-06"
+---
+
+# 如何自定义分类、标签与首页内容
+
+本平台的分类系统有一个清晰的单一数据源设计——所有分类定义集中在两个文件中，修改一处，全站生效。本文介绍如何新增或修改**教程分类**、**工具分类**、**标签**和**首页展示内容**。
+
+---
+
+## 一、平台架构概览
+
+```
+src/lib/categories.ts        ← 教程分类的唯一数据源
+src/lib/tool-categories.ts   ← 工具分类的唯一数据源
+src/messages/{en,zh,ja}.json ← 分类名称的多语言翻译
+src/app/[locale]/page.tsx    ← 首页展示的版块配置
+content/tutorials/{locale}/  ← 教程内容（frontmatter 包含 category、tags）
+```
+
+**数据流向：**
+1. 分类定义 → 侧边栏筛选 → URL 参数（`?cat=xxx`）
+2. 内容文件的 `category` 字段 → 筛选逻辑 → 教程列表
+3. 内容文件的 `tags` 字段 → 全站搜索索引 → 展示柜标签云
+
+---
+
+## 二、教程分类（Tutorial Categories）
+
+### 2.1 分类系统的工作原理
+
+教程分类由 `src/lib/categories.ts` 统一管理：
+
+```typescript
+// src/lib/categories.ts
+
+export const TUTORIAL_CATEGORIES: CategoryDef[] = [
+  { id: 'frameworks',  value: 'Frameworks',        i18nKey: 'frameworks',  icon: 'grid' },
+  { id: 'llms',        value: 'LLM Models',        i18nKey: 'llms',        icon: 'cpu' },
+  { id: 'workflows',   value: 'Agentic Workflows',  i18nKey: 'workflows',   icon: 'git-merge' },
+  { id: 'cases',       value: 'Real-world Cases',   i18nKey: 'cases',       icon: 'briefcase' },
+  { id: 'rag',         value: 'RAG',                i18nKey: 'rag',         icon: 'database' },
+  { id: 'prompting',   value: 'Prompting',          i18nKey: 'prompting',   icon: 'message-square' },
+];
+```
+
+四个字段的含义：
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `id` | URL 中的参数值（稳定不变） | `llms` → `/explore?cat=llms` |
+| `value` | 内容文件 frontmatter 中 `category:` 的值 | `"LLM Models"` |
+| `i18nKey` | 对应 `messages/xx.json` 的 `Categories.{key}` | `"llms"` |
+| `icon` | Lucide 图标名（小写连字符） | `"cpu"` |
+
+### 2.2 新增一个教程分类
+
+以新增「多模态」分类为例，需要修改 **3 个文件**：
+
+**第一步：在 `src/lib/categories.ts` 添加分类定义**
+
+```typescript
+export const TUTORIAL_CATEGORIES: CategoryDef[] = [
+  // ... 现有分类 ...
+  {
+    id: 'multimodal',          // URL 参数，英文小写
+    value: 'Multimodal',       // 内容文件 category 字段的值
+    i18nKey: 'multimodal',     // 翻译 key
+    icon: 'image',             // Lucide 图标名
+  },
+];
+```
+
+> 可用图标名参考：`grid`, `cpu`, `git-merge`, `briefcase`, `database`, `message-square`, `image`, `bot`, `layers`, `code`, `rocket`
+
+**第二步：在 3 个语言文件中添加翻译**
+
+```json
+// src/messages/zh.json → "Categories" 对象内添加：
+"multimodal": "多模态"
+
+// src/messages/en.json → "Categories" 对象内添加：
+"multimodal": "Multimodal"
+
+// src/messages/ja.json → "Categories" 对象内添加：
+"multimodal": "マルチモーダル"
+```
+
+**第三步：为内容文件设置 `category` 字段**
+
+```mdx
+---
+title: "GPT-4o 多模态应用开发"
+slug: "gpt4o-multimodal"
+locale: "zh"
+category: "Multimodal"    ← 必须与 value 字段完全一致（区分大小写）
+tags: ["GPT-4o", "多模态", "视觉"]
+---
+```
+
+完成后重启开发服务器，新分类会自动出现在侧边栏。
+
+### 2.3 修改现有分类名称
+
+只需修改对应语言文件中的翻译值，不要修改 `id` 和 `value`（这两个字段一旦有内容使用就不应更改）：
+
+```json
+// src/messages/zh.json
+"Categories": {
+  "workflows": "工作流程"   // 从"智能体工作流"改为"工作流程"
+}
+```
+
+### 2.4 删除一个分类
+
+1. 从 `TUTORIAL_CATEGORIES` 数组中删除该条目
+2. 从 3 个语言文件中删除对应翻译
+3. **注意**：已使用该 `category` 的内容文件不会报错，只是侧边栏不再显示该筛选项
+
+---
+
+## 三、工具分类（Tool Categories）
+
+工具分类与教程分类逻辑完全相同，只是数据源不同：
+
+| 对比项 | 教程分类 | 工具分类 |
+|--------|----------|----------|
+| 定义文件 | `src/lib/categories.ts` | `src/lib/tool-categories.ts` |
+| 数组名称 | `TUTORIAL_CATEGORIES` | `TOOL_CATEGORIES` |
+| i18n 命名空间 | `"Categories"` | `"ToolCategories"` |
+
+### 新增工具分类示例
+
+以新增「安全工具」为例：
+
+**`src/lib/tool-categories.ts`：**
+
+```typescript
+export const TOOL_CATEGORIES: ToolCategoryDef[] = [
+  // ... 现有分类 ...
+  {
+    id: 'security',
+    value: 'Security',
+    i18nKey: 'security',
+    icon: 'shield',
+  },
+];
+```
+
+**各语言文件的 `"ToolCategories"` 对象内：**
+
+```json
+// zh.json
+"security": "安全工具"
+
+// en.json
+"security": "Security"
+
+// ja.json
+"security": "セキュリティ"
+```
+
+**工具内容文件：**
+
+```mdx
+---
+title: "LLM Guard"
+slug: "llm-guard"
+category: "Security"    ← 与 value 一致
+---
+```
+
+---
+
+## 四、标签（Tags）
+
+标签采用**完全动态**的设计，无需注册，直接在内容文件 frontmatter 中使用：
+
+```mdx
+---
+tags: ["Claude", "Multi-Agent", "Python", "RAG"]
+---
+```
+
+### 标签的作用
+
+- **全站搜索**：标签会被收录进 Orama 搜索索引（`/api/search-index`）
+- **展示柜侧边栏**：Showcase 页面的侧边栏会自动统计所有 showcase 内容的标签，按使用频次排序展示
+
+> **注意**：Showcase 侧边栏的标签云是从 `showcase` 类型内容动态生成的，不是从教程生成的。如果想让某个标签出现在侧边栏，需要在 showcase 内容文件中使用该标签。
+
+### 标签规范
+
+| 建议 | 说明 |
+|------|------|
+| 保持拼写一致 | `"LangChain"` 和 `"langchain"` 会被视为两个不同标签 |
+| 数量 2～5 个 | 太少描述不足，太多稀释权重 |
+| 优先使用已有标签 | 避免语义重复（如 `"RAG"` vs `"检索增强"` 可选一个统一使用） |
+| 可中英文混用 | 同一概念保持统一即可 |
+
+---
+
+## 五、首页内容自定义
+
+### 5.1 热门话题（精选教程）
+
+首页「热门话题」区域展示 `featured: true` 的教程，优先排序，最多显示 4 篇。
+
+**设置方法：** 在教程 frontmatter 中设置 `featured: true`：
+
+```mdx
+---
+title: "用 Claude 构建生产级 RAG 系统"
+slug: "claude-production-rag"
+locale: "zh"
+featured: true    ← 设为 true 即出现在首页热门话题
+---
+```
+
+> 如果 `featured: true` 的教程不足 4 篇，会自动用最新的普通教程补位。
+
+### 5.2 首页版块（Repository Segments）
+
+首页底部的分类导航卡片在 `src/app/[locale]/page.tsx` 中定义：
+
+```typescript
+// src/app/[locale]/page.tsx
+
+const repositorySegments = [
+  {
+    titleKey: 'categories.foundation',   // 对应 Home.categories.foundation 翻译
+    descKey: 'categories.foundationDesc',
+    icon: Activity,                       // Lucide 图标组件
+    href: '/explore?cat=llms',           // 点击跳转的链接
+  },
+  {
+    titleKey: 'categories.workflows',
+    descKey: 'categories.workflowsDesc',
+    icon: Terminal,
+    href: '/explore?cat=workflows',
+  },
+  // ...
+];
+```
+
+**修改步骤：**
+
+1. 在 `repositorySegments` 数组中增删或修改条目
+2. 在 `src/messages/{en,zh,ja}.json` 的 `"Home.categories"` 中添加对应的 title 和 desc 翻译 key
+3. 在文件顶部从 `lucide-react` 导入需要使用的图标
+
+**示例：新增一个「资讯」版块**
+
+```typescript
+// page.tsx 顶部导入图标
+import { Newspaper } from 'lucide-react';
+
+// repositorySegments 数组中添加：
+{
+  titleKey: 'categories.news',
+  descKey: 'categories.newsDesc',
+  icon: Newspaper,
+  href: '/news',
+},
+```
+
+```json
+// src/messages/zh.json → Home.categories 对象中添加：
+"news": "资讯动态",
+"newsDesc": "跟踪 AI 智能体领域的最新进展与研究"
+```
+
+### 5.3 首页副标题与 CTA 文案
+
+修改 `src/messages/{en,zh,ja}.json` 中的以下 key：
+
+```json
+// src/messages/zh.json → Home 对象
+{
+  "subtitle": "面向 AI 开发者的实战资源库。从基础到生产级智能体，一站学习。",
+  "ctaExplore": "开始学习 →",
+  "ctaTools": "浏览工具"
+}
+```
+
+---
+
+## 六、完整操作清单
+
+### 新增教程分类（4 步）
+
+- [ ] 在 `src/lib/categories.ts` 的 `TUTORIAL_CATEGORIES` 中添加新条目
+- [ ] 在 `src/messages/en.json` 的 `"Categories"` 中添加翻译
+- [ ] 在 `src/messages/zh.json` 的 `"Categories"` 中添加翻译
+- [ ] 在 `src/messages/ja.json` 的 `"Categories"` 中添加翻译
+- [ ] 内容文件使用 `category: "新分类的 value 值"`
+
+### 新增工具分类（4 步）
+
+- [ ] 在 `src/lib/tool-categories.ts` 的 `TOOL_CATEGORIES` 中添加新条目
+- [ ] 在 3 个语言文件的 `"ToolCategories"` 中添加翻译
+
+### 新增首页版块（3 步）
+
+- [ ] 在 `src/app/[locale]/page.tsx` 的 `repositorySegments` 中添加条目
+- [ ] 导入对应 Lucide 图标
+- [ ] 在 3 个语言文件的 `"Home.categories"` 中添加 title 和 desc 翻译
+
+### 设置热门教程（1 步）
+
+- [ ] 在教程 frontmatter 中设置 `featured: true`
+
+---
+
+## 七、常见问题
+
+**Q：修改分类后侧边栏没有更新？**
+重启开发服务器（`npm run dev`）。Velite 在构建时生成内容索引，开发模式下有缓存。
+
+**Q：`category` 值写错了会怎样？**
+内容不会报错，但筛选时不会匹配到该教程（因为筛选逻辑是字符串精确匹配）。检查内容文件的 `category` 值是否与 `TUTORIAL_CATEGORIES` 中的 `value` 完全一致（区分大小写）。
+
+**Q：可以给一篇教程设置多个分类吗？**
+不可以，`category` 是单值字段。多分类需求可以用 `tags` 来补充。
+
+**Q：标签在哪里可以看到汇总列表？**
+执行 `grep -h "^tags:" content/tutorials/zh/*.mdx` 可以列出所有已用标签。展示柜页面的侧边栏会自动聚合 showcase 内容的标签。

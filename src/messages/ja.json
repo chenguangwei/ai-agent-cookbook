@@ -1,18 +1,31 @@
 {
   "Home": {
     "title": "AIエージェントの未来を習得する",
-    "subtitle": "自律型アーキテクチャの決定版リソース。次世代AI開発者のためのプロフェッショナルワークフロー。",
+    "subtitle": "AIデベロッパーのための実践リソースハブ。基礎から本番グレードのエージェントまで一か所で学べます。",
     "searchPlaceholder": "リポジトリを検索...",
     "hotTopics": "ホットトピック",
     "viewAll": "すべて表示",
     "featuredTutorials": "注目のチュートリアル",
     "repositorySegments": "リポジトリセクション",
     "systemStatus": "システム状態: 稼働中",
+    "ctaExplore": "学習を始める →",
+    "ctaTools": "ツールを見る",
+    "recentlyAdded": "最近追加",
+    "stats": {
+      "tutorials": "チュートリアル",
+      "tools": "ツール",
+      "showcases": "事例",
+      "languages": "言語"
+    },
     "categories": {
-      "foundation": "基礎",
-      "workflows": "ワークフロー",
-      "practice": "実践",
+      "tutorials": "チュートリアル",
+      "tutorialsDesc": "基礎から本番グレードのエージェント構築まで実践的なガイド",
+      "tools": "ツール",
+      "toolsDesc": "最適なAIフレームワーク、ベクターDB、開発ツールを発見する",
       "showcase": "事例紹介",
+      "showcaseDesc": "コミュニティが構築した実際のAIプロジェクトを探索する",
+      "news": "ニュース",
+      "newsDesc": "AIエージェントとLLMの最新ブレークスルーをキャッチアップ",
       "llms": "LLM"
     }
   },

@@ -1,18 +1,31 @@
 {
   "Home": {
     "title": "Master the Agentic Future",
-    "subtitle": "The definitive repository for autonomous architectures. Professional workflows built for the next generation of AI developers.",
+    "subtitle": "A hands-on resource hub for AI developers. From fundamentals to production-grade agents, all in one place.",
     "searchPlaceholder": "Search repository...",
     "hotTopics": "Hot Topics",
     "viewAll": "View All",
     "featuredTutorials": "Featured Tutorials",
     "repositorySegments": "Repository Segments",
     "systemStatus": "System Status: Operational",
+    "ctaExplore": "Start Learning →",
+    "ctaTools": "Browse Tools",
+    "recentlyAdded": "Recently Added",
+    "stats": {
+      "tutorials": "Tutorials",
+      "tools": "Tools",
+      "showcases": "Showcases",
+      "languages": "Languages"
+    },
     "categories": {
-      "foundation": "Foundation",
-      "workflows": "Workflows",
-      "practice": "Practice",
+      "tutorials": "Tutorials",
+      "tutorialsDesc": "Hands-on guides from basic prompting to production-grade agent architectures",
+      "tools": "Tools",
+      "toolsDesc": "Discover the best AI frameworks, vector databases, and developer tools",
       "showcase": "Showcase",
+      "showcaseDesc": "Explore real-world AI projects built by the community",
+      "news": "News",
+      "newsDesc": "Stay up to date with the latest breakthroughs in AI agents and LLMs",
       "llms": "LLMs"
     }
   },

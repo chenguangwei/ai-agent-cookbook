@@ -49,9 +49,6 @@ export function Header() {
           <Link href="/explore" className={navLinkClass('/explore')}>
             {t('tutorials')}
           </Link>
-          <Link href="/practice" className={navLinkClass('/practice')}>
-            {t('practice')}
-          </Link>
           <Link href="/showcase" className={navLinkClass('/showcase')}>
             {t('showcase')}
           </Link>

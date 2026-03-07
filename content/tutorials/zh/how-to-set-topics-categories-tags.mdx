@@ -1,0 +1,234 @@
+---
+title: "如何设置热门话题、分类与标签"
+slug: "how-to-set-topics-categories-tags"
+locale: "zh"
+description: "完整指南：掌握内容管理中的 featured（热门）、category（分类）和 tags（标签）字段的设置方法，让你的教程更易发现。"
+category: "智能体工作流"
+tags: ["内容管理", "教程", "贡献指南"]
+techStack: ["MDX", "Velite"]
+difficulty: "初级"
+duration: "10 分钟阅读"
+thumbnail: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=800"
+featured: false
+date: "2026-03-05"
+---
+
+# 如何设置热门话题、分类与标签
+
+本平台的每篇教程、工具页、展示项目都通过文件头部的 **frontmatter** 元数据来控制分类、标签和热门状态。掌握这三个字段的设置方法，能让你的内容更容易被搜索、筛选和发现。
+
+---
+
+## 一、内容文件的基本结构
+
+所有内容文件（`.mdx`）的开头都有一个用 `---` 包裹的 YAML 元数据块，称为 **frontmatter**：
+
+```mdx
+---
+title: "你的教程标题"
+slug: "your-tutorial-slug"
+locale: "zh"
+description: "简短描述"
+category: "Frameworks"
+tags: ["Claude", "Python"]
+featured: false
+date: "2026-03-05"
+---
+
+# 正文从这里开始
+```
+
+以下重点介绍 `featured`、`category`、`tags` 三个字段。
+
+---
+
+## 二、热门话题（featured）
+
+### 作用
+
+`featured: true` 的内容会出现在首页的**「精选教程」**区域，获得比普通内容更高的曝光率。
+
+### 设置方法
+
+```yaml
+featured: true   # 设为热门，显示在首页精选区
+featured: false  # 普通内容（默认值）
+```
+
+### 使用原则
+
+| 情况 | 建议值 |
+|------|--------|
+| 新发布、质量高、有代表性的教程 | `true` |
+| 常规教程、工具介绍 | `false` |
+| 过时或需要更新的内容 | `false` |
+
+> **注意**：首页精选区通常只展示 3～6 篇，请谨慎使用 `featured: true`，避免滥用导致首页拥挤。
+
+---
+
+## 三、分类（category）
+
+### 作用
+
+`category` 字段用于将内容归入一个**主要类别**，支持探索页的按分类筛选功能。
+
+### 教程（Tutorials）可用分类
+
+| 分类值 | 说明 |
+|--------|------|
+| `"LLM Models"` | 大语言模型相关（GPT、Claude、Gemini 等） |
+| `"Frameworks"` | AI 框架（LangChain、LlamaIndex、CrewAI 等） |
+| `"Agentic Workflows"` | 智能体工作流与多智能体系统 |
+| `"Prompting"` | 提示工程技巧 |
+| `"RAG"` | 检索增强生成 |
+
+### 工具（Tools）可用分类
+
+| 分类值 | 说明 |
+|--------|------|
+| `"Agent Framework"` | 智能体开发框架 |
+| `"Vector Database"` | 向量数据库 |
+| `"IDE/Editor"` | 开发工具与编辑器 |
+
+### 设置示例
+
+```yaml
+# 一篇关于 LangGraph 的教程
+category: "Frameworks"
+
+# 一篇关于 GPT-4o 的教程
+category: "LLM Models"
+
+# 一篇关于 RAG 检索的教程
+category: "RAG"
+```
+
+### 注意事项
+
+- `category` 只能填**一个值**，不能填数组
+- 尽量使用已有的分类值，保持一致性
+- 如果需要新增分类，需同步更新筛选组件的分类列表
+
+---
+
+## 四、标签（tags）
+
+### 作用
+
+`tags` 是一个**字符串数组**，用于描述内容涉及的具体技术、概念或工具。标签比分类更细粒度，支持全局搜索索引。
+
+### 常用标签参考
+
+**模型类：**
+```yaml
+tags: ["Claude", "GPT-4", "Gemini", "Llama", "Ollama"]
+```
+
+**框架类：**
+```yaml
+tags: ["LangChain", "LlamaIndex", "CrewAI", "AutoGPT", "LangGraph"]
+```
+
+**技术概念类：**
+```yaml
+tags: ["RAG", "ReAct", "Multi-Agent", "提示工程", "向量数据库"]
+```
+
+**编程语言类：**
+```yaml
+tags: ["Python", "TypeScript", "JavaScript"]
+```
+
+### 设置示例
+
+```yaml
+# 关于用 CrewAI 构建多智能体系统的教程
+tags: ["CrewAI", "Multi-Agent", "Python"]
+
+# 关于 Claude API 提示工程的教程
+tags: ["Claude", "提示工程", "API"]
+
+# 关于 LlamaIndex RAG 的教程
+tags: ["RAG", "LlamaIndex", "向量数据库"]
+```
+
+### 设置原则
+
+- 建议填写 **2～5 个**标签，太少不够描述，太多会稀释权重
+- 优先使用已有标签，避免拼写变体（如同时存在 `"LangChain"` 和 `"langchain"`）
+- 标签可以中英文混用，但同一概念请保持统一
+
+---
+
+## 五、完整示例
+
+### 示例一：一篇关于 Claude + ReAct 的教程
+
+```mdx
+---
+title: "用 Claude 实现 ReAct 自省智能体"
+slug: "claude-react-self-reflecting-agent"
+locale: "zh"
+description: "学习如何使用 Claude API 和 ReAct 模式构建能够自我反思的 AI 智能体。"
+category: "Agentic Workflows"
+tags: ["Claude", "ReAct", "Python", "自省"]
+techStack: ["Claude API", "Python"]
+difficulty: "中级"
+duration: "25 分钟阅读"
+thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
+featured: true
+date: "2026-03-05"
+---
+```
+
+### 示例二：一篇工具介绍
+
+```mdx
+---
+title: "Chroma 向量数据库"
+slug: "chroma-vector-db"
+locale: "zh"
+description: "开源嵌入式向量数据库，适合本地 RAG 应用开发。"
+category: "Vector Database"
+tags: ["向量数据库", "RAG", "Python", "开源"]
+websiteUrl: "https://www.trychroma.com"
+repoUrl: "https://github.com/chroma-core/chroma"
+pricing: "Open Source"
+stars: 15000
+featured: false
+date: "2026-03-05"
+---
+```
+
+---
+
+## 六、内容文件存放位置
+
+| 内容类型 | 存放路径 | 文件格式 |
+|----------|----------|----------|
+| 中文教程 | `content/tutorials/zh/` | `.mdx` |
+| 英文教程 | `content/tutorials/en/` | `.mdx` |
+| 中文文档 | `content/docs/zh/` | `.mdx` |
+| 英文工具 | `content/tools/en/` | `.mdx` |
+| 中文工具 | `content/tools/zh/` | `.mdx` |
+| 实验室 | `content/labs/en/` | `.json` |
+| 展示项目 | `content/showcase/en/` | `.mdx` |
+
+---
+
+## 七、快速检查清单
+
+添加新内容前，确认以下项目：
+
+- [ ] `slug` 全小写，单词间用连字符 `-` 连接，且在该语言下唯一
+- [ ] `locale` 与文件所在目录匹配（`zh` / `en` / `ja`）
+- [ ] `category` 使用已有分类值之一
+- [ ] `tags` 为数组格式，2～5 个标签
+- [ ] `featured` 只在内容确实值得推荐时设为 `true`
+- [ ] `date` 格式为 `"YYYY-MM-DD"`
+- [ ] `thumbnail` 为可访问的图片 URL
+
+---
+
+按照以上规范设置元数据，你的内容就能在平台的分类筛选、全局搜索和首页精选中正确显示。

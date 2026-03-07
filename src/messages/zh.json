@@ -1,18 +1,31 @@
 {
   "Home": {
     "title": "掌握 Agentic 未来",
-    "subtitle": "探索自主架构的权威资源库。为下一代 AI 开发者打造的专业工作流。",
+    "subtitle": "面向 AI 开发者的实战资源库。从基础到生产级智能体，一站学习。",
     "searchPlaceholder": "搜索资源库...",
     "hotTopics": "热门话题",
     "viewAll": "查看全部",
     "featuredTutorials": "精选教程",
     "repositorySegments": "资源库分区",
     "systemStatus": "系统状态: 运行中",
+    "ctaExplore": "开始学习 →",
+    "ctaTools": "浏览工具",
+    "recentlyAdded": "最近更新",
+    "stats": {
+      "tutorials": "教程",
+      "tools": "工具",
+      "showcases": "案例",
+      "languages": "语言"
+    },
     "categories": {
-      "foundation": "基础知识",
-      "workflows": "工作流程",
-      "practice": "实践练习",
+      "tutorials": "教程",
+      "tutorialsDesc": "从基础提示工程到生产级智能体架构的实战教程",
+      "tools": "工具目录",
+      "toolsDesc": "发现最佳 AI 框架、向量数据库和开发工具",
       "showcase": "案例展示",
+      "showcaseDesc": "探索社区构建的真实 AI 项目",
+      "news": "资讯动态",
+      "newsDesc": "跟踪 AI 智能体与大语言模型的最新突破",
       "llms": "大语言模型"
     }
   },

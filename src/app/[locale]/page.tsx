@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ArrowUpRight, Terminal, Activity, Database, Sparkles, Command } from 'lucide-react';
+import { Search, ArrowUpRight, BookOpen, Wrench, Sparkles, Command, Newspaper } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
-import { getFeaturedTutorials } from '@/lib/content';
+import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 
 // ISR: Revalidate every 60 seconds
@@ -12,28 +12,28 @@ export const revalidate = 60;
 
 const repositorySegments = [
   {
-    titleKey: 'categories.foundation',
-    icon: Activity,
-    descKey: 'categories.foundation',
-    href: '/explore?cat=llms',
+    titleKey: 'tutorials',
+    descKey: 'tutorialsDesc',
+    icon: BookOpen,
+    href: '/explore',
   },
   {
-    titleKey: 'categories.workflows',
-    icon: Terminal,
-    descKey: 'categories.workflows',
-    href: '/explore?cat=workflows',
+    titleKey: 'tools',
+    descKey: 'toolsDesc',
+    icon: Wrench,
+    href: '/tools',
   },
   {
-    titleKey: 'categories.practice',
-    icon: Database,
-    descKey: 'categories.practice',
-    href: '/practice',
-  },
-  {
-    titleKey: 'categories.showcase',
+    titleKey: 'showcase',
+    descKey: 'showcaseDesc',
     icon: Sparkles,
-    descKey: 'categories.showcase',
     href: '/showcase',
+  },
+  {
+    titleKey: 'news',
+    descKey: 'newsDesc',
+    icon: Newspaper,
+    href: '/news',
   },
 ];
 
@@ -41,8 +41,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const { locale } = await params;
   const t = await getTranslations('Home');
   const tCat = await getTranslations('Home.categories');
+  const tStat = await getTranslations('Home.stats');
 
-  const featuredTutorials = await getFeaturedTutorials(4, locale);
+  const featuredTutorials = getFeaturedTutorials(4, locale);
+  const recentTutorials = getRecentTutorials(3, locale);
+  const tutorialCount = getAllTutorials(locale).length;
+  const toolCount = getAllTools(locale).length;
+  const showcaseCount = getAllShowcaseProjects(locale).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -68,13 +73,27 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 )
               })}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl text-center max-w-2xl leading-relaxed font-light">
+            <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl text-center max-w-2xl leading-relaxed font-light mb-8">
               {t('subtitle')}
             </p>
+            <div className="flex items-center gap-4 mb-8">
+              <Link
+                href="/explore"
+                className="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold transition-colors"
+              >
+                {t('ctaExplore')}
+              </Link>
+              <Link
+                href="/tools"
+                className="px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-400 dark:hover:border-primary-600 text-sm font-bold transition-colors bg-white dark:bg-slate-900"
+              >
+                {t('ctaTools')}
+              </Link>
+            </div>
           </div>
 
           {/* Search Box */}
-          <div className="max-w-2xl mx-auto mb-32">
+          <div className="max-w-2xl mx-auto mb-12">
             <div className="group relative">
               <div className="flex w-full items-center rounded-2xl h-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg transition-shadow">
                 <div className="pl-6 text-slate-400">
@@ -91,6 +110,25 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Stats Bar */}
+          <div className="flex flex-wrap justify-center gap-10 mb-20 py-8 border-y border-slate-100 dark:border-slate-800">
+            {[
+              { value: tutorialCount, label: tStat('tutorials') },
+              { value: toolCount, label: tStat('tools') },
+              { value: showcaseCount, label: tStat('showcases') },
+              { value: 3, label: tStat('languages') },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center gap-1">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white font-display">
+                  {stat.value}+
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest font-medium">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
           </div>
 
           {/* Hot Topics Section */}
@@ -110,7 +148,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </div>
 
           {/* Featured Tutorials Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
             {featuredTutorials.map((tutorial) => (
               <Link
                 href={`/tutorial/${tutorial?.slug}`}
@@ -143,8 +181,52 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             ))}
           </div>
 
+          {/* Recently Added Section */}
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-4">
+              <div className="h-6 w-1 bg-indigo-500 rounded-full"></div>
+              <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-widest uppercase font-display">
+                {t('recentlyAdded')}
+              </h2>
+            </div>
+            <Link
+              href="/explore"
+              className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
+            >
+              {t('viewAll')} <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
+            {recentTutorials.map((tutorial) => (
+              <Link
+                href={`/tutorial/${tutorial.slug}`}
+                key={tutorial.slug}
+                className="group flex flex-col gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
+              >
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  {tutorial.thumbnail && (
+                    <Image
+                      src={tutorial.thumbnail}
+                      alt={tutorial.title || ''}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <TutorialBadge type="difficulty" value={tutorial.difficulty || 'Beginner'} />
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+                    {tutorial.title}
+                  </h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+
           {/* Repository Segments Section */}
-          <div className="flex items-center gap-4 mt-24 mb-12">
+          <div className="flex items-center gap-4 mb-12">
             <div className="h-6 w-1 bg-primary-600 rounded-full"></div>
             <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-widest uppercase font-display">
               {t('repositorySegments')}
@@ -162,16 +244,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   <item.icon className="text-primary-600 dark:text-primary-400 group-hover:text-white w-7 h-7 transition-colors duration-300" />
                 </div>
                 <h3 className="font-bold text-lg mb-2 text-slate-900 dark:text-white uppercase tracking-wider font-display">
-                  {item.titleKey === 'categories.foundation' ? tCat('foundation') :
-                    item.titleKey === 'categories.workflows' ? tCat('workflows') :
-                      item.titleKey === 'categories.practice' ? tCat('practice') :
-                        tCat('showcase')}
+                  {tCat(item.titleKey as any)}
                 </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed uppercase tracking-tight">
-                  {item.titleKey === 'categories.foundation' ? tCat('foundation') :
-                    item.titleKey === 'categories.workflows' ? tCat('workflows') :
-                      item.titleKey === 'categories.practice' ? tCat('practice') :
-                        tCat('showcase')}
+                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+                  {tCat(item.descKey as any)}
                 </p>
               </Link>
             ))}
