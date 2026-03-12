@@ -1,9 +1,9 @@
 ---
-title: "卧丢，Obsidian 一句话画图神器，1600星"
+title: "Holy Smokes, Obsidian's One-Sentence Diagramming Tool, 1600 Stars"
 slug: "obsidian-1600"
 locale: "en"
-description: "卧丢，Obsidian 一句话画图神器，1600星"
-category: "LLM Models"
+description: "Holy Smokes, Obsidian's One-Sentence Diagramming Tool, 1600 Stars"
+category: "Real-world Cases"
 tags: ["Claude", "ReAct"]
 techStack: []
 difficulty: "Beginner"
@@ -13,104 +13,85 @@ featured: false
 date: 2026-03-03
 ---
 
-# 卧丢，Obsidian 一句话画图神器，1600星
+# Holy Smokes, Obsidian's One-Sentence Diagramming Tool, 1600 Stars
 
+I've been using this Obsidian tool myself!!!
 
-这个 Obsidian 神器我自己一直都在用！！！
+Do you ever have this pain: you finish reading an article and want to create a mind map, but you open various tools, struggle for ages, and the result looks terrible???
 
-你们有没有这种痛苦：看完一篇文章想画个思维导图，打开各种工具折腾半天，画出来还丑得一批？？？
+Today, I'm sharing an open-source project on GitHub with 1600 stars called `axton-obsidian-visual-skills`. In one sentence: in Obsidian, you use natural language to say one sentence, and AI directly draws a hand-drawn style diagram for you!!!
 
-今天分享一个 GitHub 上 1600 星的开源项目，叫 axton-obsidian-visual-skills，一句话总结：在 Obsidian 里用自然语言说一句话，AI 直接帮你画出手绘风格的图！！！
-
-流程图、思维导图、时间线、对比图……你说啥它画啥，而且画出来是那种手绘风格，不是死板的方框线条，真的太香了😂
+Flowcharts, mind maps, timelines, comparison charts... you name it, it draws it. And the output is in that hand-drawn style, not rigid boxes and lines. It's seriously amazing 😂
 
 ![](https://pbs.twimg.com/media/HCZrgAvaIAA7df1.jpg)
 
-## 三个技能，覆盖所有画图场景
+## Three Skills Covering All Diagramming Scenarios
 
+This project is actually a skill pack containing three Claude Code Skills:
 
-这个项目其实是个技能包，里面塞了三个 Claude Code Skill：
+1.  **Excalidraw Diagram Generator**
+    This is my favorite!!! The generated diagrams are all in hand-drawn style, with 8 chart types to choose from: flowcharts, mind maps, hierarchical charts, relationship diagrams, comparison charts, timelines, matrix charts, freeform layouts.
+    It even supports Chinese! And it can do animations!!!
 
-1.
+2.  **Mermaid Visualizer**
+    6 chart types, comes with syntax error correction, so you don't have to worry about writing Mermaid syntax wrong. You can choose vertical or horizontal layout, simple or detailed, and the color schemes are professional-grade.
 
-Excalidraw 图表生成器
+3.  **Obsidian Canvas Creator**
+    Directly generates native Obsidian `.canvas` files, with two layout modes: mind map-style radial, or free positioning. Nodes are automatically colored, automatically connected, and automatically arranged.
 
-这个是我最爱的！！！生成的图全是手绘风格，8 种图表类型随便选：流程图、思维导图、层级图、关系图、对比图、时间线、矩阵图、自由布局。
-
-还支持中文！还能做动画！！！
-
-2.
-
-Mermaid 可视化器
-
-6 种图表类型，自带语法纠错，不用担心写错 Mermaid 语法。布局可以选垂直还是水平，简洁还是详细，配色也是专业级的。
-
-3.
-
-Obsidian Canvas 创建器
-
-直接生成 Obsidian 原生的 .canvas 文件，两种布局模式：思维导图式的放射状，或者自由定位。节点自动配色、自动连线、自动排版。
-
-三个技能组合起来，基本上你能想到的图都能画！！！
+Combined, these three skills can basically draw any diagram you can think of!!!
 
 ![](https://pbs.twimg.com/media/HCZrgB1aMAEAASR.jpg)
 
-## 安装简单到离谱
+## Installation is Ridiculously Simple
 
+Two ways:
 
-两种方式：
-
-方式一：插件市场（推荐）
-
+**Method 1: Plugin Marketplace (Recommended)**
 > /plugin marketplace add axtonliu/axton-obsidian-visual-skills
 > /plugin install obsidian-visual-skills
 
-两行命令，搞定。
+Two commands, done.
 
-方式二：手动安装
+**Method 2: Manual Installation**
+Clone the project and drop the `skill` folder into `~/.claude/skills/`.
 
-把项目 clone 下来，skill 文件夹丢到 ~/.claude/skills/ 里就行。
+Prerequisites: you need to have Claude Code CLI and Obsidian, and the Excalidraw plugin also needs to be installed.
 
-前提是你得有 Claude Code CLI 和 Obsidian，Excalidraw 插件也要装一下。
+## How Awesome is it to Use?
 
-## 用起来有多爽？
+Just talk to Claude in plain language:
 
+*   "Help me draw a flowchart for a CI/CD pipeline."
+*   "Organize this article into a mind map."
+*   "Draw a sequence diagram for user registration using Mermaid."
+*   "Create a Canvas comparing the pros and cons of React and Vue."
 
-直接跟 Claude 说人话就行：
-
-- "帮我画个 CI/CD 流水线的流程图"
-- "把这篇文章整理成思维导图"
-- "用 Mermaid 画个用户注册的时序图"
-- "做个 Canvas 对比 React 和 Vue 的优缺点"
-
-它自己就给你生成好了，直接在 Obsidian 里打开就能看。手绘风格的图拿去做 PPT、写文档、发推文都特别好看🔥
+It generates it for you, and you can open it directly in Obsidian to view. The hand-drawn style diagrams look great for PPTs, documentation, or tweets 🔥
 
 ![](https://pbs.twimg.com/media/HCZrgAzacAA3lDc.jpg)
 
-## 成本？零！
+## Cost? Zero!
 
+MIT open-source license, completely free.
 
-MIT 开源协议，完全免费。
+The only cost is the Claude Code API call fee, but drawing one diagram costs just a few cents.
 
-唯一的成本就是 Claude Code 的 API 调用费，但画一张图也就几分钱的事。
+Compared to those diagramming tools that charge dozens of dollars per month, the value for money here is off the charts!!!
 
-跟那些动辄收费几十块一个月的画图工具比，这个性价比直接爆杀！！！
+## Lao Yang's Summary
 
-## 老杨啊总结
+Honestly, if Obsidian users are still drawing diagrams by hand, they're really missing out.
 
+This project:
+*   One-sentence generation of hand-drawn style charts
+*   Three skills covering all scenarios
+*   Supports Chinese, supports animations
+*   Completely free and open-source
+*   1600 stars, community-approved
 
-说真的，Obsidian 用户如果还在手动画图，那真的是亏大了。
+The only thing to note is the project is marked as experimental, and output quality may vary with different model versions, but in my tests, the results are already very impressive.
 
-这个项目：
+Obsidian folks, install it now! If you have questions, complain in the comments, Lao Yang is always here to reply 😂
 
-- 一句话生成手绘风格图表
-- 三个技能覆盖所有场景
-- 支持中文、支持动画
-- 完全免费开源
-- 1600 星，社区认可
-
-唯一要注意的是项目标注了实验性质，输出质量可能因模型版本不同有差异，但我实测下来效果已经很能打了。
-
-Obsidian 党赶紧装起来！有问题评论区吐槽，老杨啊随时回😂
-
-> 项目地址：github.com/axtonliu/axton-obsidian-visual-skills
+> Project address: github.com/axtonliu/axton-obsidian-visual-skills

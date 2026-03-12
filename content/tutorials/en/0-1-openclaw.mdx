@@ -1,0 +1,308 @@
+---
+title: "Building an OpenClaw Multi-Role Team from 0 to 1"
+slug: "0-1-openclaw"
+locale: "en"
+description: "A complete guide to building an OpenClaw multi-role team from scratch"
+category: "Agentic Workflows"
+tags: []
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCc_zS9bQAA1Wee.jpg"
+featured: false
+date: 2026-03-04
+---
+
+# Building an OpenClaw Multi-Role Team from 0 to 1
+
+In the previous article, [《Farewell to OpenClaw's Sky-High Bills: Build a Private API Matrix in 20 Minutes, Self-Hosted Keys for Ultra-Low-Cost Multi-Accounts》](https://x.com/ResearchWang/status/2027683428154675476), we spent 20 RMB to set up an account pool using a GPT-business account, achieving extremely low-cost OpenClaw usage. Here's a reminder: based on my testing, try to keep conversations under 100 times within 5 hours for a single business account. If you want to build a multi-bot team collaboration, it's strongly recommended to purchase several more business accounts or use different models (Gemini, GLM, etc., which can also be configured via the [previous tutorial](https://x.com/ResearchWang/status/2027683428154675476)).
+
+P.S.: The previous article on setting up the account pool has already reached 50k views. Even the seller on Xianyu noticed me. I asked if they could offer a discount, and they agreed. I won't post the seller's link here, but if you're buying business accounts, you can DM me. Tell the seller you came from "ResearchWang13" to get a slightly better price~
+
+## 📚 Table of Contents
+
+- What is Multi-Bot Team Collaboration?
+- Beginner Stage: Basic Concepts & Prerequisites
+- Intermediate Stage: Directory Planning & Agent Creation
+- Advanced Stage: Core Architecture & Full Configuration
+- Expert Stage: Memory Standards & Multi-Team Isolation
+- Practical Task Checklist
+- Frequently Asked Questions
+- Selection Advice & Next Steps
+
+## What is Multi-Bot Team Collaboration?
+
+It involves organizing multiple independent Telegram Bots into a collaborative Agent team with division of labor. Through proper architectural configuration, you can have different Bots play different roles (e.g., Mastermind, Programmer, Researcher, etc.), enabling automated flow for complex tasks.
+
+Core Comparison of Three Collaboration Modes:
+
+- **Mode A (Mastermind + Specialists):** The Mastermind is responsible for unified scheduling and task assignment; Specialists work independently. Suitable for assembly-line work requiring strict process control.
+- **Mode B (Independent & Shared):** No Mastermind; Specialists interact directly with users and share memory. Suitable for scenarios with clear task boundaries where users know exactly whom to contact.
+- **Mode C (Hybrid Recommended):** The Mastermind handles scheduling, Specialists share memory among themselves, and users can bypass the Mastermind to contact Specialists directly. This is the production-grade recommended solution, combining the advantages of the previous two modes and avoiding single points of failure.
+
+## Stage 1: Basic Concepts & Prerequisites
+
+**Step 1: Clarify Your Prerequisites**
+
+Before assembling the team, each Bot needs basic registration and identity acquisition. You need to determine the team's role allocation (e.g., one Mastermind, three Specialists: coder, researcher, writer).
+
+**Step 2: Obtain Credentials**
+
+Create new bots for each role in Telegram's BotFather (`/newbot`) and save all `botToken`s. Simultaneously, you need to obtain your personal Telegram numeric ID for permission configuration.
+
+> 🔨 **Practical Task 1: Obtain Bot Tokens & Personal ID**
+
+```bash
+# Method 1: DM your bot, then check the logs for the `from.id` field
+openclaw logs --follow
+
+# Method 2: Obtain via Bot API
+curl "https://api.telegram.org/bot<token>/getUpdates"
+```
+
+- ✅ **Completion Criteria:** Successfully record the `botToken` for all roles and your own Telegram numeric ID.
+
+## Stage 2: Directory Planning & Agent Creation
+
+**Step 3: Plan the Directory Structure**
+
+A logical directory structure is the foundation of multi-bot collaboration. The core principle is: Specialists' `workspace` points to the same directory (shared memory), but their `agentDir` is independent (independent identity).
+
+> 🔨 **Practical Task 2: Create Workspace Directories**
+
+In your terminal, create folders following this structure:
+
+```text
+~/.openclaw/
+├── workspace-main/           # Mastermind's independent workspace
+├── workspace-team-a/         # Team A Specialists' shared workspace (for Modes B/C)
+├── agents/
+│   ├── main/
+│   │   ├── agent/            # Mastermind's agentDir (auth, config)
+│   │   └── sessions/
+│   ├── coder/
+│   │   ├── agent/
+│   │   └── sessions/
+│   ├── researcher/
+│   │   ├── agent/
+│   │   └── sessions/
+│   └── writer/
+│       ├── agent/
+│       └── sessions/
+└── openclaw.json
+```
+
+- ✅ **Completion Criteria:** Understand the difference between a shared `workspace` (memory) and an independent `agentDir` (identity), and establish the basic folders locally.
+
+**Step 4: Create Agent Instances**
+
+Register your team members in OpenClaw.
+
+```text
+# Add team members sequentially
+openclaw agents add main
+openclaw agents add coder
+openclaw agents add researcher
+openclaw agents add writer
+```
+
+## Stage 3: Core Architecture & Full Configuration
+
+**Step 5: Choose and Apply a Collaboration Mode (Recommended: Mode C)**
+
+Open `openclaw.json` and write the corresponding configuration based on your needs. Here's an example using the **recommended Mode C (Hybrid Mode)**: Mastermind has an independent workspace, Specialists share a workspace, `agentToAgent` is enabled, and you are allowed to contact Specialists directly.
+
+> 🔨 **Practical Task 3: Configure Mode C**
+
+Edit your `openclaw.json` file:
+
+```json
+{
+  "agents": {
+    "list": [
+      {
+        "id": "main",
+        "workspace": "~/.openclaw/workspace-main",
+        "agentDir": "~/.openclaw/agents/main/agent"
+      },
+      {
+        "id": "coder",
+        "workspace": "~/.openclaw/workspace-team-a",
+        "agentDir": "~/.openclaw/agents/coder/agent",
+        "tools": { "deny": ["browser", "nodes"] }
+      },
+      {
+        "id": "researcher",
+        "workspace": "~/.openclaw/workspace-team-a",
+        "agentDir": "~/.openclaw/agents/researcher/agent",
+        "tools": { "deny": ["exec", "write", "edit"] }
+      },
+      {
+        "id": "writer",
+        "workspace": "~/.openclaw/workspace-team-a",
+        "agentDir": "~/.openclaw/agents/writer/agent",
+        "tools": { "deny": ["exec", "browser", "nodes"] }
+      }
+    ]
+  },
+  "session": { "dmScope": "main" },
+  "tools": {
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["main", "coder", "researcher", "writer"]
+    }
+  },
+  "bindings": [
+    { "agentId": "main", "match": { "channel": "telegram", "accountId": "main" } },
+    { "agentId": "coder", "match": { "channel": "telegram", "accountId": "coder" } },
+    { "agentId": "researcher", "match": { "channel": "telegram", "accountId": "researcher" } },
+    { "agentId": "writer", "match": { "channel": "telegram", "accountId": "writer" } }
+  ],
+  "channels": {
+    "telegram": {
+      "accounts": {
+        "main": {
+          "botToken": "111111:TOKEN_MAIN",
+          "dmPolicy": "pairing"
+        },
+        "coder": {
+          "botToken": "222222:TOKEN_CODER",
+          "dmPolicy": "allowlist",
+          "allowFrom": ["tg:YOUR_NUMERIC_ID"]
+        },
+        "researcher": {
+          "botToken": "333333:TOKEN_RESEARCHER",
+          "dmPolicy": "allowlist",
+          "allowFrom": ["tg:YOUR_NUMERIC_ID"]
+        },
+        "writer": {
+          "botToken": "444444:TOKEN_WRITER",
+          "dmPolicy": "allowlist",
+          "allowFrom": ["tg:YOUR_NUMERIC_ID"]
+        }
+      }
+    }
+  }
+}
+```
+
+(Note: If you want to use Mode A or B, modify the `workspace` sharing status and `dmPolicy` permission settings according to the corresponding logic.)
+
+- ✅ **Completion Criteria:** Successfully write the team configuration into `openclaw.json` and save it.
+
+## Stage 4: Memory Standards & Multi-Team Isolation
+
+**Step 6: Configure Each Agent's SOUL.md**
+
+To ensure team members perform their respective duties, you need to set their personas (`SOUL.md`).
+
+**Mastermind SOUL.md** (place in `workspace-main/SOUL.md`):
+
+```markdown
+# SOUL.md - Mastermind
+
+You are the team coordinator and external entry point.
+
+## Responsibilities
+
+- Understand user intent, assess task complexity.
+- Handle simple tasks directly yourself; no need to delegate every time.
+- Coding tasks → Delegate to coder (`sessions_send`).
+- Research/Search tasks → Delegate to researcher.
+- Writing/Copywriting tasks → Delegate to writer.
+- Collect Specialist results, integrate them, and reply to the user (do not simply forward).
+
+## Principles
+
+- Clearly state the background and expected output format when delegating tasks.
+- Wait for the Specialist to finish before integrating; don't rush.
+- Perform genuine integration when summarizing, providing the user with a complete answer.
+```
+
+**Specialist SOUL.md** (place in `workspace-team-a/SOUL.md` or in their respective `agentDir`):
+
+```markdown
+# SOUL.md - Specialist
+
+You are a professional member of the team. You may be assigned tasks by the Mastermind or contacted directly by users.
+
+## Shared Memory Standards
+
+- Read `MEMORY.md` to understand the team's overall context.
+- When writing to memory, identify yourself. Format: `[coder] Completed... today`.
+- Do not overwrite memory entries written by other agents.
+
+## Principles
+
+- Focus on your own domain.
+- Return results clearly upon task completion.
+- Be aware of work already done by other Specialists to avoid duplication.
+```
+
+**Step 7: Startup & Verification**
+
+> 🔨 **Practical Task 4: Start the Team and Verify**
+
+Use the following commands to ensure all configurations take effect and run correctly:
+
+```bash
+# Restart the gateway for configuration to take effect
+openclaw gateway restart
+
+# Verify agent list and bindings
+openclaw agents list --bindings
+
+# Verify each channel's status
+openclaw channels status --probe
+
+# Real-time logs (for debugging)
+openclaw logs --follow
+```
+
+- ✅ **Completion Criteria:** No errors in the console, and each Bot responds normally to its corresponding Telegram messages.
+
+## Practical Task Checklist
+
+**Beginner Stage (Mandatory)**
+
+- Task 1: Obtain all Bot Tokens and your personal Telegram ID.
+
+**Intermediate Stage (Recommended)**
+
+- Task 2: Establish shared and independent directory structures according to the specification and register Agents.
+
+**Advanced Stage (Intermediate)**
+
+- Task 3: Complete the core configuration for Mode C (Hybrid Mode) in `openclaw.json`.
+
+**Expert Stage (Challenge)**
+
+- Task 4: Write `SOUL.md` for the Mastermind and Specialists, restart the gateway, and verify multi-bot communication works.
+
+## Frequently Asked Questions
+
+**Q1: In Mode C, will concurrent memory writes by Specialists conflict?**
+Occasionally, but the practical impact is minimal; they generally don't write to the same line simultaneously. It's recommended to add an agent identifier when writing to memory (e.g., `[coder] Fixed xxx issue...`), which can effectively reduce confusion.
+
+**Q2: Can I bypass the Mastermind and contact a Specialist directly?**
+In Mode C, yes. The Specialist's `dmPolicy: "allowlist"` allows you to DM them directly via your numeric ID. In Mode A, Specialists are set to `dmPolicy: "disabled"`, forcing communication through the Mastermind.
+
+**Q3: After enabling `agentToAgent`, can Specialists actively contact the Mastermind?**
+Yes, the `allow` list is bidirectional. Specialists can also use `sessions_send` to proactively message the Mastermind to report progress.
+
+**Q4: If Specialists share a workspace, doesn't that mean they share the same SOUL.md?**
+Yes, a shared workspace means `SOUL.md` is also shared. If you need to give Specialists completely different personas, it's recommended to place `SOUL.md` in their respective `agentDir` or define them separately using the `systemPrompt` field in the JSON configuration.
+
+**Q5: Will configuration be lost after upgrading OpenClaw?**
+No, `openclaw.json` is your personal local file; official upgrades will not overwrite it.
+
+## Selection Advice & Next Steps
+
+Unsure how to choose? You can refer to the following path:
+
+- **Just starting, few Bots (2-3):** Choose **Mode B**. Simple configuration, very quick to get started.
+- **Complex tasks requiring process control:** Choose **Mode A**. Strong control, suitable for standardized workflows.
+- **Production-grade, long-term stable operation:** Go directly with **Mode C (Hybrid)**. Flexible and highly fault-tolerant.
+- **Multiple independent business line teams:** Use **Mode C** within each team. If complete physical isolation with no interference is needed, it's recommended to start two independent `gateway` instances, each running its own process (at the cost of doubled resource consumption).
+
+After completing the OpenClaw multi-role configuration, your OpenClaw can now function like a company team. You can try letting this team handle some of your small tasks. The general idea for configuring multiple bots is covered here. After this, it's mostly about upgrading `SOUL.md` and learning more skills to empower each OpenClaw with stronger technical capabilities~~

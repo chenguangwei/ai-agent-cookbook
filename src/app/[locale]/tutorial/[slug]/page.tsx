@@ -23,9 +23,11 @@ export async function generateStaticParams() {
   }));
 }
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+
 export async function generateMetadata({ params }: TutorialPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const tutorial = await getTutorialBySlug(slug);
+  const { slug, locale } = await params;
+  const tutorial = await getTutorialBySlug(slug, locale);
   const t = await getTranslations('Tutorial');
 
   if (!tutorial) {
@@ -34,10 +36,23 @@ export async function generateMetadata({ params }: TutorialPageProps): Promise<M
     };
   }
 
+  // Build canonical URL based on locale
+  const canonicalUrl = locale === 'en'
+    ? `${siteUrl}/tutorial/${slug}`
+    : `${siteUrl}/${locale}/tutorial/${slug}`;
+
   return {
     title: tutorial.title,
     description: tutorial.description,
     keywords: [...(tutorial.tags || []), ...(tutorial.techStack || []), tutorial.category].filter((k): k is string => k !== null && k !== undefined),
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `${siteUrl}/tutorial/${slug}`,
+        'zh': `${siteUrl}/zh/tutorial/${slug}`,
+        'ja': `${siteUrl}/ja/tutorial/${slug}`,
+      },
+    },
     openGraph: {
       title: tutorial.title,
       description: tutorial.description,

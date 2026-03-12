@@ -1,0 +1,156 @@
+---
+title: "From Vibe Coding to Agentic Engineering: The Developer Role is Being Rewritten"
+slug: "vibe-coding-agentic-engineering"
+locale: "en"
+description: "From Vibe Coding to Agentic Engineering: The Developer Role is Being Rewritten"
+category: "Agentic Workflows"
+tags: ["Claude", "RAG"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCeGFaRbgAEAk39.jpg"
+featured: false
+date: 2026-03-03
+---
+
+# From Vibe Coding to Agentic Engineering: The Developer Role is Being Rewritten
+
+To be honest, after reading the recent experience-sharing post from the Anthropic Claude Code team, I stared at the screen for a long time.
+
+It wasn't because the technology was complex. On the contrary, the most striking sentence in the entire article was incredibly simple:
+
+**"You have to learn to see the world like an agent."**
+
+This line came from a core developer of Claude Code. Someone who works with AI agents every day, and his most important advice wasn't about architectural patterns or framework choices, but a shift in cognitive approach.
+
+This made me think of a bigger question: It's 2026, have we fundamentally misunderstood how to collaborate with AI?
+
+## 1. Give AI a Hammer, It Might Not Build a House
+
+The Claude Code team gave a particularly vivid analogy.
+
+Imagine a difficult math problem in front of you. What tools would you want to help?
+
+If you can only do mental math, paper and pen are enough. If you can use a calculator, a calculator is more efficient. If you can program, a computer is the fastest.
+
+The upper limit of a tool depends on the user's ability.
+
+This seems simple, but when applied to AI agent design, most people get it backwards. The common approach is: stuff AI with as many tools as possible, 50, 100, covering every possible scenario. Thinking more tools equals more powerful AI.
+
+The result? AI facing a pile of tools is like you facing a remote control with 200 buttons. It's not unusable, but the cost of choice is too high, often leading to wrong choices.
+
+Claude Code's approach is completely different. It only has about 20 tools, and the team constantly asks themselves: is that still too many?
+
+Fewer, not for convenience. Fewer, for understanding.
+
+![](https://pbs.twimg.com/media/HCdSPwUbAAAWuHS.jpg)
+
+## 2. The Lifesaving Tool That Later Became a Shackle
+
+This is one of the most brilliant lessons in the entire article.
+
+When Claude Code first launched, the team found the model often forgot what it was doing. It would drift off track mid-task, completely losing context.
+
+Solution? Give it a to-do list. List tasks at the start, check them off when done. Simple, direct, immediate effect.
+
+Even the list wasn't enough. The team also inserted a system reminder every 5 rounds: "Hey, don't forget your task."
+
+But as the model got smarter, a problem emerged.
+
+The model felt constrained by the to-do list. It wanted to adjust strategies flexibly, but the system kept reminding it to "stick to the plan." Like an increasingly capable employee being micromanaged with intern-level oversight.
+
+Ultimately, the team made a bold decision: they removed the to-do tool.
+
+They replaced it with a new tool called "Task." No longer "reminding you what to do," but "helping you communicate and coordinate with other agents." Tasks support dependencies, can be shared and updated among sub-agents, and the model itself can modify and delete tasks.
+
+From being managed, to self-managing.
+
+The takeaway is direct: the model is getting stronger, the tools you give it must evolve too. Yesterday's good design might be today's bottleneck.
+
+![](https://pbs.twimg.com/media/HCdSSnWacAApIVA.jpg)
+
+## 3. Not More Tools, But Letting It Find Its Own
+
+How did Claude Code initially understand your codebase? Using RAG vector databases. Chunk your code, index it, store it, and let AI retrieve from the database when needed.
+
+This is the industry standard approach: fast, mature, easy to understand.
+
+But the Claude Code team discovered a fundamental problem: AI was passively receiving context.
+
+It wasn't understanding your project itself; it was being fed a bunch of possibly relevant code snippets. Like starting a new job and having a colleague dump all the company documentation on you, instead of letting you explore, ask questions, and build understanding yourself.
+
+So they changed their approach: gave AI a Grep tool to search the codebase itself.
+
+The results were surprisingly good. And as models got smarter, their ability to search and understand context improved dramatically.
+
+This thinking evolved into a core design principle: **Progressive Disclosure**.
+
+Don't dump all information on AI at once; let it discover on demand. Skill files can reference other files; the model can read recursively, diving deeper layer by layer. In fact, many Skills are designed to teach AI how to use a specific API or query a database—essentially, "teaching it how to find answers itself."
+
+In one year, Claude evolved from barely being able to build its own context to accurately finding needed information within multi-layered, nested files.
+
+This offers a practical insight: rather than constantly increasing the number of tools, focus on enhancing AI's ability to autonomously acquire information. Giving it a fishing rod is more useful than delivering fish every day.
+
+![](https://pbs.twimg.com/media/HCdSVfAbYAAE-m1.jpg)
+
+## 4. The 2026 Watershed: From Vibe Coding to Agentic Engineering
+
+The Claude Code team's experiences are even more interesting when viewed against the broader industry backdrop.
+
+In early 2025, Andrej Karpathy coined the term **"Vibe Coding."** It meant going with the flow, letting AI generate code, using whatever works, not being too meticulous. The term went viral because it perfectly described how most people used AI for coding at the time.
+
+But by February 2026, Karpathy himself declared the term obsolete.
+
+The new term replacing it: **Agentic Engineering**.
+
+What's the difference?
+
+Vibe Coding = Go with the flow. Use whatever AI writes.
+
+Agentic Engineering = AI handles execution, humans handle architecture, quality, and correctness.
+
+Karpathy was clear: "You spend 99% of your time not writing code directly, but you need stronger engineering skills to supervise and verify AI's output."
+
+The Claude Code team's experience is essentially about this. They found that designing tools for agents is "both an art and a science." Intuitively stuffing tools doesn't work; blindly following textbooks doesn't either. You have to observe the model's behavior, read its output, run many experiments.
+
+A developer's value is no longer typing speed or memorizing API parameters, but whether you can define the problem clearly and know at a glance if AI's output is correct.
+
+![](https://pbs.twimg.com/media/HCdSYX8bkAA0kpp.jpg)
+
+## 5. What Does It Really Mean to Think Like an Agent?
+
+After all this, let's return to that core statement: see the world like an agent.
+
+This isn't just advice for AI engineers. I think it applies to everyone collaborating with AI.
+
+First, you need to know AI's capability boundaries. You can't give a supercomputer to a new intern and expect groundbreaking results. Before giving AI tools, spend time observing and experimenting. Don't jump to conclusions after reading a few tutorials.
+
+Second, the scale of management is subtle. The to-do list lesson shows that over-managing limits AI's potential, but no management at all isn't good either. Give direction, provide resources, let it run on its own, and then you review the results.
+
+Finally, don't expect one method to last forever. The workflow you think is perfect today might need a complete overhaul in three months. The Claude Code team says "we tend to support a small set of models with relatively similar capabilities" because every time the model upgrades, they have to re-evaluate the entire tool design. Your collaboration method with AI must also iterate.
+
+## Final Thoughts
+
+A recent McKinsey report said something I think is spot on:
+
+**"Cultivating an AI agent is more like onboarding a new employee than deploying a piece of software."**
+
+If you treat AI as software, you expect it to be plug-and-play, always stable, and the more features, the better.
+
+If you treat it as a new employee, you spend time understanding its capabilities, match it with appropriate tools and responsibilities, set clear goals, and leave room for growth.
+
+The Claude Code team spent a year moving from "stuffing the model with more tools" to "learning to think like the model." This shift sounds simple but requires breaking many intuitions to implement.
+
+In 2026, AI capabilities are growing exponentially, but most people's approach to using AI remains stuck at "give it instructions, wait for results."
+
+Maybe it's time for a perspective shift.
+
+Don't make AI adapt to your way of thinking. First, learn to see the world like an agent.
+
+This article is based on the experience-sharing post from the Anthropic Claude Code team, combined with 2026 AI agent industry trends.
+
+References:
+- Anthropic Engineering Blog: Building Effective Agents
+- Karpathy's definition of Agentic Engineering (February 2026)
+- McKinsey: One Year of Agentic AI - Six Lessons
+- MIT Sloan: Agentic AI Explained

@@ -13,8 +13,12 @@ export function getAllTutorials(locale?: string): Tutorial[] {
   return tutorials
 }
 
-export function getTutorialBySlug(slug: string): Tutorial | null {
-  return tutorials.find(t => t.slug === slug) ?? null
+export function getTutorialBySlug(slug: string, locale?: string): Tutorial | null {
+  const results = tutorials.filter(t => t.slug === slug)
+  if (locale && results.length > 0) {
+    return results.find(t => t.locale === locale) ?? results[0]
+  }
+  return results[0] ?? null
 }
 
 export function getFeaturedTutorials(limit = 4, locale?: string): Tutorial[] {

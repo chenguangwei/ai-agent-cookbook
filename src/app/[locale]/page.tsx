@@ -6,6 +6,32 @@ import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations('Home');
+
+  // Build canonical URL based on locale
+  const canonicalUrl = locale === 'en'
+    ? `${siteUrl}/`
+    : `${siteUrl}/${locale}/`;
+
+  return {
+    title: t('seoTitle') || t('title'),
+    description: t('seoDescription') || t('subtitle'),
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `${siteUrl}/`,
+        'zh': `${siteUrl}/zh/`,
+        'ja': `${siteUrl}/ja/`,
+      },
+    },
+  };
+}
 
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60;

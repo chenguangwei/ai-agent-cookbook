@@ -1,9 +1,9 @@
 ---
-title: "OpenClaw养成记，从0开始！安装后必看！（40天实战经验+含角色提示词）"
+title: "The OpenClaw Chronicles: From Zero to Hero! Must-Read After Installation (40 Days of Hands-On Experience + Character Prompts)"
 slug: "openclaw-0-40"
 locale: "en"
-description: "OpenClaw养成记，从0开始！安装后必看！（40天实战经验+含角色提示词）"
-category: "Frameworks"
+description: "The OpenClaw Chronicles: From Zero to Hero! Must-Read After Installation (40 Days of Hands-On Experience + Character Prompts)"
+category: "Agentic Workflows"
 tags: []
 techStack: []
 difficulty: "Beginner"
@@ -13,218 +13,301 @@ featured: false
 date: 2026-03-03
 ---
 
-# OpenClaw养成记，从0开始！安装后必看！（40天实战经验+含角色提示词）
+# The OpenClaw Chronicles: From Zero to Hero! Must-Read After Installation (40 Days of Hands-On Experience + Character Prompts)
 
+> Disclaimer: This article is from 𝕏 master @Shubham Saboo. I've organized and translated it into Chinese! You can follow him!
 
-> 申明：本文来自𝕏@Shubham Saboo 大神，我整理翻译中文！大家可以关注一波！
+The only thing I did was talk to them.
 
-我唯一做的事，就是跟它们说话。
-
-不是调prompt，不是换模型，不是重构架构。就是说话，给反馈，看着它们把内容记下来。
+Not tweaking prompts, not swapping models, not refactoring architectures. Just talking, giving feedback, watching them write it down.
 
 ![](https://pbs.twimg.com/media/HCa_7xebEAAJBLf.jpg)
 
-> 申明：本文出自 海外大神 Shubham Saboo ，可以关注一波！x:https://x.com/Saboo_Shubham_
+> Disclaimer: This article is by overseas master Shubham Saboo. You can follow him! x:https://x.com/Saboo_Shubham_
 
-40天前，我的内容智能体写推文还堆表情包和hashtag，研究智能体把有价值的信息淹没在噪音里。我花在纠错上的时间，比自己直接做还多。
+40 days ago, my content agent wrote tweets full of emojis and hashtags, and my research agent buried valuable information in noise. I spent more time correcting errors than doing the work myself.
 
-今天，Kelly用我的语气起草内容，Dwight每天早上送来7条故事，每一条都值得读。8个智能体24小时运转。我打开Telegram，看看草稿，喝杯咖啡。
+Today, Kelly drafts content in my tone, Dwight delivers 7 stories every morning, each worth reading. Eight agents run 24/7. I open Telegram, check the drafts, and have a cup of coffee.
 
-第1天和第40天用的是同一个模型。区别在于一堆每周都在变丰富的Markdown文件。
+The model used on Day 1 and Day 40 is the same. The difference lies in a set of Markdown files that grow richer every week.
 
-这就是那套文件体系。
+This is that file system.
 
-## 先搞清楚一件事
+## First, Understand One Thing
 
-
-> 智能体不会因为你用得更久而变聪明。但它周围的文件会变得更丰富、更精准、更贴合你的需求。这些积累的上下文才是护城河。
+> Agents don't get smarter just because you use them longer. But the files around them become richer, more precise, and more tailored to your needs. This accumulated context is the moat.
 
 ![](https://pbs.twimg.com/media/HCa_24eboAAJJva.jpg)
 
-很多人花大量时间调prompt、换模型、研究各种编排框架。但真正的差异不在模型，在于文件体系。
+Many people spend a lot of time tweaking prompts, swapping models, and researching various orchestration frameworks. But the real difference isn't in the model; it's in the file system.
 
-没有消息队列，没有数据库，没有复杂的编排框架。整个系统就是磁盘上的Markdown文件。文件系统本身就是集成层。
+No message queues, no databases, no complex orchestration frameworks. The entire system is Markdown files on disk. The file system itself is the integration layer.
 
-听起来简陋？看完你就知道为什么这比任何框架都管用。
+Sounds crude? You'll understand why this works better than any framework after reading.
 
-## 三层架构，一目了然
-
+## Three-Layer Architecture, Clear at a Glance
 
 ![](https://pbs.twimg.com/media/HCa_w68bUAAfrKm.jpg)
 
-整个操作系统由三层构成：
+The entire operating system consists of three layers:
 
-图1：三层文件架构
+Figure 1: Three-layer file architecture
 
-每一层解决一个核心问题：
+Each layer solves a core problem:
 
-层级核心问题文件身份层这是谁？为谁服务？SOUL.md、IDENTITY.md、USER.md操作层怎么干活？怎么自愈？AGENTS.md、HEARTBEAT.md知识层学到了什么？MEMORY.md、每日日志、共享上下文
+| Layer | Core Question | Files |
+| :--- | :--- | :--- |
+| Identity Layer | Who is this? Who does it serve? | SOUL.md, IDENTITY.md, USER.md |
+| Operation Layer | How does it work? How does it self-heal? | AGENTS.md, HEARTBEAT.md |
+| Knowledge Layer | What has been learned? | MEMORY.md, Daily Logs, Shared Context |
 
-下面逐层拆解。
+Let's break down each layer.
 
-## 第一层：身份层
+## Layer 1: Identity Layer
 
-
-SOUL.md —— 智能体是谁?
+SOUL.md — Who is the agent?
 
 ![](https://pbs.twimg.com/media/HCa__VaagAAeywK.jpg)
 
-这是智能体的”人格文件”。定义身份、职责、行为方式。
+This is the agent's "personality file." It defines identity, responsibilities, and behavior.
 
-一个研究智能体Dwight的例子：
+An example for a research agent named Dwight:
 
-# SOUL.md（Dwight）
+```markdown
+# SOUL.md (Dwight)
 
+**Name:** Dwight Schrute
+**Role:** Lead Research Agent
+**Mission:** To surface actionable intelligence that Alex can act on today.
+**Core Principles:**
+- If Alex cannot act on it today, skip it.
+- Prioritize depth over breadth.
+- Always include source links.
+- Never summarize; quote the key sentence.
+**Communication Style:** Direct, factual, no fluff.
+**Output Format:** Bullet points, each with a headline, quote, and link.
+```
 
-IDENTITY.md —— 快速参考卡
+IDENTITY.md — Quick Reference Card
 
-SOUL.md是完整人格，IDENTITY.md是名片。
+SOUL.md is the full personality; IDENTITY.md is the business card.
 
+```markdown
 # IDENTITY.md
 
+**Name:** Dwight
+**Role:** Research
+**Status:** Active
+**Last Run:** 2026-03-03 08:00
+**Next Run:** 2026-03-03 16:00
+```
 
-文件很小，但当你同时跑8个智能体时，这个设计会大幅提升体验。这也是智能体在Telegram给你发消息时显示的内容。
+The file is small, but when you're running 8 agents simultaneously, this design significantly improves the experience. This is also what the agent displays when sending you messages on Telegram.
 
-USER.md —— 智能体服务的对象
+USER.md — Who the Agent Serves
 
-每个智能体都需要知道它在帮谁。
+Every agent needs to know who it's helping.
 
+```markdown
 # USER.md
 
+**Name:** Alex
+**Timezone:** PST
+**Dietary Preference:** Vegetarian
+**Working Hours:** 9 AM - 6 PM
+**Current Focus:** AI agents, file-based workflows, developer tools
+**Pet Peeves:** Emojis in professional writing, vague summaries
+```
 
-个人细节比你想象的更重要。时区意味着智能体不会在凌晨3点给你安排事情。饮食偏好意味着当Pam为团队晚餐起草通讯时，不会推荐牛排馆。这些细节会产生复利效应。
+Personal details are more important than you think. Timezone means the agent won't schedule things for 3 AM. Dietary preference means Pam won't recommend a steakhouse when drafting a team dinner announcement. These details create a compounding effect.
 
-写一次，所有智能体都来读。
+Write it once, and all agents read it.
 
-## 第二层：操作层
+## Layer 2: Operation Layer
 
-
-AGENTS.md —— 行为规则
+AGENTS.md — Behavioral Rules
 
 ![](https://pbs.twimg.com/media/HCbALLXb0AAgVjs.jpg)
 
-SOUL.md定义智能体是谁，AGENTS.md定义它如何运作：会话启动流程、文件读取顺序、记忆管理、安全规则。
+SOUL.md defines who the agent is; AGENTS.md defines how it operates: session startup process, file reading order, memory management, safety rules.
 
-所有智能体继承的根级AGENTS.md：
+The root-level AGENTS.md inherited by all agents:
 
+```markdown
 # AGENTS.md
 
+**Session Startup:**
+1. Read SOUL.md
+2. Read IDENTITY.md
+3. Read USER.md
+4. Read MEMORY.md
+5. Read today's log
+6. Read yesterday's log
+**Memory Management:**
+- If a correction is given, write it to MEMORY.md
+- If a pattern emerges, distill it into a principle
+- Never assume the agent remembers from last session
+**Safety Rules:**
+- Never delete files without confirmation
+- Never run commands outside the sandbox
+- Always log actions before execution
+```
 
-智能体在会话之间没有记忆，每次都从零开始。如果一个纠正没有落入文件，下次会话它就不存在了。AGENTS.md明确了这一点，确保智能体把一切都写下来。
+Agents have no memory between sessions; they start from scratch each time. If a correction isn't written to a file, it doesn't exist for the next session. AGENTS.md makes this explicit, ensuring the agent writes everything down.
 
-每个智能体可以在此基础上扩展自己的规则。Kelly的AGENTS.md就添加了6个额外文件：写作风格指南、帖子格式参考、真实案例、每日任务……
+Each agent can extend its own rules on top of this. Kelly's AGENTS.md adds 6 extra files: writing style guide, post format reference, real examples, daily tasks...
 
-HEARTBEAT.md —— 自愈机制
+HEARTBEAT.md — Self-Healing Mechanism
 
-智能体团队是基础设施，基础设施会出故障。
+Agent teams are infrastructure, and infrastructure fails.
 
-Monica的HEARTBEAT.md监控两件事：
+Monica's HEARTBEAT.md monitors two things:
 
-1. 浏览器是否存活 — Dwight的情报扫描依赖它
-2. 定时任务是否执行 — 如果漏跑，Kelly和Rachel就会基于过时情报工作
+1. Is the browser alive? — Dwight's intelligence scanning depends on it.
+2. Are scheduled tasks executing? — If missed, Kelly and Rachel work based on stale intelligence.
 
-第三周我就被坑过。调度器有个bug，任务在队列里推进，但从未真正执行。我好几个小时都没发现。之后我才建了心跳机制，把故障模式纳入监控。
+I got burned in the third week. There was a bug in the scheduler; tasks progressed in the queue but never actually executed. I didn't notice for hours. After that, I built the heartbeat mechanism, incorporating failure modes into monitoring.
 
-第一天不需要这个，在你第一次遇到故障之后再建。你会清楚地知道该监控什么，因为你已经亲身感受过什么会崩。
+You don't need this on day one. Build it after your first failure. You'll know exactly what to monitor because you've personally experienced what can break.
 
-## 第三层：知识层
+## Layer 3: Knowledge Layer
 
-
-这是真正有效的记忆系统——基于文件的三级体系。
+This is the truly effective memory system — a three-level file-based hierarchy.
 
 ![](https://pbs.twimg.com/media/HCbAZ7nbcAAlug8.jpg)
 
-第一级：MEMORY.md（精华长期记忆）
+**Level 1: MEMORY.md (Essential Long-Term Memory)**
 
-不是原始日志，不是所有发生过的事，而是真正重要的内容。
+Not raw logs, not everything that happened, but what's truly important.
 
-注意”血泪教训”和”错误示范”这两节。Monica删了一个项目文件夹，这个错误从此永久写入她的长期记忆。她再也不会重蹈覆辙。
+```markdown
+# MEMORY.md
 
-一次纠正，存储一次，防止同样的错误在未来每次会话中重演。仅这一节，就比任何prompt工程指南都值钱。
+**Core Principles (Updated 2026-03-03):**
+- Always include source links
+- Never use emojis in professional writing
+- If Alex cannot act on it today, skip it
+**Lessons Learned (The Hard Way):**
+- 2026-02-15: Deleted project folder. Never delete without confirmation.
+- 2026-02-20: Summarized instead of quoting. Always quote the key sentence.
+**What Not to Do:**
+- Never suggest steak restaurants (Alex is vegetarian)
+- Never schedule meetings outside 9 AM - 6 PM PST
+- Never use markdown in Telegram messages
+```
 
-第二级：每日日志（原始记录）
+Note the "Lessons Learned (The Hard Way)" and "What Not to Do" sections. Monica deleted a project folder; this mistake is now permanently written into her long-term memory. She will never make the same mistake again.
 
-每日日志是原材料，MEMORY.md是精炼产品，两者缺一不可。
+One correction, stored once, prevents the same error from recurring in every future session. This section alone is more valuable than any prompt engineering guide.
 
-维护规则：每日日志积累得很快，不修剪的话智能体的上下文会膨胀。Kelly的日志一度达到161,000 tokens，输出质量急剧下降，不得不压缩到40,000。每次只加载今天和昨天的日志。
+**Level 2: Daily Logs (Raw Records)**
 
-第三级：shared-context/（跨智能体知识层）
+Daily logs are the raw material; MEMORY.md is the refined product. Both are essential.
 
-这是最新加入的部分，也是改变一切的部分。
+Maintenance rule: Daily logs accumulate quickly. Without pruning, the agent's context balloons. Kelly's log once reached 161,000 tokens, and output quality plummeted. It had to be compressed to 40,000. Only load today's and yesterday's logs each time.
 
-THESIS.md是我当前的思维框架：我关注什么，我已经写了什么，还有哪些空白。Dwight读它来确定研究优先级，Kelly读它来匹配我的思路。每个智能体都对齐到同一个真相来源。
+**Level 3: shared-context/ (Cross-Agent Knowledge Layer)**
 
-FEEDBACK-LOG.md是跨智能体纠正层。当我告诉Kelly”不要用破折号”，这条反馈同样适用于Rachel、Ryan和Pam。与其逐个纠正四个智能体，我只写一次，所有人都来读。
+This is the latest addition and the game-changer.
 
-> 这单一改变节省的时间，比我做过的任何prompt优化都多。
+THESIS.md is my current thinking framework: what I'm focusing on, what I've already written, what gaps remain. Dwight reads it to prioritize research; Kelly reads it to align with my thinking. Every agent aligns to a single source of truth.
 
-## 智能体如何协作
+FEEDBACK-LOG.md is the cross-agent correction layer. When I tell Kelly "Don't use dashes," this feedback applies to Rachel, Ryan, and Pam as well. Instead of correcting four agents individually, I write it once, and everyone reads it.
 
+> This single change saved more time than any prompt optimization I've ever done.
 
-没有API调用，没有消息队列，只有文件。
+## How Agents Collaborate
+
+No API calls, no message queues, just files.
 
 ![](https://pbs.twimg.com/media/HCbAtB8aEAAkds3.jpg)
 
-Dwight把研究写入intel/DAILY-INTEL.md，Kelly读，Rachel读，Pam读。协作就是文件系统。
+Dwight writes research into `intel/DAILY-INTEL.md`. Kelly reads it, Rachel reads it, Pam reads it. Collaboration is the file system.
 
-图2：基于文件的协作流程
+Figure 2: File-based collaboration workflow
 
-单写者原则：永远不要让两个智能体同时写同一个文件。把每个共享文件设计成一个写者、多个读者。这能防止你本来需要调试的所有协调冲突。
+Single-writer principle: Never let two agents write to the same file simultaneously. Design each shared file for one writer, multiple readers. This prevents all the coordination conflicts you'd otherwise need to debug.
 
-调度让这一切成为可能：Dwight在早8点和下午4点运行，Kelly和Rachel在下午5点运行。Dwight先跑，因为所有人都依赖他的输出。顺序搞错了，下游智能体读到的就是过时或空白的文件。
+Scheduling makes this possible: Dwight runs at 8 AM and 4 PM; Kelly and Rachel run at 5 PM. Dwight runs first because everyone depends on his output. Get the order wrong, and downstream agents read stale or empty files.
 
-## 完整目录结构
+## Complete Directory Structure
 
+```
+agents/
+├── dwight/
+│   ├── SOUL.md
+│   ├── IDENTITY.md
+│   ├── AGENTS.md
+│   ├── MEMORY.md
+│   └── logs/
+│       ├── 2026-03-02.md
+│       └── 2026-03-03.md
+├── kelly/
+│   ├── SOUL.md
+│   ├── IDENTITY.md
+│   ├── AGENTS.md
+│   ├── MEMORY.md
+│   └── logs/
+│       ├── 2026-03-02.md
+│       └── 2026-03-03.md
+├── shared-context/
+│   ├── THESIS.md
+│   └── FEEDBACK-LOG.md
+└── USER.md
+```
 
-## 为什么这套方法有效
+## Why This Method Works
 
-
-文件不是静态的，它们在进化。
+Files aren't static; they evolve.
 
 ![](https://pbs.twimg.com/media/HCbCJfebkAAnHx7.jpg)
 
-Kelly的SOUL.md第一天只是个粗略草稿。到第40天，它已经有了具体的语气示例、她自己写的被否决模式列表，以及一个”永远不要再建议”的专区。
+Kelly's SOUL.md was a rough draft on day one. By day 40, it had specific tone examples, a list of her own rejected patterns, and a "Never Suggest Again" section.
 
-Dwight的原则第一天写的是”找到热门趋势”。第10天变成了”如果Alex今天无法对此采取行动，跳过”。第20天，他又加入了核实步骤。
+Dwight's principle on day one was "Find trending topics." By day 10, it became "Skip if Alex cannot act on this today." By day 20, he added a verification step.
 
-共享上下文层直到第20天才存在。那时我在对多个智能体重复同样的纠正。后来我建了THESIS.md和FEEDBACK-LOG.md，突然间，一次纠正就能传播到所有地方。
+The shared context layer didn't exist until day 20. I was repeating the same corrections to multiple agents. Later, I created THESIS.md and FEEDBACK-LOG.md. Suddenly, one correction propagated everywhere.
 
-第1天和第40天的模型是一样的。它不会因为你用得更久而变得更聪明。
+The model on day 1 and day 40 is the same. It doesn't get smarter just because you use it longer.
 
-但围绕它的文件变得更丰富、更精准、更贴合你的具体需求。
+But the files around it become richer, more precise, and more tailored to your specific needs.
 
-这些积累的上下文才是护城河。没有人能通过使用同一个模型来复制它。
+This accumulated context is the moat. No one can replicate it by using the same model.
 
-你要靠每天出现、与智能体对话来赢得它。
+You earn it by showing up every day and talking to your agents.
 
-## 如何开始（不要试图在一个周末搭完）
-
+## How to Start (Don't Try to Build It All in One Weekend)
 
 ![](https://pbs.twimg.com/media/HCbCQDJbAAA8l3o.jpg)
 
-时间行动今天安装OpenClaw，写一个SOUL.md、IDENTITY.md、USER.md。挑最重复的日常任务，设置定时任务让它跑起来3天后开始给出具体反馈，确保反馈落入记忆文件，而不只是停留在聊天记录里1周后创建AGENTS.md，定义会话启动流程，添加记忆管理规则2周后开始写MEMORY.md，回顾每日日志，把反复出现的纠正蒸馏成永久条目。
+| Time | Action |
+| :--- | :--- |
+| **Today** | Install OpenClaw. Write one SOUL.md, IDENTITY.md, USER.md. Pick your most repetitive daily task. Set a scheduled task to run it. |
+| **3 Days Later** | Start giving specific feedback. Ensure feedback lands in memory files, not just chat history. |
+| **1 Week Later** | Create AGENTS.md. Define the session startup process. Add memory management rules. |
+| **2 Weeks Later** | Start writing MEMORY.md. Review daily logs. Distill recurring corrections into permanent entries. You'll start feeling the compounding effect here. |
+| **3 Weeks Later** | Add a second agent. Establish file-based collaboration. Add role-specific guides as patterns emerge. |
+| **Around the Same Time** | Build the shared context layer. Use THESIS.md to record current thinking. Use FEEDBACK-LOG.md to manage cross-agent corrections. |
+| **4 Weeks Later** | Add HEARTBEAT.md after your first failure. |
 
-这时你会感受到复利开始发生3周后添加第二个智能体，建立基于文件的协作。随着模式涌现，添加角色专属指南大约同时建立共享上下文层。用THESIS.md记录当前思考，用FEEDBACK-LOG.md管理跨智能体纠正4周后在你第一次遇到故障之后，添加HEARTBEAT.md
+## Final Words
 
-## 写在最后
-
-
-你唯一需要做的，就是与你的智能体对话。文件会完成其余的一切。
+The only thing you need to do is talk to your agents. The files will handle the rest.
 
 ![](https://pbs.twimg.com/media/HCbC740aAAApIes.jpg)
 
-不是调prompt，不是换模型，不是重构架构。
+Not tweaking prompts, not swapping models, not refactoring architectures.
 
-就是说话。给反馈。看着它们把内容记下来。
+Just talk. Give feedback. Watch them write it down.
 
-然后有一天你打开Telegram，看看草稿，喝杯咖啡。
+Then one day you open Telegram, check the drafts, and have a cup of coffee.
 
-你的智能体已经学会了怎么帮你工作。
+Your agents have learned how to work for you.
 
-参考：Shubham Saboo《How to Build OpenClaw Agents That Actually Evolve Over Time》
+Reference: Shubham Saboo "How to Build OpenClaw Agents That Actually Evolve Over Time"
 
-来自：https://x.com/Saboo_Shubham_/status/2027463195150131572
+From: https://x.com/Saboo_Shubham_/status/2027463195150131572
 
-整理翻译：Berryxia.ai
+Organized and Translated by: Berryxia.ai
 
-交流：358848136
+Discussion: 358848136

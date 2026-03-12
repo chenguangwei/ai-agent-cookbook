@@ -1,0 +1,99 @@
+---
+title: "Agent Skill Best Practices"
+slug: "meng-shao-shao-meng-on-x"
+locale: "en"
+description: "Agent Skill Best Practices"
+category: "Agentic Workflows"
+tags: ["ReAct"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCFjuUcaEAA18yV.jpg:large"
+featured: false
+date: 2026-03-01
+---
+
+## Agent Skill Best Practices
+
+https://x.com/shao__meng/status/2027010981013114951
+
+Author @mgechev's open-source best practices for writing and validating Skills. The core process is: write professional skills, validate with LLM, and maintain an extremely minimal context window.
+
+Recommended directory structure:
+skill-name/
+├── SKILL.md      # Required: Metadata + Core Instructions
+├── scripts/           # Small, deterministic CLI scripts
+├── references/   # Supplementary materials
+└── assets/          # Templates, static files
+
+Strictly prohibit nested subdirectories, human documentation (README/CHANGELOG), and large library code.
+
+Frontmatter (The only content the Agent sees in advance)
+· name: 1-64 characters, lowercase letters + numbers + hyphens, must exactly match the folder name.
+· description: ≤1024 characters, use third person + negative triggers, clearly state "unsuitable scenarios".
+  · Bad example: "React skills."
+  · Good example: "Creates React components with Tailwind. Use for style/UI updates. Never for Vue/Svelte/vanilla CSS."
+
+Progressive Disclosure
+· SKILL.md only contains high-level navigation and the main process.
+· Details are lazy-loaded: Use explicit instructions like "See references/xxx.md".
+· Paths must be relative and use forward slashes (/).
+
+Instruction Writing Standards (For LLMs)
+· Strictly numbered steps + decision trees.
+· Provide specific templates from assets/ for the Agent to directly copy the structure.
+· Use third-person imperative sentences ("Extract the text...").
+· Maintain 100% terminology consistency and use the most precise native domain vocabulary.
+
+Packaging Deterministic Scripts
+· Complex/fragile operations (e.g., parsing, querying) are delegated to small scripts in scripts/.
+· Scripts must output clear stdout/stderr, enabling the Agent to self-assess success/failure and auto-correct.
+
+LLM Four-Step Validation Loop
+· Discovery: Test trigger accuracy using only frontmatter + optimize description.
+· Logic: Simulate full execution, flag any hallucination/guess points.
+· Edge Case: Have the LLM play the role of a "ruthless QA", proposing 3-5 breaking questions.
+· Refinement: Force refactoring towards stricter progressive disclosure + add an error handling section.
+
+Open Source Address
+https://t.co/uAw753E12w
+
+> Author: Minko Gechev (@mgechev)
+> URL: https://x.com/mgechev/status/2026696225248956842
+>
+> Rethinking how we build for the agentic era. Stop writing agent skills like human docs—it wastes tokens and invites hallucinations.
+>
+> Here's a distilled set of core best practices (&lt;5 min read) to help us write better skills.
+>
+> Give it a read: https://t.co/6ep4VXg2zJ
+
+![](https://pbs.twimg.com/media/HCFjuUcaEAA18yV.jpg:large)
+
+## I've seen friends asking about the method and prompts for creating info cards. They're all in my pinned post. There's a series of articles on my WeChat public account and Xiaohongshu (Little Red Book). You can check them out here, and I'll keep updating:
+
+https://x.com/shao__meng/status/2027024866118164688
+
+https://t.co/QAJOiNd6jm
+
+> Author: meng shao (@shao__meng)
+> URL: https://x.com/shao__meng/status/2013773573706371129
+>
+> Info cards with multiple images and text, better suited for Xiaohongshu and WeChat public accounts. I've put the prompts here, interested friends can take them 🔽
+>
+> If you want to create multi-image posts (2-4 images) for X, you can adjust the output ratio in the prompt yourself. Check out the "AI启蒙小伙伴" account on Xiaohongshu and WeChat public account, or use the links below 🔗
+>
+> Xiaohongshu:
+> https://t.co/8F3MvFTisl
+> WeChat Public Account:
+> https://t.co/2hi8Mrtotd
+
+## 3
+
+https://x.com/shao__meng/status/2027368761251307665
+
+https://t.co/10iqOI8Wlx
+
+> Author: meng shao (@shao__meng)
+> URL: https://x.com/shao__meng/status/2027368489439334504
+>
+> https://t.co/igDhxNVGEj

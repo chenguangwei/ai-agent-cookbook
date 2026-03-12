@@ -22,11 +22,26 @@ export function TableOfContents({ className = '' }: TableOfContentsProps) {
     if (!article) return;
 
     const elements = article.querySelectorAll('h2, h3');
-    const items: TocItem[] = Array.from(elements).map((element) => ({
-      id: element.id || element.textContent?.toLowerCase().replace(/\s+/g, '-') || '',
-      title: element.textContent || '',
-      level: element.tagName === 'H2' ? 2 : 3,
-    }));
+    // Track used IDs to ensure uniqueness
+    const usedIds: Record<string, number> = {};
+    const items: TocItem[] = Array.from(elements).map((element) => {
+      const textId = element.textContent?.toLowerCase().replace(/\s+/g, '-') || '';
+      let id = element.id || textId;
+
+      // Make ID unique if it already exists
+      if (usedIds[id] !== undefined) {
+        usedIds[id]++;
+        id = `${id}-${usedIds[id]}`;
+      } else {
+        usedIds[id] = 0;
+      }
+
+      return {
+        id,
+        title: element.textContent || '',
+        level: element.tagName === 'H2' ? 2 : 3,
+      };
+    });
 
     // Add IDs to headings if they don't have one
     elements.forEach((element, index) => {

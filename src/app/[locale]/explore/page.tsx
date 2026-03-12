@@ -1,41 +1,65 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, PlayCircle, BookOpen } from 'lucide-react';
+import { Clock, PlayCircle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
+import { FilterSelect } from '@/components/features/FilterSelect';
 import { getAllTutorials } from '@/lib/content';
 import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 
+const ITEMS_PER_PAGE = 50;
+
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: 'Explore Tutorials',
-  description: 'Explore our comprehensive collection of AI agent tutorials covering LangChain, CrewAI, AutoGPT, and more.',
-  openGraph: {
-    title: 'Explore AI Agent Tutorials | Agent Hub',
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+  // Default to 'en' if locale is undefined
+  const resolvedLocale = locale || 'en';
+
+  const canonicalUrl = resolvedLocale === 'en'
+    ? `${siteUrl}/explore`
+    : `${siteUrl}/${resolvedLocale}/explore`;
+
+  return {
+    title: 'Explore Tutorials',
     description: 'Explore our comprehensive collection of AI agent tutorials covering LangChain, CrewAI, AutoGPT, and more.',
-  },
-};
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `${siteUrl}/explore`,
+        'zh': `${siteUrl}/zh/explore`,
+        'ja': `${siteUrl}/ja/explore`,
+      },
+    },
+    openGraph: {
+      title: 'Explore AI Agent Tutorials | Agent Hub',
+      description: 'Explore our comprehensive collection of AI agent tutorials covering LangChain, CrewAI, AutoGPT, and more.',
+    },
+  };
+}
 
 interface ExplorePageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ cat?: string; locale?: string; difficulty?: string }>;
+  searchParams: Promise<{ cat?: string; locale?: string; difficulty?: string; page?: string }>;
 }
 
 export default async function ExplorePage({ params, searchParams }: ExplorePageProps) {
   const resolvedParams = await params;
   const search = await searchParams;
   const categoryParam = search.cat;
-  const localeFilter = search.locale !== undefined ? search.locale : resolvedParams.locale;
+  const localeFilter = search.locale !== undefined ? search.locale : (resolvedParams.locale || 'en');
   const difficultyFilter = search.difficulty;
+  const currentPage = parseInt(search.page || '1', 10);
   const t = await getTranslations('Explore');
   const tCat = await getTranslations('Categories');
+  const tHome = await getTranslations('Home');
 
   // Map category id (URL param) to category value (stored in content)
   const categoryValue = categoryParam ? categoryIdToValue[categoryParam] : null;
@@ -43,8 +67,8 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
     (c) => c.id === categoryParam
   );
 
-  // Fetch and filter tutorials
-  let tutorials = getAllTutorials();
+  // Fetch and filter tutorials - pass locale directly to getAllTutorials for efficiency
+  let tutorials = getAllTutorials(localeFilter);
 
   if (categoryValue) {
     tutorials = tutorials.filter((t) => t?.category === categoryValue);
@@ -55,6 +79,13 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
   if (difficultyFilter) {
     tutorials = tutorials.filter((t) => t?.difficulty === difficultyFilter);
   }
+
+  // Calculate pagination
+  const totalItems = tutorials.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTutorials = tutorials.slice(startIndex, endIndex);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -99,7 +130,6 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                     { value: 'zh', label: t('chinese') },
                     { value: 'ja', label: t('japanese') },
                   ]}
-                  currentParams={search}
                 />
                 <FilterSelect
                   name="difficulty"
@@ -110,17 +140,17 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                     { value: 'Intermediate', label: t('intermediate') },
                     { value: 'Advanced', label: t('advanced') },
                   ]}
-                  currentParams={search}
                 />
                 <div className="ml-auto text-xs text-slate-500 dark:text-slate-400">
-                  {t('tutorialsCount', { count: tutorials.length })}
+                  {t('tutorialsCount', { count: totalItems })}
                 </div>
               </div>
 
               {/* Tutorials Grid */}
-              {tutorials.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {tutorials.map((tutorial) => (
+              {paginatedTutorials.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {paginatedTutorials.map((tutorial) => (
                     <Link
                       href={`/tutorial/${tutorial?.slug}`}
                       key={tutorial?.slug}
@@ -185,7 +215,57 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                       </div>
                     </Link>
                   ))}
-                </div>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-12">
+                      {currentPage > 1 ? (
+                        <Link
+                          href={`?${new URLSearchParams({
+                            ...(categoryParam && { cat: categoryParam }),
+                            ...(localeFilter && { locale: localeFilter }),
+                            ...(difficultyFilter && { difficulty: difficultyFilter }),
+                            page: String(currentPage - 1),
+                          }).toString()}`}
+                          className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          Previous
+                        </Link>
+                      ) : (
+                        <span className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                          <ChevronLeft className="w-4 h-4" />
+                          Previous
+                        </span>
+                      )}
+
+                      <span className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
+                        {tHome('page')} {currentPage} {tHome('of')} {totalPages}
+                      </span>
+
+                      {currentPage < totalPages ? (
+                        <Link
+                          href={`?${new URLSearchParams({
+                            ...(categoryParam && { cat: categoryParam }),
+                            ...(localeFilter && { locale: localeFilter }),
+                            ...(difficultyFilter && { difficulty: difficultyFilter }),
+                            page: String(currentPage + 1),
+                          }).toString()}`}
+                          className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      ) : (
+                        <span className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                          Next
+                          <ChevronRight className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-700 mb-4" />
@@ -203,41 +283,6 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
       </main>
 
       <Footer />
-    </div>
-  );
-}
-
-// Server-side filter select component using links
-function FilterSelect({
-  name,
-  defaultValue,
-  options,
-  currentParams,
-}: {
-  name: string;
-  defaultValue?: string;
-  options: { value: string; label: string }[];
-  currentParams: Record<string, string | undefined>;
-}) {
-  return (
-    <div className="relative">
-      <select
-        className="h-9 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        defaultValue={defaultValue || ''}
-      >
-        {options.map((option) => {
-          const newParams = new URLSearchParams();
-          Object.entries(currentParams).forEach(([k, v]) => {
-            if (v && k !== name) newParams.set(k, v);
-          });
-          if (option.value) newParams.set(name, option.value);
-          return (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          );
-        })}
-      </select>
     </div>
   );
 }
