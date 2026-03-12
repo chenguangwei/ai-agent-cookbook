@@ -54,7 +54,22 @@ export async function initSearchDB(): Promise<Orama<typeof schema>> {
 export async function indexDocuments(documents: SearchDocument[]): Promise<void> {
   const database = await initSearchDB();
 
+  // Get existing document IDs to avoid duplicates
+  const existingIds = new Set<string>();
+  try {
+    const existing = await search(database, { term: '*', limit: 10000 });
+    for (const hit of existing.hits) {
+      existingIds.add(hit.document.id as string);
+    }
+  } catch {
+    // Index might be empty, continue
+  }
+
   for (const doc of documents) {
+    // Skip if document with this ID already exists
+    if (existingIds.has(doc.id)) {
+      continue;
+    }
     await insert(database, {
       id: doc.id,
       title: doc.title,

@@ -20,11 +20,13 @@ https://x.com/shao__meng/status/2027010981013114951
 Author @mgechev's open-source best practices for writing and validating Skills. The core process is: write professional skills, validate with LLM, and maintain an extremely minimal context window.
 
 Recommended directory structure:
+```
 skill-name/
 ├── SKILL.md      # Required: Metadata + Core Instructions
 ├── scripts/           # Small, deterministic CLI scripts
 ├── references/   # Supplementary materials
 └── assets/          # Templates, static files
+```
 
 Strictly prohibit nested subdirectories, human documentation (README/CHANGELOG), and large library code.
 

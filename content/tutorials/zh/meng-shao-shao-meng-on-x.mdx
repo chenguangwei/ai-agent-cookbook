@@ -1,7 +1,7 @@
 ---
 title: "Agent Skill 最佳实践"
 slug: "meng-shao-shao-meng-on-x"
-locale: "en"
+locale: "zh"
 description: "Agent Skill 最佳实践"
 category: "Agentic Workflows"
 tags: ["ReAct"]
@@ -20,14 +20,13 @@ https://x.com/shao__meng/status/2027010981013114951
 作者 @mgechev 开源的 Skills 编写验证最佳实践，核心流程是：写专业技能、用 LLM 验证、保持极简上下文窗口
 
 推荐目录结构
-skill-name/ 
-├── SKILL. md      # 必备：元数据 + 核心指令
-
-├── scripts/           # 小型确定性 CLI 脚本 
-
+```
+skill-name/
+├── SKILL.md      # 必备：元数据 + 核心指令
+├── scripts/           # 小型确定性 CLI 脚本
 ├── references/   # 补充资料
-
 └── assets/          # 模板、静态文件
+```
 
 严禁嵌套子目录、人类文档（README/CHANGELOG）、大库代码。
 
