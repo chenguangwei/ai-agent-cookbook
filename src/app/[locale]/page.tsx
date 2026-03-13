@@ -41,7 +41,7 @@ const repositorySegments = [
     titleKey: 'tutorials',
     descKey: 'tutorialsDesc',
     icon: BookOpen,
-    href: '/explore',
+    href: '/tutorials',
   },
   {
     titleKey: 'tools',
@@ -104,7 +104,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             </p>
             <div className="flex items-center gap-4 mb-8">
               <Link
-                href="/explore"
+                href="/tutorials"
                 className="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold transition-colors"
               >
                 {t('ctaExplore')}
@@ -166,7 +166,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </h2>
             </div>
             <Link
-              href="/explore"
+              href="/tutorials"
               className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
             >
               {t('viewAll')} <ArrowUpRight className="w-4 h-4" />
@@ -216,7 +216,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </h2>
             </div>
             <Link
-              href="/explore"
+              href="/tutorials"
               className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
             >
               {t('viewAll')} <ArrowUpRight className="w-4 h-4" />

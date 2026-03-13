@@ -97,7 +97,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
               {t('home')}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href="/explore" className="hover:text-primary-600 dark:hover:text-primary-400">
+            <Link href="/tutorials" className="hover:text-primary-600 dark:hover:text-primary-400">
               {t('tutorials')}
             </Link>
             <ChevronRight className="w-4 h-4" />

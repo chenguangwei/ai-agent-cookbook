@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${BASE_URL}/explore`,
+      url: `${BASE_URL}/tutorials`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
@@ -55,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${BASE_URL}/zh/explore`,
+      url: `${BASE_URL}/zh/tutorials`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,

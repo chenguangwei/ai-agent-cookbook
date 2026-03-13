@@ -154,7 +154,7 @@ function ExploreSidebar({
             return (
               <Link
                 key={category.id}
-                href={`/explore?cat=${category.id}`}
+                href={`/tutorials?cat=${category.id}`}
                 className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${isActive ? ACTIVE_CLASS : DEFAULT_CLASS}`}
               >
                 <div className="flex items-center gap-3">

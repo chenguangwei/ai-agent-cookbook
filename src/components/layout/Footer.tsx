@@ -23,7 +23,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <span className="text-slate-900 dark:text-slate-200">{t('platform')}</span>
             <Link
-              href="/explore"
+              href="/tutorials"
               className="hover:text-primary-600 dark:hover:text-primary-400"
             >
               {tNav('tutorials')}

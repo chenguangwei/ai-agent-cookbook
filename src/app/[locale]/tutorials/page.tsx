@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, PlayCircle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, PlayCircle, BookOpen, ChevronLeft, ChevronRight, Tag, X } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -14,18 +14,16 @@ import type { Metadata } from 'next';
 
 const ITEMS_PER_PAGE = 50;
 
-// ISR: Revalidate every 60 seconds
 export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
-  // Default to 'en' if locale is undefined
   const resolvedLocale = locale || 'en';
 
   const canonicalUrl = resolvedLocale === 'en'
-    ? `${siteUrl}/explore`
-    : `${siteUrl}/${resolvedLocale}/explore`;
+    ? `${siteUrl}/tutorials`
+    : `${siteUrl}/${resolvedLocale}/tutorials`;
 
   return {
     title: 'Explore Tutorials',
@@ -33,9 +31,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     alternates: {
       canonical: canonicalUrl,
       languages: {
-        'en': `${siteUrl}/explore`,
-        'zh': `${siteUrl}/zh/explore`,
-        'ja': `${siteUrl}/ja/explore`,
+        'en': `${siteUrl}/tutorials`,
+        'zh': `${siteUrl}/zh/tutorials`,
+        'ja': `${siteUrl}/ja/tutorials`,
       },
     },
     openGraph: {
@@ -47,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 interface ExplorePageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ cat?: string; locale?: string; difficulty?: string; page?: string }>;
+  searchParams: Promise<{ cat?: string; locale?: string; difficulty?: string; page?: string; tag?: string }>;
 }
 
 export default async function ExplorePage({ params, searchParams }: ExplorePageProps) {
@@ -56,19 +54,29 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
   const categoryParam = search.cat;
   const localeFilter = search.locale !== undefined ? search.locale : (resolvedParams.locale || 'en');
   const difficultyFilter = search.difficulty;
+  const tagFilter = search.tag;
   const currentPage = parseInt(search.page || '1', 10);
   const t = await getTranslations('Explore');
   const tCat = await getTranslations('Categories');
   const tHome = await getTranslations('Home');
 
-  // Map category id (URL param) to category value (stored in content)
   const categoryValue = categoryParam ? categoryIdToValue[categoryParam] : null;
   const currentCategory = TUTORIAL_CATEGORIES.find(
     (c) => c.id === categoryParam
   );
 
-  // Fetch and filter tutorials - pass locale directly to getAllTutorials for efficiency
   let tutorials = getAllTutorials(localeFilter);
+
+  // Get all unique tags for the tag filter
+  const allTags = new Set<string>();
+  tutorials.forEach((tutorial) => {
+    if (tutorial?.tags) {
+      tutorial.tags.filter((tag): tag is string => tag !== null).forEach((tag) => {
+        allTags.add(tag);
+      });
+    }
+  });
+  const sortedTags = Array.from(allTags).sort();
 
   if (categoryValue) {
     tutorials = tutorials.filter((t) => t?.category === categoryValue);
@@ -79,8 +87,12 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
   if (difficultyFilter) {
     tutorials = tutorials.filter((t) => t?.difficulty === difficultyFilter);
   }
+  if (tagFilter) {
+    tutorials = tutorials.filter((t) =>
+      t?.tags?.some((tag): boolean => tag !== null && tag === tagFilter)
+    );
+  }
 
-  // Calculate pagination
   const totalItems = tutorials.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -90,18 +102,13 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       <Header />
-
       <main className="flex-1">
         <div className="max-w-[1400px] mx-auto px-6 py-8 lg:py-12">
           <div className="flex gap-8">
-            {/* Sidebar */}
             <Suspense fallback={<div className="w-64 flex-shrink-0" />}>
               <Sidebar />
             </Suspense>
-
-            {/* Main Content */}
             <div className="flex-1 min-w-0">
-              {/* Category Header */}
               {currentCategory ? (
                 <div className="mb-8">
                   <h1 className="text-slate-900 dark:text-white text-3xl font-bold mb-2 font-display">
@@ -116,6 +123,50 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                   <p className="text-slate-500 dark:text-slate-400 text-sm">
                     {t('description')}
                   </p>
+                </div>
+              )}
+
+              {/* Tags Filter Bar */}
+              {sortedTags.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Tag className="w-4 h-4 text-slate-400" />
+                    {/* All option - default when no tag is selected */}
+                    <Link
+                      key="all"
+                      href={`?${new URLSearchParams({
+                        ...(categoryParam && { cat: categoryParam }),
+                        ...(localeFilter && { locale: localeFilter }),
+                        ...(difficultyFilter && { difficulty: difficultyFilter }),
+                      }).toString()}`}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        !tagFilter
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400'
+                      }`}
+                    >
+                      All
+                    </Link>
+                    {sortedTags.map((tag) => (
+                      <Link
+                        key={tag}
+                        href={`?${new URLSearchParams({
+                          ...(categoryParam && { cat: categoryParam }),
+                          ...(localeFilter && { locale: localeFilter }),
+                          ...(difficultyFilter && { difficulty: difficultyFilter }),
+                          ...(tagFilter !== tag && { tag: tag }),
+                        }).toString()}`}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          tagFilter === tag
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400'
+                        }`}
+                      >
+                        {tag}
+                        {tagFilter === tag && <X className="w-3 h-3" />}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -146,7 +197,6 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                 </div>
               </div>
 
-              {/* Tutorials Grid */}
               {paginatedTutorials.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -156,7 +206,6 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                       key={tutorial?.slug}
                       className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
                     >
-                      {/* Thumbnail */}
                       <div className="relative w-full aspect-video bg-slate-100 dark:bg-slate-800">
                         {tutorial?.thumbnail && (
                           <Image
@@ -173,10 +222,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                           </div>
                         )}
                       </div>
-
-                      {/* Content */}
                       <div className="flex flex-col gap-3 p-5">
-                        {/* Tags */}
                         <div className="flex flex-wrap gap-2">
                           {(tutorial?.techStack || []).filter((t): t is string => t !== null).slice(0, 2).map((tech) => (
                             <span
@@ -187,18 +233,12 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                             </span>
                           ))}
                         </div>
-
-                        {/* Title */}
                         <h3 className="text-slate-900 dark:text-white font-bold text-lg leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                           {tutorial?.title}
                         </h3>
-
-                        {/* Description */}
                         <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2">
                           {tutorial?.description}
                         </p>
-
-                        {/* Meta */}
                         <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                           <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                             {tutorial?.duration && (
@@ -217,7 +257,6 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                   ))}
                   </div>
 
-                  {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 mt-12">
                       {currentPage > 1 ? (
@@ -226,6 +265,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                             ...(categoryParam && { cat: categoryParam }),
                             ...(localeFilter && { locale: localeFilter }),
                             ...(difficultyFilter && { difficulty: difficultyFilter }),
+                            ...(tagFilter && { tag: tagFilter }),
                             page: String(currentPage - 1),
                           }).toString()}`}
                           className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
@@ -239,17 +279,16 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                           Previous
                         </span>
                       )}
-
                       <span className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
                         {tHome('page')} {currentPage} {tHome('of')} {totalPages}
                       </span>
-
                       {currentPage < totalPages ? (
                         <Link
                           href={`?${new URLSearchParams({
                             ...(categoryParam && { cat: categoryParam }),
                             ...(localeFilter && { locale: localeFilter }),
                             ...(difficultyFilter && { difficulty: difficultyFilter }),
+                            ...(tagFilter && { tag: tagFilter }),
                             page: String(currentPage + 1),
                           }).toString()}`}
                           className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
@@ -281,7 +320,6 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   );
