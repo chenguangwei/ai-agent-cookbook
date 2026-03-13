@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
+import { getFeaturedNewsByCategory } from '@/lib/db/news';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 
@@ -74,6 +75,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const tutorialCount = getAllTutorials(locale).length;
   const toolCount = getAllTools(locale).length;
   const showcaseCount = getAllShowcaseProjects(locale).length;
+
+  let featuredNews: any[] = [];
+  try {
+    featuredNews = getFeaturedNewsByCategory(6);
+  } catch (e) {
+    // 忽略数据库错误
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -250,6 +258,68 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </Link>
             ))}
           </div>
+
+          {/* Hot News Section */}
+          {featuredNews.length > 0 && (
+            <>
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-4">
+                  <div className="h-6 w-1 bg-orange-500 rounded-full"></div>
+                  <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-widest uppercase font-display">
+                    {t('hotNews') || '热门资讯'}
+                  </h2>
+                </div>
+                <Link
+                  href="/news"
+                  className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
+                >
+                  {t('viewAll')} <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-24">
+                {featuredNews.map((news) => (
+                  <a
+                    href={news.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    key={news.id}
+                    className="group flex flex-col gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-orange-500/5 hover:border-orange-200 dark:hover:border-orange-800 transition-all duration-300"
+                  >
+                    {news.image_url && (
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <Image
+                          src={news.image_url}
+                          alt={news.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                        />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-orange-600 dark:text-orange-400 font-medium">
+                          {news.source_name}
+                        </span>
+                        {news.is_featured && (
+                          <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] rounded">
+                            HOT
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-slate-900 dark:text-white font-bold text-sm leading-tight group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                        {news.title}
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs line-clamp-2">
+                        {news.summary}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Repository Segments Section */}
           <div className="flex items-center gap-4 mb-12">
