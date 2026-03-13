@@ -191,6 +191,31 @@ export default function AdminNewsPage() {
     }
   };
 
+  // Handle import from BestBlogs OPML
+  const handleImportBestBlogs = async (opmlFile: string, category: string) => {
+    try {
+      const res = await fetch('/api/news/import-opml', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          opmlPath: `../BestBlogs/${opmlFile}`,
+          category
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Imported ${data.imported || 0} sources, skipped ${data.skipped || 0}`);
+        fetchSources();
+      } else {
+        const data = await res.json();
+        alert(`Error: ${data.error || 'Failed to import'}`);
+      }
+    } catch (error) {
+      console.error('Failed to import from BestBlogs:', error);
+      alert('Failed to import from BestBlogs');
+    }
+  };
+
   // Handle delete source
   const handleDeleteSource = async (id: string) => {
     if (!confirm('Are you sure you want to delete this source?')) return;
@@ -314,20 +339,64 @@ export default function AdminNewsPage() {
           /* Sources Tab */
           <div className="space-y-6">
             {/* Import Buttons */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm text-slate-600 dark:text-slate-400">导入默认源:</span>
-              {CATEGORIES.slice(1).map(cat => (
+            <div className="space-y-4">
+              {/* BestBlogs Import */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm text-slate-600 dark:text-slate-400">从 BestBlogs 导入:</span>
                 <Button
-                  key={cat}
                   variant="outline"
                   size="sm"
-                  onClick={() => handleImportDefault(cat)}
+                  onClick={() => handleImportBestBlogs('BestBlogs_RSS_Articles.opml', 'Articles')}
                   className="gap-1"
                 >
                   <Plus className="w-3 h-3" />
-                  {cat}
+                  Articles
                 </Button>
-              ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleImportBestBlogs('BestBlogs_RSS_Podcasts.opml', 'Podcasts')}
+                  className="gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  Podcasts
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleImportBestBlogs('BestBlogs_RSS_Twitters.opml', 'Twitters')}
+                  className="gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  Twitters
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleImportBestBlogs('BestBlogs_RSS_Videos.opml', 'Videos')}
+                  className="gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  Videos
+                </Button>
+              </div>
+
+              {/* Default Sources Import */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm text-slate-600 dark:text-slate-400">导入默认源:</span>
+                {CATEGORIES.slice(1).map(cat => (
+                  <Button
+                    key={cat}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleImportDefault(cat)}
+                    className="gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {cat}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             {/* Sources List */}
