@@ -117,7 +117,11 @@
     "all": "全部",
     "tech": "科技",
     "research": "研究",
-    "industry": "行业"
+    "industry": "行业",
+    "articles": "文章",
+    "podcasts": "播客",
+    "twitters": "推文",
+    "videos": "视频"
   },
   "Explore": {
     "title": "全部教程",

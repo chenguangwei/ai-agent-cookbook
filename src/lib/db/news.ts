@@ -398,6 +398,27 @@ export function getFeaturedNewsByCategory(limit: number = 10): NewsItem[] {
   return rows.map(mapNewsItem);
 }
 
+export function getApprovedNewsCount(category?: string): number {
+  let stmt;
+  let row: { count: number } | undefined;
+
+  if (category) {
+    stmt = db.prepare(`
+      SELECT COUNT(*) as count FROM news_items ni
+      JOIN rss_sources rs ON ni.source_id = rs.id
+      WHERE ni.status = 'approved' AND rs.category = ?
+    `);
+    row = stmt.get(category) as { count: number } | undefined;
+  } else {
+    stmt = db.prepare(`
+      SELECT COUNT(*) as count FROM news_items WHERE status = 'approved'
+    `);
+    row = stmt.get() as { count: number } | undefined;
+  }
+
+  return row?.count || 0;
+}
+
 // Helper function to map database row to NewsItem type
 function mapNewsItem(row: {
   id: string;

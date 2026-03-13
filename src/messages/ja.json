@@ -74,7 +74,11 @@
     "all": "すべて",
     "tech": "テクノロジー",
     "research": "研究",
-    "industry": "業界"
+    "industry": "業界",
+    "articles": "記事",
+    "podcasts": "ポッドキャスト",
+    "twitters": "ツイート",
+    "videos": "動画"
   },
   "Explore": {
     "title": "すべてのチュートリアル",
