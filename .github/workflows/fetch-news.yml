@@ -1,0 +1,19 @@
+name: Fetch RSS News
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch RSS News
+        run: |
+          curl -X POST "https://agenthub.dev/api/news/fetch" \
+            -H "Content-Type: application/json"
+        env:
+          # This ensures the request is authenticated if needed
+          # The API will use environment variables from Vercel
