@@ -35,21 +35,6 @@ export function Footer() {
               {t('practice')}
             </Link>
           </div>
-          <div className="flex flex-col gap-4">
-            <span className="text-slate-900 dark:text-slate-200">{t('legal')}</span>
-            <Link
-              href="/privacy"
-              className="hover:text-primary-600 dark:hover:text-primary-400"
-            >
-              {t('privacy')}
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-primary-600 dark:hover:text-primary-400"
-            >
-              {t('terms')}
-            </Link>
-          </div>
         </div>
 
         <div className="flex gap-4">

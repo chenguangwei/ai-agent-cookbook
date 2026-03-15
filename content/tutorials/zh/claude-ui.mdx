@@ -1,0 +1,351 @@
+---
+title: "我复刻了 Claude 刚发布的生成式 UI 交互！"
+slug: "claude-ui"
+locale: "zh"
+description: "我复刻了 Claude 刚发布的生成式 UI 交互！"
+category: "LLM Models"
+tags: ["Claude", "ReAct"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDcQW_eacAE_s8d.jpg"
+featured: false
+date: 2026-03-15
+---
+
+# 我复刻了 Claude 刚发布的生成式 UI 交互！
+
+
+前天 Anthropic 在 Claude 里面上线了基于生成式 UI 的新交互。
+
+可以帮你在聊天信息流里面用地吗可视化的方式介绍一些概念和信息，远比原来的纯文本要好理解。
+
+![](https://pbs.twimg.com/media/HDcQTnoaUAAhwJa.jpg)
+
+我之前就一直在看类似的方案，刚好 Claude 发了，我就感觉我也得加紧做了。
+
+同时刚好也可以逆向参考一下他的方案。
+
+疯狂 PUA 了两天 Codex 和 Claude 还真让我搞出来了！
+
+![](https://pbs.twimg.com/amplify_video_thumb/2033112086713364480/img/EUmHCjsTK7tfnToZ.jpg)
+
+这个功能能让 AI 直接在聊天里画交互式图表，流式输出，边生成边渲染。
+
+以前让 AI 写网页，得等整个页面代码全部生成完才能渲染，等半天。
+
+现在不一样了。你能看着图表一笔一笔在画布上画出来，SVG 节点一个接一个冒出来。
+
+生成过程本身就很震撼，而且生成完直接就能交互。
+
+直接在我的 Agent 产品 Code Pilot 里面体验：https://github.com/op7418/CodePilot
+
+这篇内容我就会介绍一下它的用法，以及具体的实现过程和一些注意事项。
+
+## 有哪些好玩的用法
+
+
+数据分析：数字终于能看懂了
+
+比如让它画一个"美国和伊朗冲突每天成本估算"的图表。
+
+以前 AI 给你一大段文字，数字关系根本看不清。
+
+现在直接出图表，每部分金额多少一目了然，文字和图表混在一起输出，该解释的解释，该画的画。
+
+![](https://pbs.twimg.com/media/HDcQu9-bgAAOnjt.jpg)
+
+小工具：写个可交互的计算器啥的
+
+让它做一个复利计算器。
+
+拖滑块改初始金额、改投资年限，下面的图表和数字实时变化。
+
+这不是静态图片，是真的能交互的小工具。
+
+贷款计算、单位换算这类东西都能做。
+
+![](https://pbs.twimg.com/media/HDcRTS_asAA0rAE.jpg)
+
+架构图：程序员最爱
+
+你可以让他帮你画某个项目的架构，或者某一个实现方案的可视化。
+
+比如这里我让它画 API 到 JWT 身份验证的完整流程。
+
+特性对比、流程图、层级结构全是图形化的，比看文字描述理解架构快太多了。
+
+![](https://pbs.twimg.com/media/HDcRXHOa0AAE96x.jpg)
+
+分析线上数据
+
+还有个玩法直接丢一个 GitHub 仓库链接给它，它自己抓数据然后可视化分析。
+
+比如这里我就把我自己的项目地址 Codepilot 发给他让他分析。
+
+星数、fork 数、技术栈、架构设计、核心模块，全部画成图表。
+
+一眼就能看清楚项目全貌，比读一大段文字强多了。
+
+![](https://pbs.twimg.com/media/HDcRlBta4AA2_0f.jpg)
+
+可以进行交互和深度解释
+
+这个最强的是他跟模型结合的相当紧密，不是一顿输出就完事了。
+
+你可以跟他生成的示意图进行交互，让他进行更详细的解释。
+
+比如这里我让他解释季风和洋流的关系。
+
+![](https://pbs.twimg.com/media/HDcRnPtasAAuOsZ.jpg)
+
+如果我们想更详细的了解就可以点击那个洋流机制的按钮。
+
+就会自动向当前的模型发送指令，继续帮你生成洋流机制的示意图。
+
+![](https://pbs.twimg.com/media/HDcRp6tbgAAqEtm.jpg)
+
+当然我们可以进行更加复杂的交互，比如常见的物理数学公式的可视化。
+
+这种对于学生来说非常好用，每个参数都可以通过滑块和输入控制，动画立刻会发生变化。
+
+![](https://pbs.twimg.com/media/HDcRt9qaMAANsxX.jpg)
+
+国产模型支持
+
+Codepilot 实现之后不只是 Claude 能用。
+
+Kimi K2.5、Minimax M2.5、Anthropic 原生模型都跑得起来。
+
+K2.5 画的图形我觉得甚至比 Sonnet 4.6 还好看，架构分析也很详细。
+
+如果用这个功能我推荐首选 K2.5 试试。
+
+好，到这里，模型的玩法基本上展示完了。
+
+如果你不关心是如何实现的，可以直接去装个 Codepilot，愉快地玩耍了。
+
+## 如何实现的
+
+
+![](https://pbs.twimg.com/media/HDcRxG5aYAAzhae.jpg)
+
+Claude 怎么做的
+
+Claude.ai 官方用的是 tool_use 机制。
+
+模型调用一个专用 tool 输出结构化的 widget 内容，
+
+前端解析 tool 调用的 input 参数来渲染。
+
+这个方案在 Claude.ai 自己的架构下没问题。
+
+但搬到 CodePilot 就不行了，原因有三个：
+
+第一，SDK 限制。 CodePilot 用 Claude Agent SDK 的 preset: 'claude_code' 模式， 没法注册自定义 tool。 SDK 暴露的是 text delta 流，tool 层面扩展不了。
+
+第二，流式体验。 tool_use 的结果要等 input_json_delta 拼完才能渲染， 不支持 HTML 增量渲染。 代码围栏方式下，HTML 随文本流式到达，边生成边预览。
+
+第三，渲染隔离。
+
+Claude.ai 用 Shadow DOM 做隔离。
+
+我们选了 sandbox iframe。
+
+iframe 隔离更彻底——完全独立的 JS 执行环境，
+
+CSP 精确控制资源加载，
+
+不存在样式泄漏和脚本逃逸。
+
+我们怎么做的
+
+触发：代码围栏
+
+模型输出一段特殊的 Markdown 代码围栏来触发渲染：
+
+```show-widget
+{"title":"training_flow","widget_code":"<svg width=\"100%\" viewBox=\"0 0 680 400\">...</svg>"}
+```
+
+这个格式复用了 CodePilot 已有的代码围栏模式  （image-gen-request、batch-plan 等），  前端 parser 链天然支持。
+
+![](https://pbs.twimg.com/media/HDcR5dyasAAtwTN.jpg)
+
+渲染：sandbox iframe
+
+每个 widget 渲染在一个 sandbox="allow-scripts" 的 iframe 里。  iframe 的 srcdoc 是一个精心构建的 receiver 页面。
+
+CSP 策略只放行 4 个 CDN 域名的外部脚本， connect-src 'none' 禁止所有网络请求。
+
+通过 postMessage 接收内容更新。  流式预览阶段发 widget:update，不执行脚本。  最终渲染发 widget:finalize，执行脚本。
+
+ResizeObserver 监听内容高度变化，
+
+通过 postMessage 报告给父页面。
+
+所有 <a> 点击被拦截，  转发给父页面在新窗口打开。
+
+主题同步靠监听父页面的 class 变化，  实时切换深色/浅色模式。
+
+![](https://pbs.twimg.com/media/HDcR8ilbgAATB-8.jpg)
+
+CSS 变量桥接
+
+这是让 widget 跟应用视觉融合的关键。
+
+CodePilot 用 OKLCH 色彩空间的 CSS 变量。  Anthropic 的 widget 设计指南用 --color-background-primary 这类标准变量名。
+
+桥接层在 iframe 初始化时，  把 CodePilot 的变量值注入 iframe 的 :root。  模型按指南写的 CSS 就能直接用当前主题的颜色。
+
+深色模式切换时，  父页面检测到 class 变化，  重新算变量值推给 iframe。
+
+![](https://pbs.twimg.com/media/HDcR_fLaYAAL88P.jpg)
+
+流式渲染
+
+这是整个实现里最复杂的部分。
+
+模型逐 token 生成。  任意时刻收到的 widget 代码都可能是不完整的 JSON、  不完整的 HTML、不完整的 <script> 标签。
+
+处理流程是这样的：
+
+正则匹配 ```show-widget，  区分"未闭合"和"已闭合"状态。
+
+手动定位 "widget_code":" 后面的内容，  逐字符反转义。  不能用 JSON.parse，因为 JSON 还没写完。
+
+检测到未闭合的 <script> 标签时，  在 <script 之前截断，  避免 JavaScript 代码显示成可见文本。
+
+120ms debounce 防止 iframe 更新太频繁。
+
+流式内容剥离所有脚本和事件处理器，
+
+预览阶段不需要交互。
+
+![](https://pbs.twimg.com/media/HDcSDCGb0AAwY7J.jpg)
+
+体验打磨：那些不该被注意到的细节
+
+其实从代码或者是实现方案来看并不复杂，复杂的是体验的打磨。
+
+这里边有太多可以影响体验的地方，需要让用户注意不到那些细节和生成的过程。这就需要在每个阶段去用不同的方式处理：
+
+1. 那些看起来不像流式的细节
+2. 不该出现的内容
+
+![](https://pbs.twimg.com/media/HDcSKQLaEAABilZ.jpg)
+
+文字消失
+
+模型先输出一段介绍文字（"我来为你可视化解释..."），
+
+然后开始输出 widget 围栏。
+
+围栏一出现，前面的文字突然没了，
+
+等 widget 渲染完才回来。
+
+原因是 parseAllShowWidgets() 对纯文本返回空数组。  围栏刚出现但还没闭合时，  围栏前的文字被传进这个函数，结果被丢了。
+
+修复：检测到围栏前的文本不含已完成的 widget 围栏时，  直接渲染为 <MessageResponse>，绕过解析函数。
+
+高度跳变
+
+widget 渲染完的瞬间，整个聊天区域抖一下。
+
+iframe 初始高度 0px。
+
+内容第一次报告实际高度时可能是 400px+，
+
+CSS transition 让这个变化在 300ms 内完成，
+
+就成了明显的动画跳变。
+
+修复：首次高度报告时临时禁用 CSS transition，
+
+让高度瞬间到位。
+
+后续高度微调才用平滑过渡。
+
+Finalize 闪烁
+
+widget 从流式预览切到最终渲染时，内容闪一下。
+
+receiver iframe 在 finalize 时执行 root.innerHTML = html 整体替换 DOM。  即使新旧内容完全一样（纯 SVG widget），  浏览器也会触发一帧重绘。
+
+修复：finalize 时先把新 HTML 解析到临时容器，
+
+分离出 script 元素。
+
+比较去掉 script 后的 visual HTML 跟当前 DOM——
+
+一样就跳过 innerHTML 替换，直接追加 script 执行。
+
+纯 SVG widget 实现了零重绘 finalize。
+
+滚动回跳
+
+聊天正在自动滚到底部，
+
+突然跳回几百像素前的位置，再跳回来。
+
+streaming 结束时， StreamingMessage 组件卸载，MessageItem 组件挂载。  这是两个完全不同的 React 组件，  内部的 WidgetRenderer 被销毁再重建。  新实例的 iframe 高度从 0 开始，  内容区高度骤降， use-stick-to-bottom 检测到高度变化就触发了滚动调整。
+
+修复：模块级高度缓存。  每当 widget 报告高度时，  以 widgetCode 前 200 字符为 key 写入缓存。  新的 WidgetRenderer 实例在 useState 初始化时从缓存读高度，  iframe 以正确高度开始渲染，  不存在 0→实际的过渡。
+
+Script 代码泄露
+
+带 Chart.js 的 widget 加载时，
+
+底部显示一大段 JavaScript 代码。
+
+模型输出的 <script> 标签在流式传输中逐字符到达。 <script> 开标签到了但 </script> 还没到时， sanitizeForStreaming 剥离了开标签，  但标签内的 JavaScript 代码变成了裸文本节点，  被浏览器渲染成可见内容。
+
+修复：在 StreamingMessage 的 partial code 提取后，  检测最后一个 <script 有没有匹配的 </script>。  没有就在 <script 位置截断。  widget 指南规定 script 放最后，截断不影响视觉内容。  截断期间展示 shimmer 遮罩，  状态栏显示"正在为可视化添加交互动画"。
+
+iframe Ready 竞态
+
+极少数情况下 widget 完全不渲染，停在 0px 高度。
+
+WidgetRenderer 通过 useEffect 注册 message 事件监听。  但 iframe 的 receiver script 加载完就立刻发 widget:ready。  如果 iframe 加载速度快于 React effect 执行， widget:ready 在监听器注册之前就发出去了， iframeReady 永远不会变成 true。
+
+修复：在 iframe 元素上加 onLoad 回调兜底。 onLoad 触发时 receiver script 必然已执行完，  是可靠的就绪信号。
+
+React 组件树稳定性
+
+widget 在围栏闭合瞬间闪一次。
+
+两个问题叠在一起：  流式 partial widget 没有 React key，  闭合后获得 key="w-0"，key 变了导致 remount。  shimmer overlay 用外包 <div> 实现，  改变了组件树结构，type 变了又导致 remount。
+
+修复：给 partial widget 算稳定的 key  （w-N，N 是在最终 segments 数组中的预期位置），  跟闭合后的 key 一致。  shimmer overlay 移进 WidgetRenderer 内部，  通过 showOverlay prop 控制。  组件树始终是 <WidgetRenderer key="w-N">，不变。
+
+## 
+
+## 写在最后
+
+
+整个生成式 UI 系统，
+
+难的不是"让一段 HTML 在 iframe 里跑起来"。那很简单。
+
+真正的复杂度在于：
+
+让这个 iframe 在流式传输、组件生命周期切换、主题变化这些状态转换中，
+
+保持视觉上的稳定。
+
+每一个"闪一下""跳一下""消失一下"，
+
+都要去理解 React 的 reconciliation、
+
+浏览器的渲染管线、
+
+postMessage 的时序。
+
+最终效果是：
+
+用户看到模型的回复里自然地穿插着图表和示意图。
+
+就像它们本来就该在那里。
+
+这是今天的内容。如果觉得对你有帮助的话，可以帮我点个赞，或者是发给有需要的朋友。
