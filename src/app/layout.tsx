@@ -15,13 +15,20 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "Agent Hub - AI Agent Tutorials & Resources",
+    default: "Agent Hub - AI Agent 教程、实战、工具与资讯平台",
     template: "%s | Agent Hub",
   },
   description:
-    "The definitive repository for autonomous architectures. Professional workflows built for the next generation of AI developers.",
+    "Agent Hub 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯，包含 OpenCLAW、LangChain、LangGraph 等框架的详细教程。",
   keywords: [
     "AI Agent",
+    "Agent 教程",
+    "Agent 实战",
+    "Agent 工具",
+    "Agent 新闻",
+    "Agent 资讯",
+    "OpenCLAW",
+    "OpenClaw",
     "LangChain",
     "LangGraph",
     "Autonomous AI",
@@ -29,6 +36,8 @@ export const metadata: Metadata = {
     "LLM",
     "GPT",
     "Claude",
+    "AI 智能体",
+    "AI 开发教程",
   ],
   authors: [{ name: "Agent Hub Team" }],
   openGraph: {
@@ -36,15 +45,15 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://agenthub.dev",
     siteName: "Agent Hub",
-    title: "Agent Hub - AI Agent Tutorials & Resources",
+    title: "Agent Hub - AI Agent 教程、实战、工具与资讯平台",
     description:
-      "The definitive repository for autonomous architectures. Professional workflows built for the next generation of AI developers.",
+      "Agent Hub 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agent Hub - AI Agent Tutorials & Resources",
+    title: "Agent Hub - AI Agent 教程、实战、工具与资讯平台",
     description:
-      "The definitive repository for autonomous architectures. Professional workflows built for the next generation of AI developers.",
+      "Agent Hub 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。",
   },
   robots: {
     index: true,
