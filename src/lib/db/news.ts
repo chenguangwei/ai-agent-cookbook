@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -9,15 +10,20 @@ const __dirname = dirname(__filename);
 // Database path - data folder at project root
 const dbPath = path.join(__dirname, '../../..', 'data', 'news.db');
 
-// Ensure data directory exists
-import fs from 'fs';
-const dataDir = path.dirname(dbPath);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+let db: Database.Database;
 
-// Initialize database
-const db = new Database(dbPath);
+try {
+  // Ensure data directory exists
+  const dataDir = path.dirname(dbPath);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  db = new Database(dbPath);
+} catch (error) {
+  console.error('Failed to initialize database:', error);
+  // Use in-memory database as fallback to prevent crashes
+  db = new Database(':memory:');
+}
 
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
