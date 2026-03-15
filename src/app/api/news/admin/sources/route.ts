@@ -2,6 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllRssSources, addRssSource, updateRssSource, deleteRssSource, getRssSourceById } from '@/lib/db/news';
 import { randomUUID } from 'crypto';
 
+// Detect language from source name or URL
+function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
+  const lowerName = name.toLowerCase();
+  const lowerUrl = url.toLowerCase();
+
+  // Check if name contains Chinese characters
+  const chineseRegex = /[\u4e00-\u9fff]/;
+  if (chineseRegex.test(name)) return 'zh';
+
+  // Check if URL contains Chinese domain or path
+  if (chineseRegex.test(url)) return 'zh';
+
+  // Check if name contains Japanese characters
+  const japaneseRegex = /[\u3040-\u309f\u30a0-\u30ff]/;
+  if (japaneseRegex.test(name)) return 'ja';
+
+  // Check for common Chinese source name patterns
+  const chineseNames = [
+    '量子位', '机器之心', '腾讯', '爱范儿', '极客公园', '虎嗅', '36氪',
+    '钛媒体', '品玩', '硅星人', '脑极羊', '将门创投',
+    'infoq', 'segmentfault', 'cocoachina', 'oschina', 'cnblogs',
+    'juejin', 'zhihu', 'weibo', 'tencent', 'aliyun', 'baidu'
+  ];
+  if (chineseNames.some(n => lowerName.includes(n.toLowerCase()))) return 'zh';
+
+  // Check URL for Chinese platforms
+  const chineseUrls = ['wechat', 'qq.com', 'baidu.com', 'aliyun.com', 'tencent.com',
+    'zhihu.com', 'juejin.cn', 'segmentfault.com', 'cocoachina.com', 'oschina.net', 'qbitai.com', 'ifanr.com'];
+  if (chineseUrls.some(u => lowerUrl.includes(u))) return 'zh';
+
+  // Check for common Japanese source patterns
+  const japaneseNames = ['技術', 'テクノロジー', ' Tech', 'Gihyo', 'Postd'];
+  if (japaneseNames.some(n => name.includes(n))) return 'ja';
+
+  // Default to English
+  return 'en';
+}
+
 // GET - Return all sources
 export async function GET() {
   try {
@@ -20,7 +58,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, url, category, enabled = true } = body;
+    const { name, url, category, language = 'en', enabled = true } = body;
 
     if (!name || !url || !category) {
       return NextResponse.json(
@@ -38,11 +76,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate language
+    const validLanguages = ['en', 'zh', 'ja'];
+    if (!validLanguages.includes(language)) {
+      return NextResponse.json(
+        { error: `Language must be one of: ${validLanguages.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     const newSource = addRssSource({
       id: randomUUID(),
       name,
       url,
       category,
+      language,
       enabled
     });
 

@@ -29,6 +29,7 @@ db.exec(`
     name TEXT NOT NULL,
     url TEXT NOT NULL UNIQUE,
     category TEXT NOT NULL CHECK(category IN ('Articles', 'Podcasts', 'Twitters', 'Videos')),
+    language TEXT DEFAULT 'en' CHECK(language IN ('en', 'zh', 'ja')),
     enabled INTEGER DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
@@ -56,12 +57,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_news_category ON news_items(source_id, status);
 `);
 
+// Add language column if it doesn't exist (for existing databases)
+try {
+  db.exec(`ALTER TABLE rss_sources ADD COLUMN language TEXT DEFAULT 'en' CHECK(language IN ('en', 'zh', 'ja'))`);
+} catch (e) {
+  // Column already exists, ignore
+}
+
 // Types
 export type RssSource = {
   id: string;
   name: string;
   url: string;
   category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
+  language: 'en' | 'zh' | 'ja';
   enabled: boolean;
   created_at: string;
 };
@@ -91,6 +100,7 @@ export function getAllRssSources(): RssSource[] {
     name: string;
     url: string;
     category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
+    language: 'en' | 'zh' | 'ja';
     enabled: number;
     created_at: string;
   }>;
@@ -107,6 +117,7 @@ export function getRssSourceById(id: string): RssSource | undefined {
     name: string;
     url: string;
     category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
+    language: 'en' | 'zh' | 'ja';
     enabled: number;
     created_at: string;
   } | undefined;
@@ -119,10 +130,10 @@ export function getRssSourceById(id: string): RssSource | undefined {
 
 export function addRssSource(source: Omit<RssSource, 'created_at'>): RssSource {
   const stmt = db.prepare(`
-    INSERT INTO rss_sources (id, name, url, category, enabled)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO rss_sources (id, name, url, category, language, enabled)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(source.id, source.name, source.url, source.category, source.enabled ? 1 : 0);
+  stmt.run(source.id, source.name, source.url, source.category, source.language || 'en', source.enabled ? 1 : 0);
   return getRssSourceById(source.id) as RssSource;
 }
 
@@ -144,6 +155,10 @@ export function updateRssSource(id: string, updates: Partial<RssSource>): RssSou
   if (updates.category !== undefined) {
     fields.push('category = ?');
     values.push(updates.category);
+  }
+  if (updates.language !== undefined) {
+    fields.push('language = ?');
+    values.push(updates.language);
   }
   if (updates.enabled !== undefined) {
     fields.push('enabled = ?');
@@ -209,59 +224,51 @@ export function getAllNewsItems(status?: string): NewsItem[] {
   }
 }
 
-export function getApprovedNews(category?: string, limit: number = 50, offset: number = 0): NewsItem[] {
+export function getApprovedNews(category?: string, limit: number = 50, offset: number = 0, language?: string): NewsItem[] {
   let stmt;
   let rows;
 
-  if (category) {
-    // Get category from rss_sources and filter
-    stmt = db.prepare(`
-      SELECT ni.* FROM news_items ni
-      JOIN rss_sources rs ON ni.source_id = rs.id
-      WHERE ni.status = 'approved' AND rs.category = ?
-      ORDER BY ni.is_featured DESC, ni.published_at DESC, ni.created_at DESC
-      LIMIT ? OFFSET ?
-    `);
-    rows = stmt.all(category, limit, offset) as Array<{
-      id: string;
-      source_id: string;
-      source_name: string | null;
-      title: string;
-      summary: string | null;
-      content: string | null;
-      url: string;
-      image_url: string | null;
-      author: string | null;
-      published_at: string | null;
-      status: string;
-      is_featured: number;
-      approved_at: string | null;
-      created_at: string;
-    }>;
-  } else {
-    stmt = db.prepare(`
-      SELECT * FROM news_items
-      WHERE status = 'approved'
-      ORDER BY is_featured DESC, published_at DESC, created_at DESC
-      LIMIT ? OFFSET ?
-    `);
-    rows = stmt.all(limit, offset) as Array<{
-      id: string;
-      source_id: string;
-      source_name: string | null;
-      title: string;
-      summary: string | null;
-      content: string | null;
-      url: string;
-      image_url: string | null;
-      author: string | null;
-      published_at: string | null;
-      status: string;
-      is_featured: number;
-      approved_at: string | null;
-      created_at: string;
-    }>;
+  // Build query based on filters
+  const hasCategory = category && category !== 'all';
+  const hasLanguage = language && language !== 'all';
+
+  let query = `
+    SELECT ni.* FROM news_items ni
+    JOIN rss_sources rs ON ni.source_id = rs.id
+    WHERE ni.status = 'approved'
+  `;
+  const params: any[] = [];
+
+  if (hasCategory) {
+    query += ` AND rs.category = ?`;
+    params.push(category);
   }
+
+  if (hasLanguage) {
+    query += ` AND rs.language = ?`;
+    params.push(language);
+  }
+
+  query += ` ORDER BY ni.is_featured DESC, ni.published_at DESC, ni.created_at DESC LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  stmt = db.prepare(query);
+  rows = stmt.all(...params) as Array<{
+    id: string;
+    source_id: string;
+    source_name: string | null;
+    title: string;
+    summary: string | null;
+    content: string | null;
+    url: string;
+    image_url: string | null;
+    author: string | null;
+    published_at: string | null;
+    status: string;
+    is_featured: number;
+    approved_at: string | null;
+    created_at: string;
+  }>;
 
   return rows.map(mapNewsItem);
 }
@@ -398,23 +405,29 @@ export function getFeaturedNewsByCategory(limit: number = 10): NewsItem[] {
   return rows.map(mapNewsItem);
 }
 
-export function getApprovedNewsCount(category?: string): number {
-  let stmt;
-  let row: { count: number } | undefined;
+export function getApprovedNewsCount(category?: string, language?: string): number {
+  const hasCategory = category && category !== 'all';
+  const hasLanguage = language && language !== 'all';
 
-  if (category) {
-    stmt = db.prepare(`
-      SELECT COUNT(*) as count FROM news_items ni
-      JOIN rss_sources rs ON ni.source_id = rs.id
-      WHERE ni.status = 'approved' AND rs.category = ?
-    `);
-    row = stmt.get(category) as { count: number } | undefined;
-  } else {
-    stmt = db.prepare(`
-      SELECT COUNT(*) as count FROM news_items WHERE status = 'approved'
-    `);
-    row = stmt.get() as { count: number } | undefined;
+  let query = `
+    SELECT COUNT(*) as count FROM news_items ni
+    JOIN rss_sources rs ON ni.source_id = rs.id
+    WHERE ni.status = 'approved'
+  `;
+  const params: any[] = [];
+
+  if (hasCategory) {
+    query += ` AND rs.category = ?`;
+    params.push(category);
   }
+
+  if (hasLanguage) {
+    query += ` AND rs.language = ?`;
+    params.push(language);
+  }
+
+  const stmt = db.prepare(query);
+  const row = stmt.get(...params) as { count: number } | undefined;
 
   return row?.count || 0;
 }

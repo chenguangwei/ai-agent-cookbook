@@ -41,6 +41,7 @@ interface Source {
   name: string;
   url: string;
   category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
+  language: 'en' | 'zh' | 'ja';
   enabled: boolean;
   created_at: string;
 }
@@ -48,6 +49,7 @@ interface Source {
 type TabType = 'pending' | 'approved' | 'sources';
 
 const CATEGORIES = ['all', 'Articles', 'Podcasts', 'Twitters', 'Videos'] as const;
+const LANGUAGES = ['all', 'en', 'zh', 'ja'] as const;
 
 export default function AdminNewsPage() {
   const t = useTranslations('NewsAdmin');
@@ -59,6 +61,9 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [category, setCategory] = useState<string>('all');
+  const [language, setLanguage] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [sourceLanguage, setSourceLanguage] = useState<string>('all');
   const [selected, setSelected] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [fetching, setFetching] = useState(false);
@@ -71,6 +76,8 @@ export default function AdminNewsPage() {
       if (activeTab === 'pending') params.set('status', 'pending');
       if (activeTab === 'approved') params.set('status', 'approved');
       if (category !== 'all') params.set('category', category);
+      if (language !== 'all') params.set('language', language);
+      if (sourceFilter !== 'all') params.set('sourceId', sourceFilter);
 
       const res = await fetch(`/api/news/admin/list?${params}`);
       const data = await res.json();
@@ -100,7 +107,7 @@ export default function AdminNewsPage() {
     } else {
       fetchItems();
     }
-  }, [activeTab, status, category]);
+  }, [activeTab, status, category, language, sourceFilter]);
 
   // Handle approve
   const handleApprove = async (ids: string[], isFeatured: boolean = false) => {
@@ -149,6 +156,22 @@ export default function AdminNewsPage() {
       }
     } catch (error) {
       console.error('Failed to toggle featured:', error);
+    }
+  };
+
+  // Handle delete news item
+  const handleDelete = async (ids: string[]) => {
+    try {
+      const query = ids.map(id => `id=${encodeURIComponent(id)}`).join('&');
+      const res = await fetch(`/api/news/admin/delete?${query}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setSelected([]);
+        fetchItems();
+      }
+    } catch (error) {
+      console.error('Failed to delete:', error);
     }
   };
 
@@ -216,6 +239,22 @@ export default function AdminNewsPage() {
     }
   };
 
+  // Handle detect language for all sources
+  const handleDetectLanguage = async () => {
+    try {
+      const res = await fetch('/api/news/admin/sources/detect-lang', {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`已根据 RSS 名称检测并更新 ${data.updated} 个源的语言`);
+        fetchSources();
+      }
+    } catch (error) {
+      console.error('Failed to detect language:', error);
+    }
+  };
+
   // Handle delete source
   const handleDeleteSource = async (id: string) => {
     if (!confirm('Are you sure you want to delete this source?')) return;
@@ -244,6 +283,22 @@ export default function AdminNewsPage() {
       }
     } catch (error) {
       console.error('Failed to toggle source:', error);
+    }
+  };
+
+  // Handle update source language
+  const handleUpdateSourceLanguage = async (id: string, language: 'en' | 'zh' | 'ja') => {
+    try {
+      const res = await fetch('/api/news/admin/sources', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, language })
+      });
+      if (res.ok) {
+        fetchSources();
+      }
+    } catch (error) {
+      console.error('Failed to update source language:', error);
     }
   };
 
@@ -399,6 +454,33 @@ export default function AdminNewsPage() {
               </div>
             </div>
 
+            {/* Language Filter for Sources */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-slate-500" />
+                <select
+                  value={sourceLanguage}
+                  onChange={e => setSourceLanguage(e.target.value)}
+                  className="h-9 px-3 pr-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {LANGUAGES.map(lang => (
+                    <option key={lang} value={lang}>
+                      {lang === 'all' ? '全部语言' : lang === 'en' ? 'English' : lang === 'zh' ? '中文' : '日本語'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDetectLanguage}
+                className="gap-1"
+              >
+                <RefreshCw className="w-3 h-3" />
+                根据名称检测语言
+              </Button>
+            </div>
+
             {/* Sources List */}
             <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
               <table className="w-full">
@@ -412,6 +494,9 @@ export default function AdminNewsPage() {
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       分类
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      语言
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       状态
@@ -431,7 +516,7 @@ export default function AdminNewsPage() {
                       </td>
                     </tr>
                   ) : (
-                    sources.map(source => (
+                    sources.filter(s => sourceLanguage === 'all' || s.language === sourceLanguage).map(source => (
                       <tr key={source.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                         <td className="px-4 py-3">
                           <span className="font-medium text-slate-900 dark:text-white">
@@ -458,6 +543,21 @@ export default function AdminNewsPage() {
                           }`}>
                             {source.category}
                           </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={source.language}
+                            onChange={e => handleUpdateSourceLanguage(source.id, e.target.value as 'en' | 'zh' | 'ja')}
+                            className={`text-xs font-medium rounded-full px-2 py-1 cursor-pointer border-0 ${
+                              source.language === 'en' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                              source.language === 'zh' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                              'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                            }`}
+                          >
+                            <option value="en">EN</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">JA</option>
+                          </select>
                         </td>
                         <td className="px-4 py-3">
                           <button
@@ -492,7 +592,7 @@ export default function AdminNewsPage() {
           /* Items Tab (Pending/Approved) */
           <div className="space-y-6">
             {/* Filters */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-slate-500" />
                 <select
@@ -507,6 +607,33 @@ export default function AdminNewsPage() {
                   ))}
                 </select>
               </div>
+
+              {/* Language Filter */}
+              <select
+                value={language}
+                onChange={e => setLanguage(e.target.value)}
+                className="h-9 px-3 pr-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {LANGUAGES.map(lang => (
+                  <option key={lang} value={lang}>
+                    {lang === 'all' ? '全部语言' : lang === 'en' ? 'English' : lang === 'zh' ? '中文' : '日本語'}
+                  </option>
+                ))}
+              </select>
+
+              {/* Source Filter */}
+              <select
+                value={sourceFilter}
+                onChange={e => setSourceFilter(e.target.value)}
+                className="h-9 px-3 pr-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">全部来源</option>
+                {sources.map(source => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </select>
 
               {selected.length > 0 && (
                 <div className="flex items-center gap-2 ml-auto bg-primary-50 dark:bg-primary-900/20 px-3 py-1.5 rounded-lg">
@@ -556,6 +683,24 @@ export default function AdminNewsPage() {
                 >
                   <X className="w-4 h-4" />
                   拒绝
+                </Button>
+              </div>
+            )}
+
+            {/* Bulk Actions for Approved */}
+            {selected.length > 0 && activeTab === 'approved' && (
+              <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  批量操作:
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDelete(selected)}
+                  className="gap-1 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  删除
                 </Button>
               </div>
             )}
@@ -690,15 +835,26 @@ export default function AdminNewsPage() {
                               </>
                             )}
                             {activeTab === 'approved' && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleToggleFeatured(item.id)}
-                                className={item.is_featured ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}
-                                title={item.is_featured ? '取消推荐' : '设为推荐'}
-                              >
-                                <Star className="w-4 h-4" fill={item.is_featured ? 'currentColor' : 'none'} />
-                              </Button>
+                              <>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleToggleFeatured(item.id)}
+                                  className={item.is_featured ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}
+                                  title={item.is_featured ? '取消推荐' : '设为推荐'}
+                                >
+                                  <Star className="w-4 h-4" fill={item.is_featured ? 'currentColor' : 'none'} />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleDelete([item.id])}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  title="删除"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
                         </td>

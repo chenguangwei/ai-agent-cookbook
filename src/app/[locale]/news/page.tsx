@@ -27,14 +27,15 @@ export default async function NewsPage({
   const limit = 12;
   const offset = (page - 1) * 12;
 
-  // Try to fetch from database
+  // Try to fetch from database (filter by locale/language)
   let articles;
   let total = 0;
 
   try {
     const categoryFilter = category === 'all' ? undefined : category;
-    articles = getApprovedNews(categoryFilter, limit, offset);
-    total = getApprovedNewsCount(categoryFilter);
+    // Use locale as language filter (en, zh, ja)
+    articles = getApprovedNews(categoryFilter, limit, offset, locale);
+    total = getApprovedNewsCount(categoryFilter, locale);
   } catch (error) {
     // Fall back to getAllNews if database fails
     articles = getAllNews(locale);
@@ -101,17 +102,22 @@ export default async function NewsPage({
                 key={article?.slug || article?.id}
                 className="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300"
               >
-                {/* Image - handle both DB (image_url) and MDX (imageUrl) */}
+                {/* Image - handle both DB (image_url) and MDX (imageUrl) - clickable */}
                 {(article?.image_url || article?.imageUrl) && (
-                  <div className="relative w-full aspect-video bg-slate-100 dark:bg-slate-800">
+                  <Link
+                    href={article.url || article.sourceUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block relative w-full aspect-video bg-slate-100 dark:bg-slate-800"
+                  >
                     <Image
                       src={article.image_url || article.imageUrl}
                       alt={article.title}
                       fill
-                      className="object-cover"
+                      className="object-cover hover:opacity-90 transition-opacity"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
-                  </div>
+                  </Link>
                 )}
 
                 {/* Content */}
@@ -128,15 +134,37 @@ export default async function NewsPage({
                     </span>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-slate-900 dark:text-white font-bold text-lg leading-tight">
-                    {article?.title}
-                  </h3>
+                  {/* Title - clickable */}
+                  {(article?.url || article?.sourceUrl) ? (
+                    <Link
+                      href={article.url || article.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-900 dark:text-white font-bold text-lg leading-tight hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    >
+                      {article?.title}
+                    </Link>
+                  ) : (
+                    <h3 className="text-slate-900 dark:text-white font-bold text-lg leading-tight">
+                      {article?.title}
+                    </h3>
+                  )}
 
-                  {/* Summary */}
-                  <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 flex-1">
-                    {article?.summary}
-                  </p>
+                  {/* Summary - clickable */}
+                  {(article?.url || article?.sourceUrl) ? (
+                    <Link
+                      href={article.url || article.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 flex-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    >
+                      {article?.summary}
+                    </Link>
+                  ) : (
+                    <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 flex-1">
+                      {article?.summary}
+                    </p>
+                  )}
 
                   {/* Meta */}
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *   - If not set → allow access freely
  */
 
-const ADMIN_PATHS = ['/admin', '/api/translate'];
+const ADMIN_PATHS = ['/admin', '/api/translate', '/api/news'];
 
 /**
  * Check if a pathname is an admin-protected route.
@@ -24,6 +24,9 @@ export function isAdminRoute(pathname: string, locales: readonly string[]): bool
 
   // /api/translate
   if (pathname === '/api/translate' || pathname.startsWith('/api/translate/')) return true;
+
+  // /api/news (all news admin APIs)
+  if (pathname === '/api/news' || pathname.startsWith('/api/news/')) return true;
 
   // /{locale}/translate or /translate (default locale)
   if (pathname === '/translate' || pathname.startsWith('/translate/')) return true;
