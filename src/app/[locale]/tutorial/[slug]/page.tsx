@@ -176,7 +176,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
               <div className="flex items-center justify-between pt-8 border-t border-slate-200 dark:border-slate-800">
                 {prevTutorial ? (
                   <Link
-                    href={`/tutorial/${prevTutorial.slug}`}
+                    href={`/${locale}/tutorial/${prevTutorial.slug}`}
                     className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -190,7 +190,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
                 )}
                 {nextTutorial && (
                   <Link
-                    href={`/tutorial/${nextTutorial.slug}`}
+                    href={`/${locale}/tutorial/${nextTutorial.slug}`}
                     className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-right"
                   >
                     <div>

@@ -185,7 +185,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
             {featuredTutorials.map((tutorial) => (
               <Link
-                href={`/tutorial/${tutorial?.slug}`}
+                href={`/${locale}/tutorial/${tutorial?.slug}`}
                 key={tutorial?.slug}
                 className="group flex flex-col gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
               >
@@ -234,7 +234,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
             {recentTutorials.map((tutorial) => (
               <Link
-                href={`/tutorial/${tutorial.slug}`}
+                href={`/${locale}/tutorial/${tutorial.slug}`}
                 key={tutorial.slug}
                 className="group flex flex-col gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
               >

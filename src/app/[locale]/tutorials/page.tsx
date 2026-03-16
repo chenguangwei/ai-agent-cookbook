@@ -51,8 +51,9 @@ interface ExplorePageProps {
 export default async function ExplorePage({ params, searchParams }: ExplorePageProps) {
   const resolvedParams = await params;
   const search = await searchParams;
+  const locale = resolvedParams.locale || 'en';
   const categoryParam = search.cat;
-  const localeFilter = search.locale !== undefined ? search.locale : (resolvedParams.locale || 'en');
+  const localeFilter = search.locale !== undefined ? search.locale : (locale);
   const difficultyFilter = search.difficulty;
   const tagFilter = search.tag;
   const currentPage = parseInt(search.page || '1', 10);
@@ -202,7 +203,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {paginatedTutorials.map((tutorial) => (
                     <Link
-                      href={`/tutorial/${tutorial?.slug}`}
+                      href={`/${locale}/tutorial/${tutorial?.slug}`}
                       key={tutorial?.slug}
                       className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
                     >
