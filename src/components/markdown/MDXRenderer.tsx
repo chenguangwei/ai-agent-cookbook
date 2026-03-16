@@ -10,6 +10,7 @@ import { MdImage } from './components/MdImage'
 import { Blockquote } from './components/Blockquote'
 import { UnorderedList, OrderedList, ListItem } from './components/List'
 import { Table } from './components/Table'
+import { sanitizeMarkdownContent } from '@/lib/markdown-sanitizer'
 
 // Adapter: MDX renders fenced code as <pre><code className="language-js">...</code></pre>
 // CodeBlock expects { value: string, lang?: string } — extract from the child code element
@@ -49,12 +50,28 @@ interface MDXRendererProps {
 }
 
 export async function MDXRenderer({ content }: MDXRendererProps) {
-  return (
-    <div className="markdown-body">
-      <MDXRemote
-        source={content}
-        components={components as MDXComponents}
-      />
-    </div>
-  )
+  // Sanitize content to fix common Markdown syntax issues
+  const sanitizedContent = sanitizeMarkdownContent(content)
+
+  try {
+    return (
+      <div className="markdown-body">
+        <MDXRemote
+          source={sanitizedContent}
+          components={components as MDXComponents}
+        />
+      </div>
+    )
+  } catch (error) {
+    // Fallback: render sanitized content as plain text if MDX parsing fails
+    console.error('MDX parsing error:', error)
+
+    return (
+      <div className="markdown-body prose dark:prose-invert max-w-none">
+        {sanitizedContent.split('\n').map((line, i) => (
+          <p key={i} className="mb-2">{line || <br />}</p>
+        ))}
+      </div>
+    )
+  }
 }
