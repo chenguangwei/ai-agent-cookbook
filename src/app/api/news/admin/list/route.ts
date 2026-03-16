@@ -26,9 +26,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Filter by language if provided
+    // Filter by language if provided (use effective language: item.language or source.language)
     if (language) {
-      items = items.filter(item => item.language === language);
+      items = items.filter(item => {
+        const effectiveLang = item.language || sourceMap.get(item.source_id)?.language || 'en';
+        return effectiveLang === language;
+      });
     }
 
     // Filter by source if provided
