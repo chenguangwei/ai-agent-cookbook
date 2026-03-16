@@ -1,0 +1,88 @@
+---
+title: "逆向 Claude 的生成式 UI 架构，移植到 Coding Agent CLI ~ Pi"
+slug: "claude-ui-coding-agent-cli-pi"
+locale: "zh"
+description: "逆向 Claude 的生成式 UI 架构，移植到 Coding Agent CLI ~ Pi"
+category: "LLM Models"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDVrkAXaMAYvYCH.jpg:large"
+featured: false
+date: 2026-03-16
+---
+
+## 逆向 Claude 的生成式 UI 架构，移植到 Coding Agent CLI ~ Pi
+
+https://x.com/shao__meng/status/2032649105852473365
+
+Anthropic 为 Claude 推出了 generative UI 功能，对话中内嵌可交互的 HTML 组件（滑块、图表、动画），而非静态图片或代码块。@micLivs 对它的实现机制进行了逆向分析，并基于 Pi 和 Glimpse 将同一套能力移植到了终端环境。
+
+咱们一起看看：
+1. Claude Generative UI 的实际实现
+2. Pi 终端重建 Generative UI
+3. 1. Claude Generative UI 设计规范（很重要！）
+https://t.co/5XFaX6ExBz
+
+-- Claude Generative UI 的实际实现 --
+
+实现机制：不是 Markdown 渲染，是一个名为 show_widget 的 tool call，参数中携带 HTML 片段，由前端做 DOM 注入。证据——CSS 变量能跨组件解析、内容随 token 实时渲染、背景透明无 iframe 痕迹。安全边界靠 CSP 白名单限定可加载的 CDN。
+
+与 Artifacts 的本质区别：Artifacts 是侧边面板中可下载的交付物，用预打包库；generative UI 是对话流内联的临时组件，可从 CDN 实时加载任意库。
+
+read_me 模式：模型调用 show_widget 前必须先调用 read_me，按需加载对应模块的设计规范（diagram/chart/interactive/mockup/art）。这是渐进式上下文注入——基础 prompt 保持精简，专业知识按需加载，节省 token。
+
+设计规范提取：通过导出对话 JSON，从 tool_result 中提取了 Anthropic 完整的 72KB 设计体系原文。核心要求包括：流式优先（style → HTML → script）、禁用渐变/阴影/模糊、深色模式强制、9 条色阶体系、Chart.js/SVG 专用规范等。
+
+-- Pi 终端重建 --
+
+问题：终端无法渲染交互式 HTML。
+
+方案：用 Glimpse（macOS 原生 WKWebView，<50ms 启动，双向 JSON 通信）作为渲染容器。
+
+流式渲染的关键迭代：
+1. setHTML() 全量替换 → 页面闪烁
+2. innerHTML 替换容器 → 仍销毁重建所有子节点
+3. 朴素 DOM 追加 → 浏览器自动闭合不完整标签，树结构每次不同，追踪失效
+4. morphdom DOM diffing → 最终方案，只更新变化节点，新增节点淡入动画
+
+Pi 的 AI 层已内置 partial JSON 解析，扩展直接读取流式 arguments.widget_code，无需额外依赖。
+
+-- Claude Generative UI 设计规范 --
+
+72KB 规范，10 个去重章节，按 5 个模块（interactive / chart / mockup / art / diagram）按需组合加载，共享章节只注入一次。
+
+核心层：一切服务于流式渲染
+规则几乎全部指向同一目标——HTML 逐 token 注入 DOM 时保持视觉稳定：
+· <style> → HTML → <script>：样式先就位，内容逐步出现，脚本最后执行。不完整的 script 标签会阻塞渲染
+· 禁用渐变、阴影、blur：DOM diff 时会产生重绘闪烁
+· 禁用 HTML 注释：浪费 token，不完整时闭合标记可能与内容产生歧义
+· CSS 变量驱动所有颜色：widget 是 DOM 注入而非 iframe，变量直接继承宿主页面级联，天然适配主题
+· 仅 400/500 字重，全部 sentence case，深色模式强制：消除变数，减少视觉跳变
+
+色彩系统
+9 条色阶，每条 7 级。颜色编码含义而非序列，每个 widget 限 2-3 条色阶，彩色背景上的文字必须用同色阶 800/900 级。目的是把配色决策压缩到模型不易犯错的范围。
+
+SVG / Diagram
+diagram 模块 59KB，占总规范大部分。提供字体像素级宽度校准表、预制 CSS 类（模型引用类名而非写内联样式）、箭头 context-stroke 自动继承颜色。两条"导致大多数图表失败"的规则：箭头不能穿过节点、盒子宽度由文本长度决定。按动词而非名词选择图表类型。
+
+Chart / UI Components
+Chart.js 专用规范（禁用默认图例、Canvas 容器显式高度、数字格式化）。UI 组件全部 token 化为固定规格（卡片、按钮、指标卡、骨架屏），模型组合使用即可。
+
+设计意图
+不教模型做设计，将设计决策空间压缩到模型难以犯错的范围。模型的自由度被精确限制在"选哪种布局"和"用哪条色阶表达什么含义"两个层面，其余全由规范兜底。
+
+> Author: Michael Livs (@micLivs)
+> URL: https://x.com/micLivs/status/2032244251464188184
+>
+> Anthropic shipped generative UI for Claude. I reverse-engineered how it works and rebuilt it for PI.
+>
+> Extracted the full design system from a conversation export. Live streaming HTML into native macOS windows via morphdom DOM diffing.
+>
+> Article: https://t.co/BcYo94YqK3
+> Repo: https://t.co/EfMDX58NWc
+>
+> Built on @badlogicgames's pi and @DanielGri's Glimpse.
+
+![](https://pbs.twimg.com/media/HDVrkAXaMAYvYCH.jpg:large)

@@ -90,8 +90,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { opmlPath, category, importDefault } = body;
 
-    // If importDefault is true, use default sources
-    if (importDefault) {
+    // Explicitly convert to boolean to handle "true" string or undefined
+    const isImportDefault = Boolean(importDefault);
+
+    console.log('[import-opml] Request:', { opmlPath, category, importDefault: isImportDefault });
+
+    // If importDefault is true, use default sources - MUST return early
+    if (isImportDefault) {
+      console.log('[import-opml] Using DEFAULT_SOURCES, category:', category);
       const categoryFilter = category || 'Articles';
       const sourcesToImport = DEFAULT_SOURCES.filter(s => s.category === categoryFilter);
 
@@ -116,7 +122,21 @@ export async function POST(request: Request) {
       for (const source of sourcesToImport) {
         try {
           // Check if source already exists by URL
-          const existingSources = await getAllRssSources();
+          let existingSources;
+          try {
+            existingSources = await getAllRssSources();
+            console.log('[import-opml] Got existing sources:', existingSources.length);
+          } catch (dbErr: any) {
+            console.error('[import-opml] Error getting existing sources:', dbErr);
+            results.push({
+              name: source.name,
+              url: source.url,
+              status: 'error',
+              message: 'Database error: ' + dbErr.message,
+            });
+            skipped++;
+            continue;
+          }
           const exists = existingSources.some(s => s.url === source.url);
 
           if (exists) {
@@ -130,14 +150,28 @@ export async function POST(request: Request) {
             continue;
           }
 
-          const newSource = await addRssSource({
-            id: uuidv4(),
-            name: source.name,
-            url: source.url,
-            category: source.category,
-            language: source.language,
-            enabled: true,
-          });
+          let newSource;
+          try {
+            newSource = await addRssSource({
+              id: uuidv4(),
+              name: source.name,
+              url: source.url,
+              category: source.category,
+              language: source.language,
+              enabled: true,
+            });
+            console.log('[import-opml] Added source:', source.name, newSource ? 'success' : 'failed');
+          } catch (addErr: any) {
+            console.error('[import-opml] Error adding source:', addErr);
+            results.push({
+              name: source.name,
+              url: source.url,
+              status: 'error',
+              message: 'Failed to add: ' + addErr.message,
+            });
+            skipped++;
+            continue;
+          }
 
           if (newSource) {
             results.push({
