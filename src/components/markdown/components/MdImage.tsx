@@ -83,8 +83,6 @@ export function MdImage({ src, alt }: MdImageProps) {
       <div className="my-8">
         <Link
           href={videoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="block group cursor-pointer"
         >
           {imageContent}
