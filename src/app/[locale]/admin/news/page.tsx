@@ -69,6 +69,13 @@ export default function AdminNewsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [fetching, setFetching] = useState(false);
 
+  // Helper to get effective language (item.language or fallback to source language)
+  const getEffectiveLanguage = (item: NewsItem): string => {
+    if (item.language) return item.language;
+    const source = sources.find(s => s.id === item.source_id);
+    return source?.language || 'en';
+  };
+
   // Fetch items
   const fetchItems = async () => {
     setLoading(true);
@@ -858,14 +865,19 @@ export default function AdminNewsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
-                            item.language === 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                            item.language === 'zh' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                            item.language === 'ja' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                          }`}>
-                            {item.language?.toUpperCase() || 'EN'}
-                          </span>
+                          {(() => {
+                            const lang = getEffectiveLanguage(item);
+                            return (
+                              <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                                lang === 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                lang === 'zh' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                lang === 'ja' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                              }`}>
+                                {lang.toUpperCase()}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-sm text-slate-500 dark:text-slate-400">
