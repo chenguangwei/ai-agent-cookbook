@@ -73,6 +73,7 @@ function extractImageUrl(item: ExtendedItem): string | undefined {
 
 /**
  * Parse RSS 2.0 and Atom feeds
+ * Try HTTPS first, then fall back to HTTP if SSL fails
  */
 export async function parseRssFeed(url: string): Promise<ParsedFeed> {
   const parser = new Parser({
@@ -85,9 +86,33 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
       ],
       feed: ['atom:link'],
     },
+    timeout: 10000,
   });
 
-  const feed = await parser.parseURL(url);
+  let feed;
+  let lastError;
+
+  // Try HTTPS first
+  if (url.startsWith('https://')) {
+    try {
+      feed = await parser.parseURL(url);
+    } catch (err: any) {
+      lastError = err;
+      // If SSL error, try HTTP
+      if (err.message?.includes('SSL') || err.message?.includes('ECONNREFUSED') || err.message?.includes('fetch failed')) {
+        const httpUrl = url.replace('https://', 'http://');
+        try {
+          feed = await parser.parseURL(httpUrl);
+        } catch (httpErr: any) {
+          throw httpErr;
+        }
+      } else {
+        throw err;
+      }
+    }
+  } else {
+    feed = await parser.parseURL(url);
+  }
 
   const items: ParsedFeedItem[] = feed.items.map((item: ExtendedItem) => ({
     title: item.title || 'Untitled',

@@ -216,12 +216,22 @@ export default function AdminNewsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
-        alert(`Fetched ${data.totalAdded || 0} new items`);
+        // Show summary with error count
+        const results = data.results || [];
+        const errorCount = results.filter((r: any) => r.error).length;
+        const successCount = results.length - errorCount;
+        let message = `成功获取 ${data.totalAdded || 0} 条新新闻\n成功: ${successCount} 个源`;
+        if (errorCount > 0) {
+          message += `\n失败: ${errorCount} 个源 (可能是 SSL/HTTP 错误)`;
+        }
+        alert(message);
         fetchItems();
+      } else {
+        alert(`获取失败: ${data.error}`);
       }
     } catch (error) {
       console.error('Failed to fetch RSS:', error);
+      alert('获取失败，请检查网络连接');
     } finally {
       setFetching(false);
     }
