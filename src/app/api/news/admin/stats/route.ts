@@ -4,10 +4,10 @@ import { getNewsCounts, getAllRssSources, getAllNewsItems } from '@/lib/db/news'
 export async function GET() {
   try {
     // Get overall counts
-    const counts = getNewsCounts();
+    const counts = await getNewsCounts();
 
     // Get all sources
-    const sources = getAllRssSources();
+    const sources = await getAllRssSources();
     const sourcesCount = sources.length;
 
     // Get category stats from sources
@@ -24,7 +24,7 @@ export async function GET() {
     });
 
     // Get recent items (last 10)
-    const allItems = getAllNewsItems();
+    const allItems = await getAllNewsItems();
     const recentItems = allItems.slice(0, 10);
 
     // Get pending items by source

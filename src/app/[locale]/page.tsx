@@ -78,7 +78,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   let featuredNews: any[] = [];
   try {
-    featuredNews = getFeaturedNewsByCategory(6);
+    featuredNews = await getFeaturedNewsByCategory(6);
   } catch (e) {
     // 忽略数据库错误
   }

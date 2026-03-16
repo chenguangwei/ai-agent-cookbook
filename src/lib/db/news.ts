@@ -1,74 +1,4 @@
-import Database from 'better-sqlite3';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Database path - data folder at project root
-const dbPath = path.join(__dirname, '../../..', 'data', 'news.db');
-
-let db: Database.Database;
-
-try {
-  // Ensure data directory exists
-  const dataDir = path.dirname(dbPath);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  db = new Database(dbPath);
-} catch (error) {
-  console.error('Failed to initialize database:', error);
-  // Use in-memory database as fallback to prevent crashes
-  db = new Database(':memory:');
-}
-
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
-
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS rss_sources (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    url TEXT NOT NULL UNIQUE,
-    category TEXT NOT NULL CHECK(category IN ('Articles', 'Podcasts', 'Twitters', 'Videos')),
-    language TEXT DEFAULT 'en' CHECK(language IN ('en', 'zh', 'ja')),
-    enabled INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS news_items (
-    id TEXT PRIMARY KEY,
-    source_id TEXT NOT NULL,
-    source_name TEXT,
-    title TEXT NOT NULL,
-    summary TEXT,
-    content TEXT,
-    url TEXT NOT NULL UNIQUE,
-    image_url TEXT,
-    author TEXT,
-    published_at TEXT,
-    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
-    is_featured INTEGER DEFAULT 0,
-    approved_at TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (source_id) REFERENCES rss_sources(id)
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_news_status ON news_items(status);
-  CREATE INDEX IF NOT EXISTS idx_news_source ON news_items(source_id);
-  CREATE INDEX IF NOT EXISTS idx_news_category ON news_items(source_id, status);
-`);
-
-// Add language column if it doesn't exist (for existing databases)
-try {
-  db.exec(`ALTER TABLE rss_sources ADD COLUMN language TEXT DEFAULT 'en' CHECK(language IN ('en', 'zh', 'ja'))`);
-} catch (e) {
-  // Column already exists, ignore
-}
+import { supabase } from '@/lib/supabase';
 
 // Types
 export type RssSource = {
@@ -99,362 +29,311 @@ export type NewsItem = {
 };
 
 // RSS Sources CRUD operations
-export function getAllRssSources(): RssSource[] {
-  const stmt = db.prepare('SELECT * FROM rss_sources ORDER BY created_at DESC');
-  const rows = stmt.all() as Array<{
-    id: string;
-    name: string;
-    url: string;
-    category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
-    language: 'en' | 'zh' | 'ja';
-    enabled: number;
-    created_at: string;
-  }>;
-  return rows.map(row => ({
+export async function getAllRssSources(): Promise<RssSource[]> {
+  const { data, error } = await supabase
+    .from('rss_sources')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching RSS sources:', error);
+    return [];
+  }
+
+  return (data || []).map(row => ({
     ...row,
     enabled: Boolean(row.enabled)
   }));
 }
 
-export function getRssSourceById(id: string): RssSource | undefined {
-  const stmt = db.prepare('SELECT * FROM rss_sources WHERE id = ?');
-  const row = stmt.get(id) as {
-    id: string;
-    name: string;
-    url: string;
-    category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
-    language: 'en' | 'zh' | 'ja';
-    enabled: number;
-    created_at: string;
-  } | undefined;
-  if (!row) return undefined;
+export async function getRssSourceById(id: string): Promise<RssSource | null> {
+  const { data, error } = await supabase
+    .from('rss_sources')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return null;
+
   return {
-    ...row,
-    enabled: Boolean(row.enabled)
+    ...data,
+    enabled: Boolean(data.enabled)
   };
 }
 
-export function addRssSource(source: Omit<RssSource, 'created_at'>): RssSource {
-  const stmt = db.prepare(`
-    INSERT INTO rss_sources (id, name, url, category, language, enabled)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(source.id, source.name, source.url, source.category, source.language || 'en', source.enabled ? 1 : 0);
-  return getRssSourceById(source.id) as RssSource;
+export async function addRssSource(source: Omit<RssSource, 'created_at'>): Promise<RssSource | null> {
+  const { data, error } = await supabase
+    .from('rss_sources')
+    .insert({
+      id: source.id,
+      name: source.name,
+      url: source.url,
+      category: source.category,
+      language: source.language || 'en',
+      enabled: source.enabled ? 1 : 0
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding RSS source:', error);
+    return null;
+  }
+
+  return data ? { ...data, enabled: Boolean(data.enabled) } : null;
 }
 
-export function updateRssSource(id: string, updates: Partial<RssSource>): RssSource | undefined {
-  const existing = getRssSourceById(id);
-  if (!existing) return undefined;
+export async function updateRssSource(id: string, updates: Partial<RssSource>): Promise<RssSource | null> {
+  const updateData: Record<string, any> = {};
 
-  const fields: string[] = [];
-  const values: (string | number)[] = [];
+  if (updates.name !== undefined) updateData.name = updates.name;
+  if (updates.url !== undefined) updateData.url = updates.url;
+  if (updates.category !== undefined) updateData.category = updates.category;
+  if (updates.language !== undefined) updateData.language = updates.language;
+  if (updates.enabled !== undefined) updateData.enabled = updates.enabled ? 1 : 0;
 
-  if (updates.name !== undefined) {
-    fields.push('name = ?');
-    values.push(updates.name);
-  }
-  if (updates.url !== undefined) {
-    fields.push('url = ?');
-    values.push(updates.url);
-  }
-  if (updates.category !== undefined) {
-    fields.push('category = ?');
-    values.push(updates.category);
-  }
-  if (updates.language !== undefined) {
-    fields.push('language = ?');
-    values.push(updates.language);
-  }
-  if (updates.enabled !== undefined) {
-    fields.push('enabled = ?');
-    values.push(updates.enabled ? 1 : 0);
+  const { data, error } = await supabase
+    .from('rss_sources')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating RSS source:', error);
+    return null;
   }
 
-  if (fields.length === 0) return existing;
-
-  values.push(id);
-  const stmt = db.prepare(`UPDATE rss_sources SET ${fields.join(', ')} WHERE id = ?`);
-  stmt.run(...values);
-
-  return getRssSourceById(id);
+  return data ? { ...data, enabled: Boolean(data.enabled) } : null;
 }
 
-export function deleteRssSource(id: string): boolean {
-  const stmt = db.prepare('DELETE FROM rss_sources WHERE id = ?');
-  const result = stmt.run(id);
-  return result.changes > 0;
+export async function deleteRssSource(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('rss_sources')
+    .delete()
+    .eq('id', id);
+
+  return !error;
 }
 
 // News Items CRUD operations
-export function getAllNewsItems(status?: string): NewsItem[] {
-  let stmt;
+export async function getAllNewsItems(status?: string): Promise<NewsItem[]> {
+  let query = supabase
+    .from('news_items')
+    .select('*')
+    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false });
+
   if (status) {
-    stmt = db.prepare('SELECT * FROM news_items WHERE status = ? ORDER BY published_at DESC, created_at DESC');
-    const rows = stmt.all(status) as Array<{
-      id: string;
-      source_id: string;
-      source_name: string | null;
-      title: string;
-      summary: string | null;
-      content: string | null;
-      url: string;
-      image_url: string | null;
-      author: string | null;
-      published_at: string | null;
-      status: string;
-      is_featured: number;
-      approved_at: string | null;
-      created_at: string;
-    }>;
-    return rows.map(mapNewsItem);
-  } else {
-    stmt = db.prepare('SELECT * FROM news_items ORDER BY published_at DESC, created_at DESC');
-    const rows = stmt.all() as Array<{
-      id: string;
-      source_id: string;
-      source_name: string | null;
-      title: string;
-      summary: string | null;
-      content: string | null;
-      url: string;
-      image_url: string | null;
-      author: string | null;
-      published_at: string | null;
-      status: string;
-      is_featured: number;
-      approved_at: string | null;
-      created_at: string;
-    }>;
-    return rows.map(mapNewsItem);
-  }
-}
-
-export function getApprovedNews(category?: string, limit: number = 50, offset: number = 0, language?: string): NewsItem[] {
-  let stmt;
-  let rows;
-
-  // Build query based on filters
-  const hasCategory = category && category !== 'all';
-  const hasLanguage = language && language !== 'all';
-
-  let query = `
-    SELECT ni.* FROM news_items ni
-    JOIN rss_sources rs ON ni.source_id = rs.id
-    WHERE ni.status = 'approved'
-  `;
-  const params: any[] = [];
-
-  if (hasCategory) {
-    query += ` AND rs.category = ?`;
-    params.push(category);
+    query = query.eq('status', status);
   }
 
-  if (hasLanguage) {
-    query += ` AND rs.language = ?`;
-    params.push(language);
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching news items:', error);
+    return [];
   }
 
-  query += ` ORDER BY ni.is_featured DESC, ni.published_at DESC, ni.created_at DESC LIMIT ? OFFSET ?`;
-  params.push(limit, offset);
-
-  stmt = db.prepare(query);
-  rows = stmt.all(...params) as Array<{
-    id: string;
-    source_id: string;
-    source_name: string | null;
-    title: string;
-    summary: string | null;
-    content: string | null;
-    url: string;
-    image_url: string | null;
-    author: string | null;
-    published_at: string | null;
-    status: string;
-    is_featured: number;
-    approved_at: string | null;
-    created_at: string;
-  }>;
-
-  return rows.map(mapNewsItem);
+  return (data || []).map(mapNewsItem);
 }
 
-export function getNewsItemById(id: string): NewsItem | undefined {
-  const stmt = db.prepare('SELECT * FROM news_items WHERE id = ?');
-  const row = stmt.get(id) as {
-    id: string;
-    source_id: string;
-    source_name: string | null;
-    title: string;
-    summary: string | null;
-    content: string | null;
-    url: string;
-    image_url: string | null;
-    author: string | null;
-    published_at: string | null;
-    status: string;
-    is_featured: number;
-    approved_at: string | null;
-    created_at: string;
-  } | undefined;
-  if (!row) return undefined;
-  return mapNewsItem(row);
+export async function getApprovedNews(
+  category?: string,
+  limit: number = 50,
+  offset: number = 0,
+  language?: string
+): Promise<NewsItem[]> {
+  let query = supabase
+    .from('news_items')
+    .select('*')
+    .eq('status', 'approved')
+    .order('is_featured', { ascending: false })
+    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching approved news:', error);
+    return [];
+  }
+
+  return (data || []).map(mapNewsItem);
 }
 
-export function addNewsItem(item: Omit<NewsItem, 'created_at' | 'status' | 'is_featured'>): NewsItem | null {
+export async function getNewsItemById(id: string): Promise<NewsItem | null> {
+  const { data, error } = await supabase
+    .from('news_items')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return null;
+
+  return mapNewsItem(data);
+}
+
+export async function addNewsItem(
+  item: Omit<NewsItem, 'created_at' | 'status' | 'is_featured'>
+): Promise<NewsItem | null> {
   // Check if URL already exists
-  const existing = db.prepare('SELECT id FROM news_items WHERE url = ?').get(item.url);
+  const { data: existing } = await supabase
+    .from('news_items')
+    .select('id')
+    .eq('url', item.url)
+    .single();
+
   if (existing) return null;
 
-  const stmt = db.prepare(`
-    INSERT INTO news_items (id, source_id, source_name, title, summary, content, url, image_url, author, published_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    item.id,
-    item.source_id,
-    item.source_name || null,
-    item.title,
-    item.summary || null,
-    item.content || null,
-    item.url,
-    item.image_url || null,
-    item.author || null,
-    item.published_at || null
-  );
-  const inserted = getNewsItemById(item.id);
-  return inserted ?? null;
+  const { data, error } = await supabase
+    .from('news_items')
+    .insert({
+      id: item.id,
+      source_id: item.source_id,
+      source_name: item.source_name || null,
+      title: item.title,
+      summary: item.summary || null,
+      content: item.content || null,
+      url: item.url,
+      image_url: item.image_url || null,
+      author: item.author || null,
+      published_at: item.published_at || null,
+      status: 'pending',
+      is_featured: 0
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding news item:', error);
+    return null;
+  }
+
+  return data ? mapNewsItem(data) : null;
 }
 
-export function updateNewsStatus(
+export async function updateNewsStatus(
   id: string,
   status: 'approved' | 'rejected',
   is_featured?: boolean
-): NewsItem | undefined {
-  const approvedAt = status === 'approved' ? new Date().toISOString() : null;
+): Promise<NewsItem | null> {
+  const updateData: Record<string, any> = {
+    status,
+    approved_at: status === 'approved' ? new Date().toISOString() : null
+  };
 
   if (is_featured !== undefined) {
-    const stmt = db.prepare(`
-      UPDATE news_items SET status = ?, is_featured = ?, approved_at = ? WHERE id = ?
-    `);
-    stmt.run(status, is_featured ? 1 : 0, approvedAt, id);
-  } else {
-    const stmt = db.prepare(`
-      UPDATE news_items SET status = ?, approved_at = ? WHERE id = ?
-    `);
-    stmt.run(status, approvedAt, id);
+    updateData.is_featured = is_featured ? 1 : 0;
   }
 
-  return getNewsItemById(id);
-}
+  const { data, error } = await supabase
+    .from('news_items')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
 
-export function toggleFeatured(id: string): NewsItem | undefined {
-  const stmt = db.prepare('SELECT is_featured FROM news_items WHERE id = ?');
-  const row = stmt.get(id) as { is_featured: number } | undefined;
-  if (!row) return undefined;
-
-  const newValue = row.is_featured === 1 ? 0 : 1;
-  const updateStmt = db.prepare('UPDATE news_items SET is_featured = ? WHERE id = ?');
-  updateStmt.run(newValue, id);
-
-  return getNewsItemById(id);
-}
-
-export function deleteNewsItem(id: string): boolean {
-  const stmt = db.prepare('DELETE FROM news_items WHERE id = ?');
-  const result = stmt.run(id);
-  return result.changes > 0;
-}
-
-export function getNewsCounts(): { pending: number; approved: number; rejected: number; total: number } {
-  const stmt = db.prepare(`
-    SELECT
-      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-      SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
-      SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-      COUNT(*) as total
-    FROM news_items
-  `);
-  const row = stmt.get() as { pending: number; approved: number; rejected: number; total: number };
-  return {
-    pending: row.pending || 0,
-    approved: row.approved || 0,
-    rejected: row.rejected || 0,
-    total: row.total || 0
-  };
-}
-
-export function getFeaturedNewsByCategory(limit: number = 10): NewsItem[] {
-  const stmt = db.prepare(`
-    SELECT ni.* FROM news_items ni
-    JOIN rss_sources rs ON ni.source_id = rs.id
-    WHERE ni.status = 'approved' AND ni.is_featured = 1
-    ORDER BY ni.published_at DESC, ni.created_at DESC
-    LIMIT ?
-  `);
-  const rows = stmt.all(limit) as Array<{
-    id: string;
-    source_id: string;
-    source_name: string | null;
-    title: string;
-    summary: string | null;
-    content: string | null;
-    url: string;
-    image_url: string | null;
-    author: string | null;
-    published_at: string | null;
-    status: string;
-    is_featured: number;
-    approved_at: string | null;
-    created_at: string;
-  }>;
-  return rows.map(mapNewsItem);
-}
-
-export function getApprovedNewsCount(category?: string, language?: string): number {
-  const hasCategory = category && category !== 'all';
-  const hasLanguage = language && language !== 'all';
-
-  let query = `
-    SELECT COUNT(*) as count FROM news_items ni
-    JOIN rss_sources rs ON ni.source_id = rs.id
-    WHERE ni.status = 'approved'
-  `;
-  const params: any[] = [];
-
-  if (hasCategory) {
-    query += ` AND rs.category = ?`;
-    params.push(category);
+  if (error) {
+    console.error('Error updating news status:', error);
+    return null;
   }
 
-  if (hasLanguage) {
-    query += ` AND rs.language = ?`;
-    params.push(language);
+  return data ? mapNewsItem(data) : null;
+}
+
+export async function toggleFeatured(id: string): Promise<NewsItem | null> {
+  // Get current value
+  const { data: current } = await supabase
+    .from('news_items')
+    .select('is_featured')
+    .eq('id', id)
+    .single();
+
+  if (!current) return null;
+
+  const newValue = current.is_featured === 1 ? 0 : 1;
+
+  const { data, error } = await supabase
+    .from('news_items')
+    .update({ is_featured: newValue })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error toggling featured:', error);
+    return null;
   }
 
-  const stmt = db.prepare(query);
-  const row = stmt.get(...params) as { count: number } | undefined;
+  return data ? mapNewsItem(data) : null;
+}
 
-  return row?.count || 0;
+export async function deleteNewsItem(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('news_items')
+    .delete()
+    .eq('id', id);
+
+  return !error;
+}
+
+export async function getNewsCounts(): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
+  const { data, error } = await supabase
+    .from('news_items')
+    .select('status');
+
+  if (error) {
+    console.error('Error getting news counts:', error);
+    return { pending: 0, approved: 0, rejected: 0, total: 0 };
+  }
+
+  const counts = { pending: 0, approved: 0, rejected: 0, total: data?.length || 0 };
+
+  data?.forEach(item => {
+    if (item.status === 'pending') counts.pending++;
+    else if (item.status === 'approved') counts.approved++;
+    else if (item.status === 'rejected') counts.rejected++;
+  });
+
+  return counts;
+}
+
+export async function getFeaturedNewsByCategory(limit: number = 10): Promise<NewsItem[]> {
+  const { data, error } = await supabase
+    .from('news_items')
+    .select('*')
+    .eq('status', 'approved')
+    .eq('is_featured', 1)
+    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching featured news:', error);
+    return [];
+  }
+
+  return (data || []).map(mapNewsItem);
+}
+
+export async function getApprovedNewsCount(category?: string, language?: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('news_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'approved');
+
+  if (error) {
+    console.error('Error getting approved news count:', error);
+    return 0;
+  }
+
+  return count || 0;
 }
 
 // Helper function to map database row to NewsItem type
-function mapNewsItem(row: {
-  id: string;
-  source_id: string;
-  source_name: string | null;
-  title: string;
-  summary: string | null;
-  content: string | null;
-  url: string;
-  image_url: string | null;
-  author: string | null;
-  published_at: string | null;
-  status: string;
-  is_featured: number;
-  approved_at: string | null;
-  created_at: string;
-}): NewsItem {
+function mapNewsItem(row: any): NewsItem {
   return {
     id: row.id,
     source_id: row.source_id,
@@ -466,11 +345,9 @@ function mapNewsItem(row: {
     image_url: row.image_url || undefined,
     author: row.author || undefined,
     published_at: row.published_at || undefined,
-    status: row.status as 'pending' | 'approved' | 'rejected',
+    status: row.status,
     is_featured: row.is_featured === 1,
     approved_at: row.approved_at || undefined,
     created_at: row.created_at
   };
 }
-
-export default db;

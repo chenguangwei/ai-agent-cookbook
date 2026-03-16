@@ -34,8 +34,8 @@ export default async function NewsPage({
   try {
     const categoryFilter = category === 'all' ? undefined : category;
     // Use locale as language filter (en, zh, ja)
-    articles = getApprovedNews(categoryFilter, limit, offset, locale);
-    total = getApprovedNewsCount(categoryFilter, locale);
+    articles = await getApprovedNews(categoryFilter, limit, offset, locale);
+    total = await getApprovedNewsCount(categoryFilter, locale);
   } catch (error) {
     // Fall back to getAllNews if database fails
     articles = getAllNews(locale);

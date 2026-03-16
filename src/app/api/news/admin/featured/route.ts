@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const item = toggleFeatured(id);
+    const item = await toggleFeatured(id);
 
     if (!item) {
       return NextResponse.json(

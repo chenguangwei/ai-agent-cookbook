@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       for (const source of sourcesToImport) {
         try {
           // Check if source already exists by URL
-          const existingSources = getAllRssSources();
+          const existingSources = await getAllRssSources();
           const exists = existingSources.some(s => s.url === source.url);
 
           if (exists) {
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
             continue;
           }
 
-          const newSource = addRssSource({
+          const newSource = await addRssSource({
             id: uuidv4(),
             name: source.name,
             url: source.url,
@@ -139,12 +139,22 @@ export async function POST(request: Request) {
             enabled: true,
           });
 
-          results.push({
-            name: newSource.name,
-            url: newSource.url,
-            status: 'imported',
-          });
-          imported++;
+          if (newSource) {
+            results.push({
+              name: newSource.name,
+              url: newSource.url,
+              status: 'imported',
+            });
+            imported++;
+          } else {
+            results.push({
+              name: source.name,
+              url: source.url,
+              status: 'error',
+              message: 'Failed to add source',
+            });
+            skipped++;
+          }
         } catch (err: any) {
           results.push({
             name: source.name,
@@ -193,7 +203,7 @@ export async function POST(request: Request) {
         }> = [];
 
         // Get existing sources to check for duplicates
-        const existingSources = getAllRssSources();
+        const existingSources = await getAllRssSources();
         const existingUrls = new Set(existingSources.map(s => s.url));
 
         for (const outline of outlines) {
@@ -214,7 +224,7 @@ export async function POST(request: Request) {
               continue;
             }
 
-            const newSource = addRssSource({
+            const newSource = await addRssSource({
               id: uuidv4(),
               name: sourceName,
               url: sourceUrl,
@@ -223,12 +233,22 @@ export async function POST(request: Request) {
               enabled: true,
             });
 
-            results.push({
-              name: newSource.name,
-              url: newSource.url,
-              status: 'imported',
-            });
-            imported++;
+            if (newSource) {
+              results.push({
+                name: newSource.name,
+                url: newSource.url,
+                status: 'imported',
+              });
+              imported++;
+            } else {
+              results.push({
+                name: sourceName,
+                url: sourceUrl,
+                status: 'error',
+                message: 'Failed to add source',
+              });
+              skipped++;
+            }
             existingUrls.add(sourceUrl); // Add to set to prevent duplicates within same import
           } catch (err: any) {
             results.push({

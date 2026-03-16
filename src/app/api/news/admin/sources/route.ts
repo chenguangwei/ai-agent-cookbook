@@ -43,7 +43,7 @@ function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
 // GET - Return all sources
 export async function GET() {
   try {
-    const sources = getAllRssSources();
+    const sources = await getAllRssSources();
     return NextResponse.json({ sources });
   } catch (error) {
     console.error('Error fetching RSS sources:', error);
@@ -137,7 +137,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const updated = updateRssSource(id, updates);
+    const updated = await updateRssSource(id, updates);
 
     if (!updated) {
       return NextResponse.json(
@@ -178,7 +178,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const deleted = deleteRssSource(id);
+    const deleted = await deleteRssSource(id);
 
     if (!deleted) {
       return NextResponse.json(

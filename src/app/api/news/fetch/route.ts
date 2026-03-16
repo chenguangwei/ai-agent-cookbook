@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     // If sourceId provided, fetch that specific source
     if (sourceId) {
-      const source = getRssSourceById(sourceId);
+      const source = await getRssSourceById(sourceId);
       if (!source) {
         return NextResponse.json(
           { error: 'Source not found' },
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
           published_at: item.isoDate || item.pubDate,
         };
 
-        const result = addNewsItem(newsItem);
+        const result = await addNewsItem(newsItem);
         if (result) {
           addedCount++;
         }
@@ -96,7 +96,8 @@ export async function POST(request: Request) {
     }
 
     // Fetch all enabled sources
-    const sources = getAllRssSources().filter(s => s.enabled);
+    const allSources = await getAllRssSources();
+    const sources = allSources.filter(s => s.enabled);
 
     if (sources.length === 0) {
       return NextResponse.json({
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
             published_at: item.isoDate || item.pubDate,
           };
 
-          const result = addNewsItem(newsItem);
+          const result = await addNewsItem(newsItem);
           if (result) {
             addedCount++;
           }

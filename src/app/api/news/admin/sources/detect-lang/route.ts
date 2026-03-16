@@ -42,7 +42,7 @@ function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
 // POST - Detect and update language for all sources
 export async function POST() {
   try {
-    const sources = getAllRssSources();
+    const sources = await getAllRssSources();
     let updated = 0;
 
     for (const source of sources) {

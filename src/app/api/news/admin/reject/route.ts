@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     for (const id of ids) {
       try {
-        const item = updateNewsStatus(id, 'rejected');
+        const item = await updateNewsStatus(id, 'rejected');
         if (item) {
           results.push({ id, success: true, item });
         } else {

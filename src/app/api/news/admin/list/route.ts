@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // Get all sources first
-    const sources = getAllRssSources();
+    const sources = await getAllRssSources();
     const sourceMap = new Map(sources.map(s => [s.id, s]));
 
     // Get all news items (optionally filtered by status)
-    let items = getAllNewsItems(status);
+    let items = await getAllNewsItems(status);
 
     // Filter by category if provided
     if (category) {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get counts
-    const counts = getNewsCounts();
+    const counts = await getNewsCounts();
 
     // Calculate category stats
     const categoryStats: Record<string, number> = {};

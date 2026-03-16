@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",
+    "@supabase/supabase-js": "^2.99.1",
     "@tailwindcss/typography": "^0.5.19",
     "better-sqlite3": "^12.6.2",
     "class-variance-authority": "^0.7.1",
