@@ -2,6 +2,8 @@
   "Home": {
     "title": "AIエージェントの未来を習得する",
     "subtitle": "AIデベロッパーのための実践リソースハブ。基礎から本番グレードのエージェントまで一か所で学べます。",
+    "seoTitle": "AIエージェント開発チュートリアルと最新ニュース | Agent Cookbook",
+    "seoDescription": "AIエージェント開発のチュートリアル、ツール、最新ニュースを発見。LangChain、CrewAI、AutoGPTを学び、本番グレードのAIエージェントを構築しましょう。",
     "searchPlaceholder": "リポジトリを検索...",
     "hotTopics": "ホットトピック",
     "viewAll": "すべて表示",
