@@ -291,6 +291,25 @@ export async function deleteNewsItem(id: string): Promise<boolean> {
   return !error;
 }
 
+export async function updateNewsLanguage(
+  id: string,
+  language: 'en' | 'zh' | 'ja'
+): Promise<NewsItem | null> {
+  const { data, error } = await supabase
+    .from('news_items')
+    .update({ language })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating news language:', error);
+    return null;
+  }
+
+  return data ? mapNewsItem(data) : null;
+}
+
 export async function getNewsCounts(): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
   const { data, error } = await supabase
     .from('news_items')

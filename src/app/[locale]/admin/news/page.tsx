@@ -32,6 +32,7 @@ interface NewsItem {
   published_at?: string;
   status: 'pending' | 'approved' | 'rejected';
   is_featured: boolean;
+  language?: 'en' | 'zh' | 'ja';
   approved_at?: string;
   created_at: string;
 }
@@ -172,6 +173,23 @@ export default function AdminNewsPage() {
       }
     } catch (error) {
       console.error('Failed to delete:', error);
+    }
+  };
+
+  // Handle set language
+  const handleSetLanguage = async (ids: string[], language: 'en' | 'zh' | 'ja') => {
+    try {
+      const res = await fetch('/api/news/admin/set-language', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, language })
+      });
+      if (res.ok) {
+        setSelected([]);
+        fetchItems();
+      }
+    } catch (error) {
+      console.error('Failed to set language:', error);
     }
   };
 
@@ -702,6 +720,34 @@ export default function AdminNewsPage() {
                   <Trash2 className="w-4 h-4" />
                   删除
                 </Button>
+                <div className="h-6 w-px bg-slate-300 dark:bg-slate-600" />
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  设置语言:
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleSetLanguage(selected, 'en')}
+                  className="gap-1"
+                >
+                  English
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleSetLanguage(selected, 'zh')}
+                  className="gap-1"
+                >
+                  中文
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleSetLanguage(selected, 'ja')}
+                  className="gap-1"
+                >
+                  日本語
+                </Button>
               </div>
             )}
 
@@ -734,6 +780,9 @@ export default function AdminNewsPage() {
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         来源
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        语言
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         发布时间
@@ -794,6 +843,16 @@ export default function AdminNewsPage() {
                         <td className="px-4 py-3">
                           <span className="text-sm text-slate-600 dark:text-slate-400">
                             {item.source_name || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                            item.language === 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                            item.language === 'zh' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                            item.language === 'ja' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                            'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                          }`}>
+                            {item.language?.toUpperCase() || 'EN'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
