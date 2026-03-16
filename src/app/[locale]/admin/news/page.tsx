@@ -68,6 +68,9 @@ export default function AdminNewsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [fetching, setFetching] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   // Helper to get effective language (item.language or fallback to source language)
   const getEffectiveLanguage = (item: NewsItem): string => {
@@ -86,11 +89,14 @@ export default function AdminNewsPage() {
       if (category !== 'all') params.set('category', category);
       if (language !== 'all') params.set('language', language);
       if (sourceFilter !== 'all') params.set('sourceId', sourceFilter);
+      params.set('limit', String(PAGE_SIZE));
+      params.set('offset', String((page - 1) * PAGE_SIZE));
 
       const res = await fetch(`/api/news/admin/list?${params}`);
       const data = await res.json();
       setItems(data.items || []);
       setSources(data.sources || []);
+      setTotal(data.total || 0);
     } catch (error) {
       console.error('Failed to fetch items:', error);
     } finally {
@@ -109,13 +115,18 @@ export default function AdminNewsPage() {
     }
   };
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, status, category, language, sourceFilter]);
+
   useEffect(() => {
     if (activeTab === 'sources') {
       fetchSources();
     } else {
       fetchItems();
     }
-  }, [activeTab, status, category, language, sourceFilter]);
+  }, [activeTab, status, category, language, sourceFilter, page]);
 
   // Handle approve
   const handleApprove = async (ids: string[], isFeatured: boolean = false) => {
@@ -955,6 +966,33 @@ export default function AdminNewsPage() {
                     ))}
                   </tbody>
                 </table>
+              )}
+
+              {/* Pagination */}
+              {total > PAGE_SIZE && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-700">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    共 {total} 条，第 {page} / {Math.ceil(total / PAGE_SIZE)} 页
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 1}
+                      onClick={() => setPage(p => p - 1)}
+                    >
+                      上一页
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page * PAGE_SIZE >= total}
+                      onClick={() => setPage(p => p + 1)}
+                    >
+                      下一页
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
