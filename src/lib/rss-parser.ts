@@ -74,6 +74,7 @@ function extractImageUrl(item: ExtendedItem): string | undefined {
 /**
  * Parse RSS 2.0 and Atom feeds
  * Try HTTPS first, then fall back to HTTP if SSL fails
+ * Reduced timeout to 5s for faster failure
  */
 export async function parseRssFeed(url: string): Promise<ParsedFeed> {
   const parser = new Parser({
@@ -86,52 +87,44 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
       ],
       feed: ['atom:link'],
     },
-    timeout: 10000,
+    timeout: 5000, // Reduced from 10s to 5s
   });
 
-  let feed;
-  let lastError;
+  // Try HTTP first for better compatibility, then HTTPS
+  const urls = url.startsWith('https://')
+    ? [url, url.replace('https://', 'http://')]
+    : [url];
 
-  // Try HTTPS first
-  if (url.startsWith('https://')) {
+  let lastError;
+  for (const tryUrl of urls) {
     try {
-      feed = await parser.parseURL(url);
+      const feed = await parser.parseURL(tryUrl);
+      const items: ParsedFeedItem[] = feed.items.map((item: ExtendedItem) => ({
+        title: item.title || 'Untitled',
+        link: item.link || '',
+        content: item.content,
+        contentSnippet: item.contentSnippet,
+        summary: item.summary,
+        pubDate: item.pubDate,
+        isoDate: item.isoDate,
+        creator: item['dc:creator'] || item.creator,
+        author: item.author,
+        imageUrl: extractImageUrl(item),
+      }));
+
+      return {
+        title: feed.title || 'Untitled Feed',
+        link: feed.link || url,
+        items,
+      };
     } catch (err: any) {
       lastError = err;
-      // If SSL error, try HTTP
-      if (err.message?.includes('SSL') || err.message?.includes('ECONNREFUSED') || err.message?.includes('fetch failed')) {
-        const httpUrl = url.replace('https://', 'http://');
-        try {
-          feed = await parser.parseURL(httpUrl);
-        } catch (httpErr: any) {
-          throw httpErr;
-        }
-      } else {
-        throw err;
-      }
+      // Skip to next URL if this one failed
+      continue;
     }
-  } else {
-    feed = await parser.parseURL(url);
   }
 
-  const items: ParsedFeedItem[] = feed.items.map((item: ExtendedItem) => ({
-    title: item.title || 'Untitled',
-    link: item.link || '',
-    content: item.content,
-    contentSnippet: item.contentSnippet,
-    summary: item.summary,
-    pubDate: item.pubDate,
-    isoDate: item.isoDate,
-    creator: item['dc:creator'] || item.creator,
-    author: item.author,
-    imageUrl: extractImageUrl(item),
-  }));
-
-  return {
-    title: feed.title || 'Untitled Feed',
-    link: feed.link || url,
-    items,
-  };
+  throw lastError || new Error('Failed to parse feed');
 }
 
 /**

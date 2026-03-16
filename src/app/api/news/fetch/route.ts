@@ -118,7 +118,10 @@ export async function POST(request: Request) {
     }> = [];
     let totalAdded = 0;
 
-    for (const source of sources) {
+    // Process sources with concurrency (10 at a time)
+    const CONCURRENCY = 10;
+
+    async function processSource(source: typeof sources[0]) {
       try {
         const feed = await parseRssFeed(source.url);
         let addedCount = 0;
@@ -146,24 +149,31 @@ export async function POST(request: Request) {
           }
         }
 
-        results.push({
+        return {
           sourceId: source.id,
           sourceName: source.name,
           feedTitle: feed.title,
           count: feed.items.length,
           addedCount,
-        });
-        totalAdded += addedCount;
+        };
       } catch (err: any) {
-        results.push({
+        return {
           sourceId: source.id,
           sourceName: source.name,
           feedTitle: '',
           count: 0,
           addedCount: 0,
           error: err.message || 'Failed to fetch feed',
-        });
+        };
       }
+    }
+
+    // Process in batches
+    for (let i = 0; i < sources.length; i += CONCURRENCY) {
+      const batch = sources.slice(i, i + CONCURRENCY);
+      const batchResults = await Promise.all(batch.map(processSource));
+      results.push(...batchResults);
+      totalAdded += batchResults.reduce((sum, r) => sum + r.addedCount, 0);
     }
 
     return NextResponse.json({
