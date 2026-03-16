@@ -24,6 +24,7 @@ export type NewsItem = {
   published_at?: string;
   status: 'pending' | 'approved' | 'rejected';
   is_featured: boolean;
+  language?: 'en' | 'zh' | 'ja';
   approved_at?: string;
   created_at: string;
 };
@@ -153,6 +154,16 @@ export async function getApprovedNews(
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
+  // Filter by language if provided
+  if (language) {
+    query = query.eq('language', language);
+  }
+
+  // Filter by category if provided
+  if (category) {
+    query = query.eq('category', category);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -200,6 +211,7 @@ export async function addNewsItem(
       image_url: item.image_url || null,
       author: item.author || null,
       published_at: item.published_at || null,
+      language: item.language || 'en',
       status: 'pending',
       is_featured: 0
     })
@@ -319,10 +331,22 @@ export async function getFeaturedNewsByCategory(limit: number = 10): Promise<New
 }
 
 export async function getApprovedNewsCount(category?: string, language?: string): Promise<number> {
-  const { count, error } = await supabase
+  let query = supabase
     .from('news_items')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'approved');
+
+  // Filter by language if provided
+  if (language) {
+    query = query.eq('language', language);
+  }
+
+  // Filter by category if provided
+  if (category) {
+    query = query.eq('category', category);
+  }
+
+  const { count, error } = await query;
 
   if (error) {
     console.error('Error getting approved news count:', error);
