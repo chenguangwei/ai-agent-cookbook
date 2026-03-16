@@ -28,10 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by language if provided
     if (language) {
-      items = items.filter(item => {
-        const source = sourceMap.get(item.source_id);
-        return source?.language === language;
-      });
+      items = items.filter(item => item.language === language);
     }
 
     // Filter by source if provided

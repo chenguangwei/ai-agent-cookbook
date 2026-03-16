@@ -390,6 +390,7 @@ function mapNewsItem(row: any): NewsItem {
     published_at: row.published_at || undefined,
     status: row.status,
     is_featured: row.is_featured === 1,
+    language: row.language || undefined,
     approved_at: row.approved_at || undefined,
     created_at: row.created_at
   };
