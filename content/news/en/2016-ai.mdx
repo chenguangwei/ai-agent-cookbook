@@ -1,0 +1,187 @@
+---
+title: 'In 2016, I Started an AI Code Generation Venture'
+slug: '2016-ai'
+locale: 'en'
+summary: 'https://t.co/inXqWdQSNy'
+source: 'X (Twitter)'
+sourceUrl: 'https://x.com/xleaps/status/2033027083476054377'
+author: 'Eric Xu (e/Mettā)'
+imageUrl: 'https://pbs.twimg.com/media/HDbDVn9aMAEYRvy.jpg'
+publishedAt: 'Sun Mar 15 03:46:43 +0000 2026'
+category: 'Tech'
+readTime: '2 min read'
+---
+
+# In 2016, I Started an AI Code Generation Venture
+
+In 2016, when AI was far from the massive wave it is today, I was already seriously attempting something: using language models to understand, modify, and generate code.
+
+I named the company ai.codes. The name almost needed no explanation: AI codes—treating "code" as a verb, meaning "AI writes code."
+
+This vision finally became reality a decade later. The wave of "Agentic Coding" has swept the globe. But by the time it truly arrived, my venture from back then had already ended in 2016.
+
+Today, I want to write down this story. It's both a record of that eve of a technological explosion and a belated reply to my 30-year-old self.
+
+![The Vision Back Then](https://pbs.twimg.com/media/HDbBtW6WIAAlsb5.jpg)
+
+## Backstory: Why I Believed in This
+
+From 2011 to 2014, I worked at Google. Back then, I had a habit: checking what code Jeff Dean had recently written.
+
+In the summer of 2013, I noticed he was involved in a project called DistBelief. It was Google's early large-scale distributed neural network training system, essentially making the forward and backward processes of neural networks into distributed computing on CPU clusters. Although I didn't know where Jeff Dean ultimately wanted to take this path, it became an opportunity: I started spending a lot of time systematically learning about neural networks.
+
+In 2014, I left Google, moved to the San Francisco Bay Area, and joined Fitbit, which wasn't very prominent at the time.
+
+Because I already had a relatively deep understanding of neural network capabilities, at Fitbit, I proactively introduced convolutional neural networks to the problem of sleep cycle classification. Fitbit was one of the earliest companies globally to do sleep cycle recognition on wearable devices, and the small team I led back then was probably one of the earlier teams in the industry to actually apply convolutional networks to this problem. The mainstream method at the time was still feature engineering plus linear classifiers, and we quickly found in practice that convolutional neural networks performed significantly better: the signal representations they learned were stronger than manually constructed features.
+
+At work, I used convolutional networks, but what truly fascinated me was the potential of neural networks in natural language processing: translation, understanding text, and further, understanding programs.
+
+I was particularly curious back then: Could neural networks write code? Especially the kind of code I found very verbose, not highly complex, but full of patterns. Because in my work, I often saw that engineers, especially those working on low-level systems, were often either writing configurations or writing "code that generates configurations." Meanwhile, machine translation was beginning to make real breakthroughs. If AI could translate between natural languages, why couldn't it translate natural language to code? Moreover, statistically, much code is more regular and lower entropy than natural language.
+
+Back then, I was writing the "Programming Pearls Extras" series on my blog, and I had given a lot of thought to the characteristics of various programming languages and the various difficulties in human programming. I gradually realized that when AI was still far from perfect, the truly viable path wasn't pure AI, but carefully combining AI with compiler technology.
+
+These simple judgments, long-accumulated technical interest, and confidence in my own engineering abilities ultimately converged into the starting point of my venture.
+
+In August 2016, I resigned from Fitbit, deciding to work on this full-time.
+
+Back then, many people registered .ai domains. I went against the grain and registered a domain I still think is awesome today: ai.codes. The meaning is very direct: AI writes code.
+
+## The First Product: Starting with Autocomplete
+
+The connection between language models and code autocompletion is actually very direct. So the earliest product I made was a smarter code autocompletion tool, with a simple goal: improving programmer efficiency in the IDE.
+
+For this, I downloaded a large amount of open-source code from GitHub at the time, specifically built a backend storage and training architecture, and trained a language model that was already quite large for its time on a GPU. Its task wasn't fundamentally different from today's large language models: predicting the next token.
+
+In 2016, Transformer hadn't appeared yet; LSTM was still the most realistic sequence model choice. So my prediction model ended up being a 4-layer LSTM. Looking back now, it was certainly early-stage, but at the time, it was impressive enough.
+
+Code has a natural advantage over natural language: its next token is often subject to stronger syntactic constraints. For example, if a left parenthesis hasn't appeared before, a right parenthesis shouldn't appear out of nowhere later. So I naturally added a layer of constraint: filtering out tokens that were impossible in the current syntactic position.
+
+Looking back today, this is similar to the later familiar concept of constrained decoding; extrapolating further, it also shares common ground with the constrained generation used later for models generating valid tool calls or valid JSON. Back then, I didn't consider it any theoretical breakthrough; I just felt it was too intuitive, something you should just do.
+
+Soon, I wrote an IntelliJ plugin that could do code completion in the editor. Traditional IDE autocompletion usually just helps you complete a function name, e.g., you type `Array.`, and it suggests candidate methods after the cursor; but my system could already complete entire statements.
+
+Later, I also scraped many code snippets from Stack Overflow and indexed them. I invented a three-slash comment method: as long as you typed a line with three slashes and pressed enter, for example:
+
+/// Here I need to read the file contents into a list
+
+![](https://pbs.twimg.com/media/HDbAJaDaMAM7tTi.jpg)
+
+The model would attempt to translate that natural language sentence into code.
+
+Even today, I remember the almost magical feeling of seeing it actually "write code" for the first time. The method behind it wasn't mysterious: I first searched the index, retrieved many candidate code snippets, then let the language model continue generation based on the context. The resulting program was not only syntactically correct but could even automatically align variable names with the context. Looking back today, this was already close to the later concept of retrieval-augmented generation.
+
+In 2016, such an effect was quite impressive.
+
+But I soon made a huge mistake: I didn't know how to promote it, nor how to turn it into revenue.
+
+I believed back then that such technology could only be sold to companies, and it needed to be customized and fine-tuned with a company's internal codebase to truly show its magic. So I spent a long time trying to sell something to various companies that most people couldn't understand and whose full value wasn't apparent without customization. Apart from some friends and acquaintances willing to try, I never managed to secure real revenue.
+
+## Beyond Technology, People and the Era Were Harder
+
+In Silicon Valley, people often joke that a company with no revenue often has the highest valuation. But when you're doing something that almost no one can understand well enough, fundraising becomes exceptionally difficult.
+
+I remember sitting in a venture capitalist's office once, facing a Stanford MBA who knew almost nothing about AI technology. Her core question wasn't about the model, the product, or programmer workflows, but: Can this technology be sold in China to make money?
+
+She even told me directly that if the system couldn't understand Chinese comments yet, they wouldn't invest, because their backers had considerations related to Chinese capital.
+
+Such feedback quickly made me realize the problem wasn't just that I wasn't explaining it well enough, but that many people weren't even discussing the same problem. We all called it AI, but we weren't thinking about the same thing.
+
+Most Silicon Valley VCs weren't actually pessimistic about this direction's prospects, but it was simply too far ahead of its time; they needed more signals. And being ahead of its time precisely meant a lack of signals.
+
+In September, I went to Mountain View for a Y Combinator interview. During the interview, people actually liked my product, but the final feedback was still: need more signals, encouraged me to apply again later.
+
+![The rejection letter from YC](https://pbs.twimg.com/media/HDbBTPnaMAE040V.jpg)
+
+Fundraising took up a lot of my time and directly slowed down product and market progress. It was only then that I truly realized how passive the lack of a suitable co-founder could make a startup that was too far ahead of its time.
+
+I had a highly respected colleague from my Google days. I even flew back to Chicago many times, trying to persuade him to join. But in his view, this was too fanciful. Later, a colleague from my graduate school days was willing to take the risk, but the entire tech stack wasn't something you could learn directly from textbooks, nor was it his PhD focus, so progress was still slow.
+
+Looking back, I can understand these colleagues and investors. They weren't wrong; they just weren't willing to bet on a vision that hadn't yet been proven by the era.
+
+So, the reality back then was: I was carrying almost everything alone—technology, product, fundraising, narrative, psychological pressure, and life itself.
+
+My child was just over a year old back then, had just learned to walk, and chased after me to play every day. But I was out running around all day. I still remember a very specific scene: coming home very late one day, my wife and son were already asleep, the kitten curled up beside them. I stood there, knowing in my heart that I vaguely saw a puzzle about the future, but in the real world, I couldn't find the next step to piece it together. I kept hitting walls. Fundraising, partners, product path—all futures were obscured by a fog. My parents would only say: Don't work too hard.
+
+That feeling wasn't simply hard work, but a deeper loneliness: You know you've seen something, but you can't translate it into a language others can believe. And at the same time, you have to do something, so as not to let down those who still believe in you.
+
+## How the Venture Ended
+
+After being rejected by YC, I decided to first figure out the product's shortcomings. I ran some more experiments, trained a few small models, and gradually saw the core problem: What I lacked wasn't the next plugin, the next demo, or a prettier fundraising pitch deck.
+
+What I truly lacked was a stronger model. More directly, it was the money to train a larger model.
+
+My model's performance was still not stable enough, predictions often had issues. I had already used all the compiler tricks and syntax checking methods I could think of, patching almost everywhere possible. The remaining problems weren't solvable by minor engineering fixes, but because the model itself wasn't strong enough.
+
+Around Christmas, I seriously calculated once: I probably needed about $250,000 to train this model.
+
+This number didn't seem exaggerated to me, but in the eyes of many VCs, it was almost heretical. In their imagination, fundraising money should be used to hire people, drive growth, tell stories, not be sent to a data center, ultimately turning into GPU heat. They already didn't understand this direction; at this step, they understood even less: why would I directly burn $250,000 for a model that might not even succeed.
+
+The problem wasn't whether they respected me, but that I truly couldn't build a bridge convincing enough for them between the "existing product" and the "product that might emerge if model capabilities leap."
+
+I needed money to train a stronger model; but I also needed that stronger model to prove this was worth investing in.
+
+Looking back now, maybe I could have thought of other paths. For example, changing the entry point, first finding users willing to tolerate the model not being smart enough but still benefiting from it; or earlier building a product around toolchains, data, and workflows that could grow slowly. But back then, I was trapped by this deadlock, feeling I couldn't push forward for the time being.
+
+So I started thinking, maybe the only way was to first monetize the technical capabilities I had, go work somewhere, save up enough money, then come back and continue this.
+
+I remember that Christmas, financial pressure was very real. I was reluctant to buy a Christmas tree, only remembering to buy my son a toy truck on Christmas Eve. After that Christmas, I finally admitted: I couldn't keep twisting like this. Rather than burning out in place, it was better to take a step back, wait for the right time, then return.
+
+So, I transferred the entire backend technology for downloading GitHub code to a company that needed it. Then I decided I would only go work at two companies to earn some money next: OpenAI and Reddit.
+
+![The three-step plan outlined back then: first autocomplete, then small-scale filling, ultimately achieving using only natural language, because code is ultimately just a symbol sequence computers can understand](https://pbs.twimg.com/media/HDbCUrRXYAA5a7S.jpg)
+
+## OpenAI and Reddit
+
+OpenAI back then was still a very small non-profit organization; you even had to solve some problems first to get an interview. Those problems weren't difficult for me. Among the several engineers who ultimately interviewed me, one was Andrej Karpathy.
+
+The technical questions themselves didn't stump me. The real problem was, I knew too clearly what I wanted to do: I wanted to work on natural language processing, I wanted to make AI write code. But OpenAI's focus at the time was more on reinforcement learning and vision; I wasn't very interested in those directions.
+
+I remember them asking me what I wanted to do if I joined OpenAI. I said I could do research, I could do engineering, but what I truly wanted was to make AI write code happen.
+
+Conversely, this also meant I might not be the person OpenAI most needed at that stage. Looking back now, I was probably quite opinionated back then. So, receiving a rejection letter wasn't surprising.
+
+The second company was Reddit.
+
+My judgment at the time was: If natural language processing was truly going to become an important capability in the future, then communities like Reddit would inevitably become increasingly important, because companies worldwide doing NLP would eventually need data like Reddit's. Later facts largely proved this true.
+
+So I joined Reddit as a Senior Director of Machine Learning. Later, some friends felt sorry for me, thinking if I had gone to OpenAI back then, my life trajectory might have been completely different. I don't think that way. Life isn't a problem you can repeatedly verify; many choices can only be made by the version of yourself at that time.
+
+## Looking Back, Where Did I Go Wrong?
+
+I certainly made many mistakes.
+
+First, I spent too much time trying to convince people who fundamentally couldn't understand this. Entrepreneurs need to tell stories, but not everyone is worth your repeated explanations. For a direction too far ahead of its time, a more realistic approach often isn't convincing everyone, but quickly finding the very few who can inherently understand.
+
+Second, I didn't dare to build in public back then. The startup environment today is already very different: writing publicly, building publicly, iterating publicly is itself part of accumulating momentum. But I didn't have that mindset back then, always thinking I'd go public after making it more complete, prettier. The result was that much important work was done silently, not truly participating in the magnificent history that followed.
+
+Finally, and most importantly: I didn't have a clear enough understanding of my own failure modes back then. I didn't know clearly enough how I would fail, what constraints I would get stuck on, and how I should adjust my strategy when these constraints appeared simultaneously. For example, I thought I had saved enough money to support a year of entrepreneurship; but when I reached a critical juncture, I didn't have $250,000 in my pocket to gamble with.
+
+## Looking Back, What Did I Do Right?
+
+If I did anything right, it's probably two things.
+
+First, I truly did something crazy. It didn't succeed, but it was real: there was code, there were models, and there were countless specific memories. It's part of my life, not an intellectual's self-indulgent fantasy stuck in the mind.
+
+Second, I'm glad I didn't take that investor's money back then. It was the first truly decent investment contract I received, for $1.5 million, but I didn't like the terms at all. After rejecting that contract, I might have offended half of Silicon Valley's investment circles, but I still like that "unwilling to be fettered" mindset I had back then. I paid a price for it, but I also preserved some freedom.
+
+## An Anecdote, for Those Anxious in the Current AI Wave
+
+Finally, a small story.
+
+In the summer of 2016, I had already gone to Reddit, working on recommendation systems, not language models, but I was still very focused on the AI code generation direction. Back then, people in Silicon Valley working on this knew each other to some extent.
+
+One day, two young Russians found me, wanting to chat about this direction. One was named Illia Polosukhin, the other Alexander Skidanov.
+
+Illia introduced himself as a technical lead on Google's TensorFlow team, Alexander was a top ACM ICPC competitor. We chatted for an afternoon at a café near Union Square in San Francisco. I told them about my attempts, the difficulties I encountered, and shared some investors I had contacted and the challenges this direction might face. I even mentioned frankly an investor who was enthusiastic about this direction but whom I didn't like; only that person had already started shifting to blockchain, and I wasn't sure if he would still invest in code generation.
+
+They also told me they wanted to do something: use AI to generate code solutions for ACM programming competition problems. And I could sense they might have a stronger method than I did.
+
+When we parted, I sincerely wished them well, and thought, these two might really accomplish something, I should keep an eye on them.
+
+A month later, they secured funding from that investor. The company was named near.ai, meaning AI is already near us.
+
+But what happened next was almost completely different from the linear technological evolution path I had in mind. A few months later, the company pivoted to AI-generated dApps; a few months after that, pivoted again to building a public chain; finally, it completely became a blockchain company.
+
+Why am I telling this story?
+
+Because those familiar with large language model history probably already know: Illia Polosukhin is actually one of the authors of the Transformer paper "Attention Is All You Need." At the time, this epoch-making paper had just been published, but no one could clearly see its significance. Today's ChatGPT, and the entire modern large language model era, are

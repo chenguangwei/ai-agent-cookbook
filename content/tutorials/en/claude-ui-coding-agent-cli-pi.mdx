@@ -1,0 +1,97 @@
+---
+title: "Reverse Engineering Claude's Generative UI Architecture, Porting to Coding Agent CLI ~ Pi"
+slug: "claude-ui-coding-agent-cli-pi"
+locale: "en"
+description: "Reverse Engineering Claude's Generative UI Architecture, Porting to Coding Agent CLI ~ Pi"
+category: "LLM Models"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDVrkAXaMAYvYCH.jpg:large"
+featured: false
+date: 2026-03-16
+---
+
+# Reverse Engineering Claude's Generative UI Architecture, Porting to Coding Agent CLI ~ Pi
+
+Original Link: https://x.com/shao__meng/status/2032649105852473365
+
+Anthropic launched the generative UI feature for Claude, embedding interactive HTML components (sliders, charts, animations) within conversations, rather than static images or code blocks. @micLivs reverse-engineered its implementation mechanism and ported the same capability to the terminal environment based on Pi and Glimpse.
+
+Let's take a look together:
+
+1. The actual implementation of Claude Generative UI
+2. Rebuilding Generative UI in the Pi terminal
+3. Claude Generative UI Design Specifications (Very Important!)
+
+Design Specifications Link: https://t.co/5XFaX6ExBz
+
+## The Actual Implementation of Claude Generative UI
+
+Implementation Mechanism: It's not Markdown rendering, but a tool call named `show_widget`, which carries HTML fragments in its parameters, and the frontend performs DOM injection. Evidence—CSS variables can be resolved across components, content renders in real-time with tokens, and the background is transparent with no iframe traces. Security boundaries rely on CSP whitelists to limit loadable CDNs.
+
+Essential Difference from Artifacts: Artifacts are downloadable deliverables in the side panel, using pre-packaged libraries; generative UI are temporary components inline within the conversation stream, capable of loading any library from a CDN in real-time.
+
+`read_me` Mode: Before the model calls `show_widget`, it must first call `read_me` to load the corresponding module's design specifications (diagram/chart/interactive/mockup/art) on-demand. This is progressive context injection—keeping the base prompt lean and injecting specialized knowledge as needed to save tokens.
+
+Design Specification Extraction: By exporting the conversation JSON, the complete 72KB original design system text from Anthropic was extracted from `tool_result`. Core requirements include: streaming-first (style → HTML → script), disabling gradients/shadows/blur, forced dark mode, a 9-color scale system, Chart.js/SVG-specific specifications, etc.
+
+## Pi Terminal Rebuild
+
+Problem: The terminal cannot render interactive HTML.
+
+Solution: Use Glimpse (macOS native WKWebView, launches in less than 50ms, bidirectional JSON communication) as the rendering container.
+
+Key iterations for streaming rendering:
+
+1. `setHTML()` full replacement, causing page flickering.
+2. `innerHTML` container replacement, still destroys and rebuilds all child nodes.
+3. Naive DOM appending, browser auto-closes incomplete tags, tree structure differs each time, tracking fails.
+4. `morphdom` DOM diffing, the final solution, only updates changed nodes, with fade-in animation for new nodes.
+
+Pi's AI layer already has built-in partial JSON parsing, the extension directly reads the streaming `arguments.widget_code`, requiring no additional dependencies.
+
+## Claude Generative UI Design Specifications
+
+72KB specification, 10 deduplicated chapters, loaded on-demand by combining 5 modules (interactive / chart / mockup / art / diagram), shared chapters are injected only once.
+
+### Core Layer
+
+Everything serves streaming rendering. Almost all rules point to the same goal—maintaining visual stability when HTML is injected token-by-token into the DOM:
+
+- `style` tags are positioned first, content appears gradually, scripts execute last. Incomplete `script` tags can block rendering.
+- Disable gradients, shadows, blur: They cause repaint flickering during DOM diffing.
+- Disable HTML comments: Waste tokens, and closing tags can be ambiguous with content when incomplete.
+- CSS variables drive all colors: Widgets are DOM-injected, not iframes, variables directly inherit from the host page cascade, naturally adapting to themes.
+- Only 400/500 font weights, all sentence case, dark mode forced: Eliminate variables, reduce visual jumps.
+
+### Color System
+
+9 color scales, each with 7 levels. Colors encode meaning, not sequence. Each widget is limited to 2-3 color scales. Text on colored backgrounds must use the 800/900 levels of the same scale. The goal is to compress color decision-making into a range where the model is less likely to make mistakes.
+
+### SVG / Diagram
+
+The diagram module is 59KB, constituting most of the specification. Provides font pixel-width calibration tables, pre-made CSS classes (models reference class names instead of writing inline styles), arrow `context-stroke` automatically inherits color. Two rules that "cause most diagram failures": arrows cannot pass through nodes, box width is determined by text length. Choose chart types by verb, not noun.
+
+### Chart / UI Components
+
+Chart.js-specific specifications (disable default legends, explicit Canvas container height, number formatting). UI components are all tokenized into fixed specifications (cards, buttons, metric cards, skeleton screens), models can combine and use them.
+
+### Design Intent
+
+Not teaching the model design, but compressing the design decision space into a range where the model is unlikely to make mistakes. The model's freedom is precisely limited to two levels: "which layout to choose" and "which color scale to use to express what meaning", with everything else covered by the specification.
+
+> Author: Michael Livs (@micLivs)
+> URL: https://x.com/micLivs/status/2032244251464188184
+>
+> Anthropic shipped generative UI for Claude. I reverse-engineered how it works and rebuilt it for PI.
+>
+> Extracted the full design system from a conversation export. Live streaming HTML into native macOS windows via morphdom DOM diffing.
+>
+> Article: https://t.co/BcYo94YqK3
+> Repo: https://t.co/EfMDX58NWc
+>
+> Built on @badlogicgames's pi and @DanielGri's Glimpse.
+
+![Cover Image](https://pbs.twimg.com/media/HDVrkAXaMAYvYCH.jpg:large)
