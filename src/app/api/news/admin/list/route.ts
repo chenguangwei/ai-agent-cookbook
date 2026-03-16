@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
     // Filter by language if provided (use effective language: item.language or source.language)
     if (language) {
       items = items.filter(item => {
-        const effectiveLang = item.language || sourceMap.get(item.source_id)?.language || 'en';
+        const sourceLang = sourceMap.get(item.source_id)?.language;
+        const effectiveLang = item.language || sourceLang || 'en';
         return effectiveLang === language;
       });
     }

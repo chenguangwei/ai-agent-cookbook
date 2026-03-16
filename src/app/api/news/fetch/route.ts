@@ -137,6 +137,7 @@ export async function POST(request: Request) {
             image_url: item.imageUrl,
             author: item.author || item.creator,
             published_at: item.isoDate || item.pubDate,
+            language: source.language,
           };
 
           const result = await addNewsItem(newsItem);
