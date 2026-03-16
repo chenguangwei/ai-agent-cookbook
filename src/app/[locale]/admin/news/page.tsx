@@ -118,6 +118,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids, isFeatured })
       });
+      const data = await res.json();
       if (res.ok) {
         setSelected([]);
         fetchItems();
@@ -135,6 +136,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids })
       });
+      const data = await res.json();
       if (res.ok) {
         setSelected([]);
         fetchItems();
@@ -152,6 +154,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       });
+      const data = await res.json();
       if (res.ok) {
         fetchItems();
       }
@@ -167,6 +170,7 @@ export default function AdminNewsPage() {
       const res = await fetch(`/api/news/admin/delete?${query}`, {
         method: 'DELETE'
       });
+      const data = await res.json();
       if (res.ok) {
         setSelected([]);
         fetchItems();
@@ -184,6 +188,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids, language })
       });
+      const data = await res.json();
       if (res.ok) {
         setSelected([]);
         fetchItems();
@@ -202,6 +207,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
       });
+      const data = await res.json();
       if (res.ok) {
         const data = await res.json();
         alert(`Fetched ${data.totalAdded || 0} new items`);
@@ -222,6 +228,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ importDefault: true, category: cat })
       });
+      const data = await res.json();
       if (res.ok) {
         const data = await res.json();
         alert(`Imported ${data.imported || 0} sources`);
@@ -243,6 +250,7 @@ export default function AdminNewsPage() {
           category
         })
       });
+      const data = await res.json();
       if (res.ok) {
         const data = await res.json();
         alert(`Imported ${data.imported || 0} sources, skipped ${data.skipped || 0}`);
@@ -263,6 +271,7 @@ export default function AdminNewsPage() {
       const res = await fetch('/api/news/admin/sources/detect-lang', {
         method: 'POST'
       });
+      const data = await res.json();
       if (res.ok) {
         const data = await res.json();
         alert(`已根据 RSS 名称检测并更新 ${data.updated} 个源的语言`);
@@ -280,6 +289,7 @@ export default function AdminNewsPage() {
       const res = await fetch(`/api/news/admin/sources?id=${id}`, {
         method: 'DELETE'
       });
+      const data = await res.json();
       if (res.ok) {
         fetchSources();
       }
@@ -296,6 +306,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: source.id, enabled: !source.enabled })
       });
+      const data = await res.json();
       if (res.ok) {
         fetchSources();
       }
@@ -312,6 +323,7 @@ export default function AdminNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, language })
       });
+      const data = await res.json();
       if (res.ok) {
         fetchSources();
       }
