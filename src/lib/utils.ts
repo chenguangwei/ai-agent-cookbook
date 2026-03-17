@@ -14,8 +14,8 @@ export function getSiteUrl(): string {
   try {
     const urlObj = new URL(url);
     // Clean up any duplicate domain in path (e.g., https://example.com/example.com)
-    const cleanPath = urlObj.pathname.replace(new RegExp(urlObj.hostname, 'g'), '').replace(/\/+/g, '/');
-    return `${urlObj.protocol}//${urlObj.host}${cleanPath || '/'}`;
+    const cleanPath = urlObj.pathname.replace(new RegExp(urlObj.hostname, 'g'), '').replace(/\/+/g, '/').replace(/\/$/, '');
+    return `${urlObj.protocol}//${urlObj.host}${cleanPath}`;
   } catch {
     return 'https://agent-cookbook.com';
   }
