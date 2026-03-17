@@ -178,12 +178,53 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
       };
     } catch (err: any) {
       lastError = err;
+      console.error(`[RSS Parser] Failed to fetch ${tryUrl}:`, err.message);
       // Skip to next URL if this one failed
       continue;
     }
   }
 
   throw lastError || new Error('Failed to parse feed');
+}
+
+/**
+ * Alternative: fetch RSS using a proxy service
+ * This can bypass CORS and SSL issues
+ */
+export async function parseRssFeedViaProxy(url: string): Promise<ParsedFeed> {
+  // Use rss2json as a proxy service
+  const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+
+  const response = await fetch(proxyUrl);
+  if (!response.ok) {
+    throw new Error(`Proxy failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.status !== 'ok') {
+    throw new Error(data.message || 'Failed to parse via proxy');
+  }
+
+  const items: ParsedFeedItem[] = (data.items || []).map((item: any) => ({
+    title: item.title || 'Untitled',
+    link: item.link || '',
+    content: item.content,
+    contentSnippet: item.description,
+    summary: item.description,
+    pubDate: item.pubDate,
+    isoDate: item.pubDate,
+    creator: item.author,
+    author: item.author,
+    imageUrl: item.thumbnail || item.enclosure?.link,
+    videoThumbnail: undefined,
+  }));
+
+  return {
+    title: data.feed.title || 'Untitled Feed',
+    link: data.feed.link || url,
+    items,
+  };
 }
 
 /**

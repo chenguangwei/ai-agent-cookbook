@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { parseRssFeed } from '@/lib/rss-parser';
+import { parseRssFeed, parseRssFeedViaProxy } from '@/lib/rss-parser';
 import { addNewsItem, getAllRssSources, getRssSourceById } from '@/lib/db/news';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -123,7 +123,14 @@ export async function POST(request: Request) {
 
     async function processSource(source: typeof sources[0]) {
       try {
-        const feed = await parseRssFeed(source.url);
+        let feed;
+        try {
+          feed = await parseRssFeed(source.url);
+        } catch (directError: any) {
+          // If direct fetch fails, try via proxy
+          console.log(`[RSS] Trying proxy for ${source.name}...`);
+          feed = await parseRssFeedViaProxy(source.url);
+        }
         let addedCount = 0;
 
         for (const item of feed.items.slice(0, MAX_ITEMS_PER_SOURCE)) {
@@ -157,6 +164,8 @@ export async function POST(request: Request) {
           addedCount,
         };
       } catch (err: any) {
+        // Log detailed error for debugging
+        console.error(`[RSS] Failed to fetch ${source.name} (${source.url}):`, err.message);
         return {
           sourceId: source.id,
           sourceName: source.name,
@@ -164,6 +173,7 @@ export async function POST(request: Request) {
           count: 0,
           addedCount: 0,
           error: err.message || 'Failed to fetch feed',
+          url: source.url,
         };
       }
     }
