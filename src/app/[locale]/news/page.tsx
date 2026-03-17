@@ -110,37 +110,64 @@ export default async function NewsPage({
                   // If no image, try to extract from content
                   if (!imageUrl && article?.content) {
                     const content = article.content;
-                    // Try og:image
-                    const ogMatch = content.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-                    if (ogMatch) {
-                      imageUrl = ogMatch[1];
-                    } else {
-                      // Try YouTube thumbnail
+                    // Try og:image - multiple formats
+                    const ogFormats = [
+                      /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+                      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+                      /<meta[^>]+name=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+                      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']og:image["']/i,
+                    ];
+                    for (const format of ogFormats) {
+                      const ogMatch = content.match(format);
+                      if (ogMatch && ogMatch[1] && !ogMatch[1].includes('data:')) {
+                        imageUrl = ogMatch[1];
+                        break;
+                      }
+                    }
+
+                    // Try YouTube thumbnail
+                    if (!imageUrl) {
                       const youtubeMatch = content.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
                       if (youtubeMatch) {
                         imageUrl = `https://img.youtube.com/vi/${youtubeMatch[1]}/maxresdefault.jpg`;
-                      } else {
-                        // Try first img tag
-                        const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
-                        if (imgMatch && !imgMatch[1].includes('data:') && !imgMatch[1].includes('pixel')) {
-                          imageUrl = imgMatch[1];
+                      }
+                    }
+
+                    // Try first valid img tag
+                    if (!imageUrl) {
+                      const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
+                      let imgMatch;
+                      while ((imgMatch = imgRegex.exec(content)) !== null) {
+                        const src = imgMatch[1];
+                        if (src && !src.startsWith('data:') && !src.includes('pixel') && !src.includes('tracking') && src.length > 20) {
+                          imageUrl = src;
+                          break;
                         }
+                      }
+                    }
+
+                    // Try twitter:image
+                    if (!imageUrl) {
+                      const twitterMatch = content.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+                      if (twitterMatch) {
+                        imageUrl = twitterMatch[1];
                       }
                     }
                   }
 
-                  // Show placeholder if still no image
+                  // Show placeholder with title preview if no image
                   if (!imageUrl) {
                     return (
                       <Link
                         href={article.url || article.sourceUrl || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block relative w-full aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+                        className="block relative w-full aspect-video bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center p-4"
                       >
                         <div className="text-center">
-                          <div className="text-4xl mb-2">📰</div>
-                          <span className="text-xs text-slate-400 dark:text-slate-500">{article?.source_name || article?.source}</span>
+                          <div className="text-3xl mb-2">📄</div>
+                          <span className="text-xs text-primary-600 dark:text-primary-400 font-medium line-clamp-3">{article?.title}</span>
+                          <span className="text-xs text-primary-500 dark:text-primary-500 mt-2 block">{article?.source_name || article?.source}</span>
                         </div>
                       </Link>
                     );
@@ -160,6 +187,11 @@ export default async function NewsPage({
                         className="object-cover hover:opacity-90 transition-opacity"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         unoptimized
+                        onError={(e) => {
+                          // Hide broken images, show placeholder
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
                       />
                     </Link>
                   );

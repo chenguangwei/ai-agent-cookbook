@@ -286,17 +286,59 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                     key={news.id}
                     className="group flex flex-col gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-orange-500/5 hover:border-orange-200 dark:hover:border-orange-800 transition-all duration-300"
                   >
-                    {news.image_url && (
-                      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-                        <Image
-                          src={news.image_url}
-                          alt={news.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                        />
-                      </div>
-                    )}
+                    {(() => {
+                      let imageUrl = news.image_url;
+                      // Try to extract image from content if not available
+                      if (!imageUrl && news.content) {
+                        const content = news.content;
+                        const ogFormats = [
+                          /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+                          /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+                        ];
+                        for (const format of ogFormats) {
+                          const ogMatch = content.match(format);
+                          if (ogMatch && ogMatch[1] && !ogMatch[1].includes('data:')) {
+                            imageUrl = ogMatch[1];
+                            break;
+                          }
+                        }
+                        // Try YouTube
+                        if (!imageUrl) {
+                          const youtubeMatch = content.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                          if (youtubeMatch) {
+                            imageUrl = `https://img.youtube.com/vi/${youtubeMatch[1]}/maxresdefault.jpg`;
+                          }
+                        }
+                      }
+
+                      if (!imageUrl) {
+                        return (
+                          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 flex items-center justify-center p-4">
+                            <div className="text-center">
+                              <div className="text-3xl mb-2">📄</div>
+                              <span className="text-xs text-orange-600 dark:text-orange-400 font-medium line-clamp-2">{news.title}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                          <Image
+                            src={imageUrl}
+                            alt={news.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            unoptimized
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      );
+                    })()}
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-orange-600 dark:text-orange-400 font-medium">
