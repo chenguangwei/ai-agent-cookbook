@@ -145,6 +145,7 @@ export async function getApprovedNews(
   offset: number = 0,
   language?: string
 ): Promise<NewsItem[]> {
+  // First get the approved news items
   let query = supabase
     .from('news_items')
     .select('*')
@@ -159,19 +160,35 @@ export async function getApprovedNews(
     query = query.eq('language', language);
   }
 
-  // Filter by category if provided
-  if (category) {
-    query = query.eq('category', category);
-  }
-
-  const { data, error } = await query;
+  let { data: items, error } = await query;
 
   if (error) {
-    console.error('Error fetching approved news:', error);
+    console.error('Error fetching news:', error);
     return [];
   }
 
-  return (data || []).map(mapNewsItem);
+  // If category filter is provided, we need to join with rss_sources
+  if (category && items && items.length > 0) {
+    const sourceIds = [...new Set(items.map(item => item.source_id))];
+
+    // Get sources with their categories
+    const { data: sources } = await supabase
+      .from('rss_sources')
+      .select('id, category')
+      .in('id', sourceIds);
+
+    const sourceCategoryMap = new Map(
+      (sources || []).map(s => [s.id, s.category])
+    );
+
+    // Filter items by category
+    items = items.filter(item => {
+      const sourceCategory = sourceCategoryMap.get(item.source_id);
+      return sourceCategory === category;
+    });
+  }
+
+  return (items || []).map(mapNewsItem);
 }
 
 export async function getNewsItemById(id: string): Promise<NewsItem | null> {
@@ -360,19 +377,37 @@ export async function getApprovedNewsCount(category?: string, language?: string)
     query = query.eq('language', language);
   }
 
-  // Filter by category if provided
-  if (category) {
-    query = query.eq('category', category);
-  }
-
-  const { count, error } = await query;
+  const { data: items, error } = await query;
 
   if (error) {
     console.error('Error getting approved news count:', error);
     return 0;
   }
 
-  return count || 0;
+  // If category filter is provided, we need to join with rss_sources
+  if (category && items && items.length > 0) {
+    const sourceIds = [...new Set(items.map(item => item.source_id))];
+
+    // Get sources with their categories
+    const { data: sources } = await supabase
+      .from('rss_sources')
+      .select('id, category')
+      .in('id', sourceIds);
+
+    const sourceCategoryMap = new Map(
+      (sources || []).map(s => [s.id, s.category])
+    );
+
+    // Count items by category
+    const filteredCount = items.filter(item => {
+      const sourceCategory = sourceCategoryMap.get(item.source_id);
+      return sourceCategory === category;
+    }).length;
+
+    return filteredCount;
+  }
+
+  return items?.length || 0;
 }
 
 // Helper function to map database row to NewsItem type
