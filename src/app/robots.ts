@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export default function robots(): MetadataRoute.Robots {
   return {

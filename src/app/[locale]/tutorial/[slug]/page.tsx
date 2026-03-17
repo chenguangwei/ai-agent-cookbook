@@ -23,7 +23,7 @@ export async function generateStaticParams() {
   }));
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: TutorialPageProps): Promise<Metadata> {
   const { slug, locale } = await params;

@@ -18,7 +18,7 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
   const resolvedLocale = locale || 'en';
 
   const canonicalUrl = resolvedLocale === 'en'

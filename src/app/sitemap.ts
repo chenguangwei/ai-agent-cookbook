@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getAllTutorials } from '@/lib/content';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

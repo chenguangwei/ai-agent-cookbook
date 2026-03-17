@@ -15,7 +15,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com'),
   title: {
     default: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
     template: "%s | Agent Cookbook",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://agenthub.dev",
+    url: "https://agent-cookbook.com",
     siteName: "Agent Cookbook",
     title: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
     description:

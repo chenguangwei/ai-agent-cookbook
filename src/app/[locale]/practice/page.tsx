@@ -7,7 +7,7 @@ import { getAllPracticeLabs } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
