@@ -8,6 +8,30 @@ import { Button } from '@/components/ui/button';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const projects = getAllShowcaseProjects(locale);
+  const project = projects.find(p => p?.slug === slug);
+  const path = `showcase/${slug}`;
+  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
+
+  return {
+    title: project?.title,
+    description: project?.description,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `${siteUrl}/${path}`,
+        'zh': `${siteUrl}/zh/${path}`,
+        'ja': `${siteUrl}/ja/${path}`,
+      },
+    },
+  };
+}
 
 interface ShowcaseDetailPageProps {
   params: Promise<{ locale: string; slug: string }>;

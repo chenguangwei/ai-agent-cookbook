@@ -112,6 +112,8 @@
     "openSandbox": "Open Sandbox"
   },
   "News": {
+    "seoTitle": "AI News & Updates - Latest AI Agent Developments",
+    "seoDescription": "Stay up to date with the latest developments in AI agents, LLMs, autonomous systems, and AI automation tutorials.",
     "title": "News & Updates",
     "description": "Stay up to date with the latest developments in AI agents, LLMs, and autonomous systems.",
     "readMore": "Read more",

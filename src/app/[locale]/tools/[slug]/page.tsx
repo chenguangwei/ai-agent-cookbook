@@ -9,6 +9,30 @@ import { Button } from '@/components/ui/button';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getAllTools } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const tools = getAllTools(locale);
+  const tool = tools.find(t => t?.slug === slug);
+  const path = `tools/${slug}`;
+  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
+
+  return {
+    title: tool?.title,
+    description: tool?.description,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `${siteUrl}/${path}`,
+        'zh': `${siteUrl}/zh/${path}`,
+        'ja': `${siteUrl}/ja/${path}`,
+      },
+    },
+  };
+}
 
 interface ToolDetailPageProps {
   params: Promise<{ locale: string; slug: string }>;

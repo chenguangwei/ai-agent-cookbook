@@ -15,6 +15,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev'),
   title: {
     default: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
     template: "%s | Agent Cookbook",

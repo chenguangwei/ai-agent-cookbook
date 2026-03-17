@@ -8,6 +8,29 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agenthub.dev';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations('Showcase');
+  const path = 'showcase';
+  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
+
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `${siteUrl}/${path}`,
+        'zh': `${siteUrl}/zh/${path}`,
+        'ja': `${siteUrl}/ja/${path}`,
+      },
+    },
+  };
+}
 
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60;

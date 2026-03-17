@@ -112,6 +112,8 @@
     "openSandbox": "打开沙盒"
   },
   "News": {
+    "seoTitle": "AI 资讯动态 - 最新 AI 智能体发展",
+    "seoDescription": "了解 AI 智能体、大语言模型和自主系统的最新发展动态，包括 AI 自动化教程和行业资讯。",
     "title": "资讯动态",
     "description": "了解 AI 智能体、大语言模型和自主系统的最新发展动态。",
     "readMore": "阅读更多",
