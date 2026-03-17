@@ -25,8 +25,13 @@ export function isAdminRoute(pathname: string, locales: readonly string[]): bool
   // /api/translate
   if (pathname === '/api/translate' || pathname.startsWith('/api/translate/')) return true;
 
-  // /api/news (all news admin APIs)
-  if (pathname === '/api/news' || pathname.startsWith('/api/news/')) return true;
+  // Specific admin news APIs (NOT all /api/news/* routes - some are public)
+  // Admin: /api/news/fetch, /api/news/import-opml
+  if (pathname === '/api/news/fetch' || pathname.startsWith('/api/news/fetch/')) return true;
+  if (pathname === '/api/news/import-opml' || pathname.startsWith('/api/news/import-opml/')) return true;
+
+  // /api/news/admin/* - all admin sub-routes
+  if (pathname.startsWith('/api/news/admin/')) return true;
 
   // /{locale}/translate or /translate (default locale)
   if (pathname === '/translate' || pathname.startsWith('/translate/')) return true;
