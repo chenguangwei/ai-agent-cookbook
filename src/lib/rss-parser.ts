@@ -145,7 +145,12 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
       ],
       feed: ['atom:link'],
     },
-    timeout: 5000, // Reduced from 10s to 5s
+    timeout: 5000,
+    headers: {
+      // Use application/xml instead of application/rss+xml
+      // Some servers (like api.xgo.ing) return 406 for rss+xml
+      'Accept': 'application/xml, application/rss+xml, text/xml, */*',
+    },
   });
 
   // Try HTTP first for better compatibility, then HTTPS
@@ -194,28 +199,89 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
 export async function parseRssFeedViaProxy(url: string): Promise<ParsedFeed> {
   // Try multiple proxy services
   const proxies = [
-    // rss2json (main proxy)
+    // rss2json (main proxy) - with timeout handling
     async () => {
-      const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`Proxy failed: ${response.status}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
 
-      const data = await response.json();
-      if (data.status !== 'ok') throw new Error(data.message || 'Failed to parse via proxy');
+      try {
+        const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeout);
 
-      return data;
+        if (!response.ok) throw new Error(`Proxy failed: ${response.status}`);
+
+        const data = await response.json();
+        if (data.status !== 'ok') throw new Error(data.message || 'Failed to parse via proxy');
+
+        return data;
+      } catch (err: any) {
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') throw new Error('Proxy timeout');
+        throw err;
+      }
     },
-    // RSS Hub (Chinese sites often work better)
+    // RSS Hub (for Chinese sites and YouTube) - 使用自建 RSSHub
     async () => {
-      // Use rsshub for problematic Chinese sites
-      const rsshubUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
-      const response = await fetch(rsshubUrl);
-      if (!response.ok) throw new Error(`Proxy failed: ${response.status}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const data = await response.json();
-      if (data.status !== 'ok') throw new Error(data.message || 'Failed to parse via proxy');
+      // 用户自建的 RSSHub
+      const RSSHUB_BASE = process.env.RSSHUB_URL || 'https://rss.agent-cookbook.com';
+      const RSSHUB_KEY = process.env.RSSHUB_ACCESS_KEY || '';
 
-      return data;
+      try {
+        let rsshubUrl: string;
+        if (url.includes('youtube.com/feeds')) {
+          // Extract channel ID from YouTube feed URL
+          const match = url.match(/channel_id=([^&]+)/);
+          if (match) {
+            rsshubUrl = `${RSSHUB_BASE}/youtube/channel/${match[1]}`;
+          } else {
+            throw new Error('Invalid YouTube URL');
+          }
+        } else {
+          // Use rsshub to wrap the original URL
+          rsshubUrl = `${RSSHUB_BASE}/rss/${encodeURIComponent(url)}`;
+        }
+
+        // 添加 access_key 参数
+        if (RSSHUB_KEY) {
+          rsshubUrl += rsshubUrl.includes('?') ? '&' : '?';
+          rsshubUrl += `access_key=${RSSHUB_KEY}`;
+        }
+
+        const response = await fetch(rsshubUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (!response.ok) throw new Error(`RSSHub failed: ${response.status}`);
+
+        // Parse RSS from RSSHub response
+        const xml = await response.text();
+        const parser = new Parser();
+        const feed = await parser.parseString(xml);
+
+        // Convert to rss2json format
+        return {
+          feed: {
+            title: feed.title,
+            link: feed.link,
+          },
+          items: feed.items.map((item: any) => ({
+            title: item.title,
+            link: item.link,
+            description: item.contentSnippet || item.summary,
+            content: item.content,
+            author: item.creator || item.author,
+            pubDate: item.pubDate,
+            thumbnail: item.imageUrl,
+          })),
+        };
+      } catch (err: any) {
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') throw new Error('RSSHub timeout');
+        throw err;
+      }
     },
   ];
 

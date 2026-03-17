@@ -1,9 +1,60 @@
 import { NextResponse } from 'next/server';
 import { parseRssFeed, parseRssFeedViaProxy } from '@/lib/rss-parser';
-import { addNewsItem, getAllRssSources, getRssSourceById } from '@/lib/db/news';
+import { addNewsItem, updateNewsStatus, getAllRssSources, getRssSourceById } from '@/lib/db/news';
 import { v4 as uuidv4 } from 'uuid';
+import { getTranslateConfig } from '@/lib/translate.config';
 
 const MAX_ITEMS_PER_SOURCE = 20;
+
+const AI_TAG_CATEGORIES = [
+  '软件编程', '人工智能', '产品设计', '商业科技',
+  '个人成长', '媒体资讯', '投资财经', '生活文化',
+];
+
+/**
+ * Use DeepSeek (or any OpenAI-compatible model) to classify an article.
+ * Returns one of AI_TAG_CATEGORIES or '媒体资讯' as default.
+ */
+async function classifyArticleWithAI(title: string, summary: string): Promise<string> {
+  try {
+    const config = getTranslateConfig();
+    if (!config.apiKey) return '媒体资讯';
+
+    const prompt = `你是一个内容分类器。请根据文章标题和摘要，从下列类别中选择最合适的一个输出（只输出类别名称，不要任何解释）：
+${AI_TAG_CATEGORIES.join('、')}
+
+标题：${title}
+摘要：${(summary || '').substring(0, 500)}`;
+
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.1,
+        max_tokens: 20,
+      }),
+    });
+
+    if (!response.ok) return '媒体资讯';
+
+    const data = await response.json();
+    const result = (data.choices?.[0]?.message?.content || '').trim();
+
+    // Validate: must be one of the allowed tags
+    const matched = AI_TAG_CATEGORIES.find(tag => result.includes(tag));
+    return matched || '媒体资讯';
+  } catch (e) {
+    console.error('[AI Tag] Classification failed:', e);
+    return '媒体资讯';
+  }
+}
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -66,6 +117,38 @@ export async function POST(request: Request) {
       for (const item of feed.items.slice(0, MAX_ITEMS_PER_SOURCE)) {
         if (!item.link) continue;
 
+        // Calculate metrics
+        const contentStr = item.content || item.summary || item.contentSnippet || '';
+        let cleanText = contentStr;
+        let imgCount = 0;
+        let codeCount = 0;
+
+        try {
+          if (contentStr.includes('<')) {
+            const cheerio = require('cheerio');
+            const $ = cheerio.load(contentStr);
+            cleanText = $.text();
+            imgCount = $('img').length;
+            codeCount = $('code, pre').length;
+          }
+        } catch (e) {
+          cleanText = cleanText.replace(/<[^>]*>?/gm, '');
+        }
+
+        // Remove extra whitespace and count words (Chinese/English mixed heuristic)
+        cleanText = cleanText.replace(/\s+/g, ' ').trim();
+        // Fallback word count if empty: guess from summary length
+        const wordCount = cleanText.length > 0 ? cleanText.length : (item.summary?.length || 0) * 2;
+        const readTime = Math.max(1, Math.ceil(wordCount / 250));
+
+        // Quality Score Heuristic (0-100)
+        // Base 60, +points for length (up to 20), +points for images (up to 10), +points for code (up to 10)
+        let qualityScore = 60;
+        qualityScore += Math.min(20, Math.floor(wordCount / 100)); // 1 point per 100 words
+        qualityScore += Math.min(10, imgCount * 2); // 2 points per image
+        qualityScore += Math.min(10, codeCount * 3); // 3 points per code block
+        qualityScore = Math.min(98, qualityScore); // Cap at 98 for realism
+
         const newsItem = {
           id: uuidv4(),
           source_id: source.id,
@@ -78,10 +161,16 @@ export async function POST(request: Request) {
           author: item.author || item.creator,
           published_at: item.isoDate || item.pubDate,
           language: source.language,
+          word_count: wordCount,
+          read_time_minutes: readTime,
+          quality_score: qualityScore,
+          ai_tag: await classifyArticleWithAI(item.title || '', item.summary || item.contentSnippet || ''),
         };
 
         const result = await addNewsItem(newsItem);
         if (result) {
+          // Auto-approve the news item
+          await updateNewsStatus(result.id, 'approved');
           addedCount++;
         }
       }
@@ -136,6 +225,36 @@ export async function POST(request: Request) {
         for (const item of feed.items.slice(0, MAX_ITEMS_PER_SOURCE)) {
           if (!item.link) continue;
 
+          // Calculate metrics
+          const contentStr = item.content || item.summary || item.contentSnippet || '';
+          let cleanText = contentStr;
+          let imgCount = 0;
+          let codeCount = 0;
+
+          try {
+            if (contentStr.includes('<')) {
+              const cheerio = require('cheerio');
+              const $ = cheerio.load(contentStr);
+              cleanText = $.text();
+              imgCount = $('img').length;
+              codeCount = $('code, pre').length;
+            }
+          } catch (e) {
+            cleanText = cleanText.replace(/<[^>]*>?/gm, '');
+          }
+
+          // Remove extra whitespace and count words (Chinese/English mixed heuristic)
+          cleanText = cleanText.replace(/\s+/g, ' ').trim();
+          const wordCount = cleanText.length > 0 ? cleanText.length : (item.summary?.length || 0) * 2;
+          const readTime = Math.max(1, Math.ceil(wordCount / 250));
+
+          // Quality Score Heuristic (0-100)
+          let qualityScore = 60;
+          qualityScore += Math.min(20, Math.floor(wordCount / 100)); // 1 point per 100 words
+          qualityScore += Math.min(10, imgCount * 2); // 2 points per image
+          qualityScore += Math.min(10, codeCount * 3); // 3 points per code block
+          qualityScore = Math.min(98, qualityScore); // Cap at 98 for realism
+
           const newsItem = {
             id: uuidv4(),
             source_id: source.id,
@@ -148,10 +267,16 @@ export async function POST(request: Request) {
             author: item.author || item.creator,
             published_at: item.isoDate || item.pubDate,
             language: source.language,
+            word_count: wordCount,
+            read_time_minutes: readTime,
+            quality_score: qualityScore,
+            ai_tag: await classifyArticleWithAI(item.title || '', item.summary || item.contentSnippet || ''),
           };
 
           const result = await addNewsItem(newsItem);
           if (result) {
+            // Auto-approve the news item
+            await updateNewsStatus(result.id, 'approved');
             addedCount++;
           }
         }

@@ -1,61 +1,51 @@
 /**
- * Full RSS Source Test
- * Tests all major RSS sources without database
+ * Test ALL RSS sources from database and generate report
  */
 
 import { parseRssFeed, parseRssFeedViaProxy } from './rss-parser';
+import { createClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Comprehensive list of RSS sources from the database
-const ALL_SOURCES = [
-  // English Tech
-  { name: 'OpenAI', url: 'https://openai.com/news/rss.xml', lang: 'en' },
-  { name: 'Hugging Face', url: 'https://huggingface.co/blog/feed.xml', lang: 'en' },
-  { name: 'LangChain', url: 'https://blog.langchain.dev/rss/', lang: 'en' },
-  { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', lang: 'en' },
-  { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', lang: 'en' },
-  { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', lang: 'en' },
-  { name: 'Wired', url: 'https://www.wired.com/feed/rss', lang: 'en' },
-  { name: 'MIT Tech Review', url: 'https://www.technologyreview.com/feed/', lang: 'en' },
-  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/', lang: 'en' },
-  { name: 'AWS ML Blog', url: 'https://aws.amazon.com/blogs/amazon-ai/feed/', lang: 'en' },
-  { name: 'Google Cloud', url: 'https://cloudblog.withgoogle.com/rss/', lang: 'en' },
-  { name: 'Microsoft Azure', url: 'https://azure.microsoft.com/en-us/blog/feed/', lang: 'en' },
-  { name: 'Cloudflare', url: 'https://blog.cloudflare.com/rss', lang: 'en' },
-  { name: 'Elastic', url: 'https://www.elastic.co/blog/feed', lang: 'en' },
-  { name: 'MongoDB', url: 'https://www.mongodb.com/blog/rss', lang: 'en' },
-  { name: 'DeepMind', url: 'https://deepmind.com/blog/feed/basic/', lang: 'en' },
-  { name: 'Meta Engineering', url: 'https://engineering.fb.com/feed/', lang: 'en' },
-  { name: 'Next.js', url: 'https://nextjs.org/feed.xml', lang: 'en' },
-  { name: 'Vercel', url: 'https://vercel.com/atom', lang: 'en' },
-  { name: 'Smashing Magazine', url: 'https://www.smashingmagazine.com/feed/', lang: 'en' },
-  { name: 'InfoQ', url: 'https://www.infoq.com/rss/rss.action', lang: 'en' },
-  { name: 'Hacker News', url: 'https://hnrss.org/frontpage', lang: 'en' },
-  { name: 'Reddit r/MachineLearning', url: 'https://www.reddit.com/r/MachineLearning/.rss', lang: 'en' },
-  { name: 'Last Week in AI', url: 'https://lastweekin.ai/feed/', lang: 'en' },
-  { name: 'ByteByteGo', url: 'https://blog.bytebytego.com/feed', lang: 'en' },
-  { name: 'Martin Fowler', url: 'https://martinfowler.com/feed.atom', lang: 'en' },
-  { name: 'DHH', url: 'https://world.hey.com/dhh/feed.atom', lang: 'en' },
+// Load env
+const envPath = path.join(process.cwd(), '.env.local');
+const envContent = fs.readFileSync(envPath, 'utf-8');
+envContent.split('\n').forEach(line => {
+  const [key, value] = line.split('=');
+  if (key && value) {
+    process.env[key] = value;
+  }
+});
 
-  // Chinese
-  { name: '量子位', url: 'https://www.qbitai.com/feed', lang: 'zh' },
-  { name: '机器之心', url: 'https://www.jiqizhixin.com/feed', lang: 'zh' },
-  { name: '虎嗅', url: 'https://www.huxiu.com/rss', lang: 'zh' },
-  { name: '36氪', url: 'https://www.36kr.com/feed/', lang: 'zh' },
-  { name: '爱范儿', url: 'https://www.ifanr.com/feed', lang: 'zh' },
-  { name: '极客公园', url: 'https://www.geekpark.net/feed', lang: 'zh' },
-  { name: '钛媒体', url: 'https://www.tmtpost.com/feed', lang: 'zh' },
-  { name: '人人都是产品经理', url: 'https://www.woshipm.com/feed', lang: 'zh' },
-  { name: '掘金', url: 'https://juejin.cn/feed', lang: 'zh' },
-  { name: '腾讯技术', url: 'https://www.tencent.com/zh-cn/blog/feed.xml', lang: 'zh' },
-  { name: '阿里云', url: 'https://developer.aliyun.com/group/techfeed', lang: 'zh' },
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // WeChat via RSS (common)
-  { name: 'WeChat - 量子位', url: 'https://wechat2rss.bestblogs.dev/feed/821c3f66-b350-4774-be0e-e271a86033f0.xml', lang: 'zh' },
-  { name: 'WeChat - 机器之心', url: 'https://wechat2rss.bestblogs.dev/feed/4efe7ec6970afd4a050d6f10b9e8131a9d5e6816.xml', lang: 'zh' },
-  { name: 'WeChat - 虎嗅', url: 'https://wechat2rss.bestblogs.dev/feed/3e2714d06aa36142e8ed6b3f4e5cf9090a069dd2.xml', lang: 'zh' },
-];
+interface Source {
+  id: string;
+  name: string;
+  url: string;
+  language: string;
+  category: string;
+}
 
-async function testSource(source: typeof ALL_SOURCES[0]) {
+async function getAllSources(): Promise<Source[]> {
+  const { data, error } = await supabase
+    .from('rss_sources')
+    .select('id, name, url, language, category')
+    .eq('enabled', 1)
+    .order('language', { ascending: true })
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch sources:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+async function testSource(source: Source) {
   try {
     const feed = await parseRssFeed(source.url);
     return { success: true, method: 'direct', items: feed.items.length, error: null };
@@ -70,73 +60,121 @@ async function testSource(source: typeof ALL_SOURCES[0]) {
 }
 
 async function runFullTest() {
-  console.log(`Testing ${ALL_SOURCES.length} RSS sources...\n`);
+  console.log('Fetching all RSS sources from database...\n');
+  const sources = await getAllSources();
+  console.log(`Found ${sources.length} enabled sources\n`);
 
-  const results = [];
+  const results: Array<Source & { success: boolean; method: string; items: number; error: string | null }> = [];
   let successDirect = 0;
   let successProxy = 0;
   let failed = 0;
 
-  for (let i = 0; i < ALL_SOURCES.length; i++) {
-    const source = ALL_SOURCES[i];
-    process.stdout.write(`[${i + 1}/${ALL_SOURCES.length}] ${source.name.substring(0, 25)}... `);
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
+    const progress = `[${i + 1}/${sources.length}]`;
+    process.stdout.write(`${progress} ${source.name.substring(0, 30).padEnd(30)}... `);
 
     const result = await testSource(source);
+    results.push({ ...source, ...result });
 
     if (result.success) {
       if (result.method === 'direct') {
         successDirect++;
-        console.log(`✅ (direct, ${result.items} items)`);
+        console.log(`✅ (direct, ${result.items})`);
       } else {
         successProxy++;
-        console.log(`✅ (proxy, ${result.items} items)`);
+        console.log(`✅ (proxy, ${result.items})`);
       }
     } else {
       failed++;
-      console.log(`❌ (${result.error?.substring(0, 40)})`);
+      console.log(`❌ ${result.error?.substring(0, 40)}`);
     }
-
-    results.push({ name: source.name, lang: source.lang, ...result });
   }
 
-  console.log('\n' + '='.repeat(60));
+  // Generate report
+  console.log('\n' + '='.repeat(70));
   console.log('SUMMARY');
-  console.log('='.repeat(60));
-  console.log(`Total tested: ${ALL_SOURCES.length}`);
-  console.log(`Direct success: ${successDirect} (${Math.round(successDirect/ALL_SOURCES.length*100)}%)`);
-  console.log(`Proxy success: ${successProxy} (${Math.round(successProxy/ALL_SOURCES.length*100)}%)`);
-  console.log(`Failed: ${failed} (${Math.round(failed/ALL_SOURCES.length*100)}%)`);
+  console.log('='.repeat(70));
+  console.log(`Total: ${sources.length}`);
+  console.log(`Direct: ${successDirect} (${Math.round(successDirect/sources.length*100)}%)`);
+  console.log(`Proxy: ${successProxy} (${Math.round(successProxy/sources.length*100)}%)`);
+  console.log(`Failed: ${failed} (${Math.round(failed/sources.length*100)}%)`);
 
-  // Analyze by language
-  console.log('\n' + '='.repeat(60));
+  // Group by language
+  console.log('\n' + '='.repeat(70));
   console.log('BY LANGUAGE');
-  console.log('='.repeat(60));
+  console.log('='.repeat(70));
 
-  for (const lang of ['en', 'zh']) {
-    const langResults = results.filter(r => r.lang === lang);
-    const langSuccess = langResults.filter(r => r.success).length;
-    const langDirect = langResults.filter(r => r.success && r.method === 'direct').length;
-    const langProxy = langResults.filter(r => r.success && r.method === 'proxy').length;
-
-    console.log(`\n${lang.toUpperCase()} (${langResults.length} sources):`);
-    console.log(`  Direct: ${langDirect}, Proxy: ${langProxy}, Failed: ${langResults.length - langSuccess}`);
+  for (const lang of ['en', 'zh', 'ja']) {
+    const langSources = results.filter(r => r.language === lang);
+    const langSuccess = langSources.filter(r => r.success).length;
+    console.log(`\n${lang.toUpperCase()}: ${langSuccess}/${langSources.length} (${Math.round(langSuccess/langSources.length*100)}%)`);
   }
 
-  // Error analysis
-  console.log('\n' + '='.repeat(60));
-  console.log('ERRORS');
-  console.log('='.repeat(60));
+  // Collect broken sources
+  const brokenSources = results.filter(r => !r.success);
 
-  const errors = results.filter(r => !r.success).map(r => r.error);
-  const errorTypes: Record<string, number> = {};
-  errors.forEach(e => {
-    const type = e?.substring(0, 50) || 'Unknown';
-    errorTypes[type] = (errorTypes[type] || 0) + 1;
+  // Generate markdown report
+  let mdContent = `# RSS Source Test Report
+
+Generated: ${new Date().toISOString()}
+
+## Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Sources | ${sources.length} |
+| Direct Success | ${successDirect} (${Math.round(successDirect/sources.length*100)}%) |
+| Proxy Success | ${successProxy} (${Math.round(successProxy/sources.length*100)}%) |
+| Failed | ${failed} (${Math.round(failed/sources.length*100)}%) |
+
+## Failed Sources (${brokenSources.length} sources)
+
+These sources are broken and should be removed from the database:
+
+| # | Name | Language | Category | URL | Error |
+|---|------|----------|----------|-----|-------|
+`;
+
+  brokenSources.forEach((source, index) => {
+    mdContent += `| ${index + 1} | ${source.name} | ${source.language} | ${source.category} | ${source.url} | ${source.error?.substring(0, 50) || 'Unknown'} |\n`;
   });
 
-  Object.entries(errorTypes).sort((a, b) => b[1] - a[1]).forEach(([type, count]) => {
-    console.log(`  ${type}: ${count}`);
+  // Group by error type
+  const errorTypes: Record<string, typeof brokenSources> = {};
+  brokenSources.forEach(source => {
+    const errorKey = source.error?.substring(0, 30) || 'Unknown';
+    if (!errorTypes[errorKey]) errorTypes[errorKey] = [];
+    errorTypes[errorKey].push(source);
   });
+
+  mdContent += `\n## Error Analysis\n\n`;
+  Object.entries(errorTypes).sort((a, b) => b[1].length - a[1].length).forEach(([error, sources]) => {
+    mdContent += `### ${error} (${sources.length} sources)\n`;
+    sources.forEach(s => {
+      mdContent += `- ${s.name} (${s.language}): ${s.url}\n`;
+    });
+    mdContent += '\n';
+  });
+
+  // Save report
+  fs.writeFileSync('docs/rss-source-test-report.md', mdContent);
+  console.log('\n✅ Report saved to docs/rss-source-test-report.md');
+
+  // Generate SQL to disable broken sources
+  let sqlContent = `-- SQL to disable broken RSS sources
+-- Run this to remove broken sources
+
+UPDATE rss_sources SET enabled = 0 WHERE id IN (
+`;
+  brokenSources.forEach(source => {
+    sqlContent += `  '${source.id}', -- ${source.name}\n`;
+  });
+  sqlContent = sqlContent.replace(/,\n$/, '\n');
+  sqlContent += ');\n';
+
+  fs.writeFileSync('docs/rss-sources-disable.sql', sqlContent);
+  console.log('✅ SQL saved to docs/rss-sources-disable.sql');
 
   return results;
 }

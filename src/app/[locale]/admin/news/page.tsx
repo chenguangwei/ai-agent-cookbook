@@ -258,9 +258,10 @@ export default function AdminNewsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         alert(`Imported ${data.imported || 0} sources`);
         fetchSources();
+      } else {
+        alert(`Error: ${data.error || 'Failed to import'}`);
       }
     } catch (error) {
       console.error('Failed to import default:', error);
@@ -280,11 +281,9 @@ export default function AdminNewsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         alert(`Imported ${data.imported || 0} sources, skipped ${data.skipped || 0}`);
         fetchSources();
       } else {
-        const data = await res.json();
         alert(`Error: ${data.error || 'Failed to import'}`);
       }
     } catch (error) {
@@ -301,9 +300,10 @@ export default function AdminNewsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         alert(`已根据 RSS 名称检测并更新 ${data.updated} 个源的语言`);
         fetchSources();
+      } else {
+        alert(`Error: ${data.error || 'Failed to detect language'}`);
       }
     } catch (error) {
       console.error('Failed to detect language:', error);
@@ -428,11 +428,10 @@ export default function AdminNewsPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-3 text-sm font-medium transition-colors relative ${
-                activeTab === tab.key
+              className={`px-4 py-3 text-sm font-medium transition-colors relative ${activeTab === tab.key
                   ? 'text-primary-600 dark:text-primary-400'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               {tab.label}
               {tab.count > 0 && (
@@ -593,12 +592,11 @@ export default function AdminNewsPage() {
                           </a>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            source.category === 'Articles' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                            source.category === 'Podcasts' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                            source.category === 'Twitters' ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' :
-                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${source.category === 'Articles' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                              source.category === 'Podcasts' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                source.category === 'Twitters' ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' :
+                                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            }`}>
                             {source.category}
                           </span>
                         </td>
@@ -606,11 +604,10 @@ export default function AdminNewsPage() {
                           <select
                             value={source.language}
                             onChange={e => handleUpdateSourceLanguage(source.id, e.target.value as 'en' | 'zh' | 'ja')}
-                            className={`text-xs font-medium rounded-full px-2 py-1 cursor-pointer border-0 ${
-                              source.language === 'en' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                              source.language === 'zh' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                              'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
-                            }`}
+                            className={`text-xs font-medium rounded-full px-2 py-1 cursor-pointer border-0 ${source.language === 'en' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                source.language === 'zh' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                                  'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                              }`}
                           >
                             <option value="en">EN</option>
                             <option value="zh">中文</option>
@@ -620,11 +617,10 @@ export default function AdminNewsPage() {
                         <td className="px-4 py-3">
                           <button
                             onClick={() => handleToggleSourceEnabled(source)}
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              source.enabled
+                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${source.enabled
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                 : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
-                            }`}
+                              }`}
                           >
                             {source.enabled ? '启用' : '禁用'}
                           </button>
@@ -836,9 +832,8 @@ export default function AdminNewsPage() {
                     {items.map(item => (
                       <tr
                         key={item.id}
-                        className={`hover:bg-slate-50 dark:hover:bg-slate-900/50 ${
-                          selected.includes(item.id) ? 'bg-primary-50 dark:bg-primary-900/10' : ''
-                        }`}
+                        className={`hover:bg-slate-50 dark:hover:bg-slate-900/50 ${selected.includes(item.id) ? 'bg-primary-50 dark:bg-primary-900/10' : ''
+                          }`}
                       >
                         <td className="px-4 py-3">
                           <input
@@ -889,12 +884,11 @@ export default function AdminNewsPage() {
                           {(() => {
                             const lang = getEffectiveLanguage(item);
                             return (
-                              <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
-                                lang === 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                lang === 'zh' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                lang === 'ja' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                              }`}>
+                              <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${lang === 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                  lang === 'zh' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                    lang === 'ja' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                      'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                }`}>
                                 {lang.toUpperCase()}
                               </span>
                             );

@@ -25,6 +25,10 @@ export type NewsItem = {
   status: 'pending' | 'approved' | 'rejected';
   is_featured: boolean;
   language?: 'en' | 'zh' | 'ja';
+  word_count?: number;
+  read_time_minutes?: number;
+  quality_score?: number;
+  ai_tag?: string;
   approved_at?: string;
   created_at: string;
 };
@@ -143,7 +147,8 @@ export async function getApprovedNews(
   category?: string,
   limit: number = 50,
   offset: number = 0,
-  language?: string
+  language?: string,
+  range?: string
 ): Promise<NewsItem[]> {
   // First get the approved news items
   let query = supabase
@@ -156,8 +161,19 @@ export async function getApprovedNews(
     .range(offset, offset + limit - 1);
 
   // Filter by language if provided
-  if (language) {
+  if (language && language !== 'all') {
     query = query.eq('language', language);
+  }
+
+  // Filter by range if provided
+  if (range && range !== 'all') {
+    const now = new Date();
+    let startDate = new Date();
+    if (range === '24h') startDate.setHours(now.getHours() - 24);
+    else if (range === 'week') startDate.setDate(now.getDate() - 7);
+    else if (range === 'month') startDate.setMonth(now.getMonth() - 1);
+
+    query = query.gte('published_at', startDate.toISOString());
   }
 
   let { data: items, error } = await query;
@@ -203,35 +219,31 @@ export async function getNewsItemById(id: string): Promise<NewsItem | null> {
   return mapNewsItem(data);
 }
 
-export async function addNewsItem(
-  item: Omit<NewsItem, 'created_at' | 'status' | 'is_featured'>
-): Promise<NewsItem | null> {
-  // Check if URL already exists
+export async function addNewsItem(item: Omit<NewsItem, 'created_at' | 'status' | 'is_featured'>): Promise<NewsItem | null> {
+  // Check if item already exists by URL (using exact match)
   const { data: existing } = await supabase
     .from('news_items')
     .select('id')
     .eq('url', item.url)
     .single();
 
-  if (existing) return null;
+  if (existing) {
+    return null; // Skip duplicate
+  }
+
+  // Set defaults for sqlite compatibility
+  const insertData = {
+    ...item,
+    status: 'pending',
+    is_featured: 0, // Use integer 0 for false in sqlite
+    word_count: item.word_count || 0,
+    read_time_minutes: item.read_time_minutes || 0,
+    quality_score: item.quality_score || 0,
+  };
 
   const { data, error } = await supabase
     .from('news_items')
-    .insert({
-      id: item.id,
-      source_id: item.source_id,
-      source_name: item.source_name || null,
-      title: item.title,
-      summary: item.summary || null,
-      content: item.content || null,
-      url: item.url,
-      image_url: item.image_url || null,
-      author: item.author || null,
-      published_at: item.published_at || null,
-      language: item.language || 'en',
-      status: 'pending',
-      is_featured: 0
-    })
+    .insert(insertData)
     .select()
     .single();
 
@@ -240,7 +252,7 @@ export async function addNewsItem(
     return null;
   }
 
-  return data ? mapNewsItem(data) : null;
+  return data ? { ...data, is_featured: Boolean(data.is_featured) } : null;
 }
 
 export async function updateNewsStatus(
@@ -366,15 +378,56 @@ export async function getFeaturedNewsByCategory(limit: number = 10): Promise<New
   return (data || []).map(mapNewsItem);
 }
 
-export async function getApprovedNewsCount(category?: string, language?: string): Promise<number> {
+export async function getApprovedNewsCount(category?: string, language?: string, range?: string): Promise<number> {
+  // If no category filter needed, use efficient count query
+  if (!category) {
+    let query = supabase
+      .from('news_items')
+      .select('id', { count: 'exact' })
+      .eq('status', 'approved');
+
+    if (language && language !== 'all') {
+      query = query.eq('language', language);
+    }
+
+    if (range && range !== 'all') {
+      const now = new Date();
+      let startDate = new Date();
+      if (range === '24h') startDate.setHours(now.getHours() - 24);
+      else if (range === 'week') startDate.setDate(now.getDate() - 7);
+      else if (range === 'month') startDate.setMonth(now.getMonth() - 1);
+
+      query = query.gte('published_at', startDate.toISOString());
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      console.error('Error getting approved news count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  }
+
+  // With category filter, we need to fetch items and join with sources
   let query = supabase
     .from('news_items')
-    .select('*', { count: 'exact', head: true })
+    .select('source_id')
     .eq('status', 'approved');
 
-  // Filter by language if provided
-  if (language) {
+  if (language && language !== 'all') {
     query = query.eq('language', language);
+  }
+
+  if (range && range !== 'all') {
+    const now = new Date();
+    let startDate = new Date();
+    if (range === '24h') startDate.setHours(now.getHours() - 24);
+    else if (range === 'week') startDate.setDate(now.getDate() - 7);
+    else if (range === 'month') startDate.setMonth(now.getMonth() - 1);
+
+    query = query.gte('published_at', startDate.toISOString());
   }
 
   const { data: items, error } = await query;
@@ -384,9 +437,64 @@ export async function getApprovedNewsCount(category?: string, language?: string)
     return 0;
   }
 
+  if (!items || items.length === 0) return 0;
+
+  const sourceIds = [...new Set(items.map(item => item.source_id))];
+
+  const { data: sources } = await supabase
+    .from('rss_sources')
+    .select('id, category')
+    .in('id', sourceIds);
+
+  const sourceCategoryMap = new Map(
+    (sources || []).map(s => [s.id, s.category])
+  );
+
+  return items.filter(item => {
+    const sourceCategory = sourceCategoryMap.get(item.source_id);
+    return sourceCategory === category;
+  }).length;
+}
+
+// Get approved news with date filter (using published_at or created_at)
+export async function getApprovedNewsByDate(
+  date: string, // YYYY-MM-DD format
+  category?: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<NewsItem[]> {
+  // Calculate date range for the day
+  const startOfDay = `${date}T00:00:00.000Z`;
+  const endOfDay = `${date}T23:59:59.999Z`;
+
+  // First get all approved news (without date filter)
+  let query = supabase
+    .from('news_items')
+    .select('*')
+    .eq('status', 'approved')
+    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  let { data: items, error } = await query;
+
+  if (error) {
+    console.error('Error fetching news by date:', error);
+    return [];
+  }
+
+  // Filter by date (published_at OR created_at)
+  items = (items || []).filter(item => {
+    const dateToCheck = item.published_at || item.created_at;
+    if (!dateToCheck) return false;
+    return dateToCheck >= startOfDay && dateToCheck <= endOfDay;
+  });
+
+  // Apply pagination
+  const paginatedItems = items.slice(offset, offset + limit);
+
   // If category filter is provided, we need to join with rss_sources
-  if (category && items && items.length > 0) {
-    const sourceIds = [...new Set(items.map(item => item.source_id))];
+  if (category && paginatedItems.length > 0) {
+    const sourceIds = [...new Set(paginatedItems.map(item => item.source_id))];
 
     // Get sources with their categories
     const { data: sources } = await supabase
@@ -398,16 +506,124 @@ export async function getApprovedNewsCount(category?: string, language?: string)
       (sources || []).map(s => [s.id, s.category])
     );
 
-    // Count items by category
-    const filteredCount = items.filter(item => {
+    // Filter items by category
+    const filteredItems = paginatedItems.filter(item => {
+      const sourceCategory = sourceCategoryMap.get(item.source_id);
+      return sourceCategory === category;
+    });
+
+    return filteredItems.map(mapNewsItem);
+  }
+
+  return paginatedItems.map(mapNewsItem);
+}
+
+// Get count of approved news by date (using published_at or created_at)
+export async function getApprovedNewsCountByDate(
+  date: string,
+  category?: string
+): Promise<number> {
+  const startOfDay = `${date}T00:00:00.000Z`;
+  const endOfDay = `${date}T23:59:59.999Z`;
+
+  // Get all approved news first
+  const { data: items, error } = await supabase
+    .from('news_items')
+    .select('*')
+    .eq('status', 'approved');
+
+  if (error) {
+    console.error('Error getting news count by date:', error);
+    return 0;
+  }
+
+  // Filter by date (published_at OR created_at)
+  const filteredItems = (items || []).filter(item => {
+    const dateToCheck = item.published_at || item.created_at;
+    if (!dateToCheck) return false;
+    return dateToCheck >= startOfDay && dateToCheck <= endOfDay;
+  });
+
+  if (category && filteredItems.length > 0) {
+    const sourceIds = [...new Set(filteredItems.map(item => item.source_id))];
+    const { data: sources } = await supabase
+      .from('rss_sources')
+      .select('id, category')
+      .in('id', sourceIds);
+
+    const sourceCategoryMap = new Map(
+      (sources || []).map(s => [s.id, s.category])
+    );
+
+    return filteredItems.filter(item => {
       const sourceCategory = sourceCategoryMap.get(item.source_id);
       return sourceCategory === category;
     }).length;
-
-    return filteredCount;
   }
 
-  return items?.length || 0;
+  return filteredItems.length;
+}
+
+// Get dates with approved news (for date list sidebar)
+export async function getApprovedNewsDates(
+  limit: number = 90 // Last 90 days
+): Promise<string[]> {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - limit);
+  const startDateStr = startDate.toISOString();
+
+  // Get all approved news
+  const { data, error } = await supabase
+    .from('news_items')
+    .select('published_at, created_at')
+    .eq('status', 'approved')
+    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching news dates:', error);
+    return [];
+  }
+
+  // Extract unique dates (YYYY-MM-DD format) - use published_at or created_at
+  const dateSet = new Set<string>();
+  (data || []).forEach(item => {
+    const dateToCheck = item.published_at || item.created_at;
+    if (dateToCheck && dateToCheck >= startDateStr) {
+      const date = dateToCheck.split('T')[0];
+      dateSet.add(date);
+    }
+  });
+
+  // Sort descending (most recent first)
+  return Array.from(dateSet).sort().reverse();
+}
+
+// Get featured news (精选)
+export async function getFeaturedNews(
+  limit: number = 20,
+  language?: string
+): Promise<NewsItem[]> {
+  let query = supabase
+    .from('news_items')
+    .select('*')
+    .eq('status', 'approved')
+    .eq('is_featured', 1)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (language) {
+    query = query.eq('language', language);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching featured news:', error);
+    return [];
+  }
+
+  return (data || []).map(mapNewsItem);
 }
 
 // Helper function to map database row to NewsItem type

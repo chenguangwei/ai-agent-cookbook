@@ -55,3 +55,4 @@ tina/__generated__/.cache
 .agent
 .claude
 .windsurf
+*.sql
