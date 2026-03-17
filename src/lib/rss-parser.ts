@@ -188,43 +188,70 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
 }
 
 /**
- * Alternative: fetch RSS using a proxy service
+ * Alternative: fetch RSS using multiple proxy services
  * This can bypass CORS and SSL issues
  */
 export async function parseRssFeedViaProxy(url: string): Promise<ParsedFeed> {
-  // Use rss2json as a proxy service
-  const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+  // Try multiple proxy services
+  const proxies = [
+    // rss2json (main proxy)
+    async () => {
+      const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`Proxy failed: ${response.status}`);
 
-  const response = await fetch(proxyUrl);
-  if (!response.ok) {
-    throw new Error(`Proxy failed: ${response.status}`);
+      const data = await response.json();
+      if (data.status !== 'ok') throw new Error(data.message || 'Failed to parse via proxy');
+
+      return data;
+    },
+    // RSS Hub (Chinese sites often work better)
+    async () => {
+      // Use rsshub for problematic Chinese sites
+      const rsshubUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+      const response = await fetch(rsshubUrl);
+      if (!response.ok) throw new Error(`Proxy failed: ${response.status}`);
+
+      const data = await response.json();
+      if (data.status !== 'ok') throw new Error(data.message || 'Failed to parse via proxy');
+
+      return data;
+    },
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const proxyFn of proxies) {
+    try {
+      const data = await proxyFn();
+
+      const items: ParsedFeedItem[] = (data.items || []).map((item: any) => ({
+        title: item.title || 'Untitled',
+        link: item.link || '',
+        content: item.content,
+        contentSnippet: item.description,
+        summary: item.description,
+        pubDate: item.pubDate,
+        isoDate: item.pubDate,
+        creator: item.author,
+        author: item.author,
+        imageUrl: item.thumbnail || item.enclosure?.link,
+        videoThumbnail: undefined,
+      }));
+
+      return {
+        title: data.feed?.title || 'Untitled Feed',
+        link: data.feed?.link || url,
+        items,
+      };
+    } catch (err: any) {
+      lastError = err;
+      // Try next proxy
+      continue;
+    }
   }
 
-  const data = await response.json();
-
-  if (data.status !== 'ok') {
-    throw new Error(data.message || 'Failed to parse via proxy');
-  }
-
-  const items: ParsedFeedItem[] = (data.items || []).map((item: any) => ({
-    title: item.title || 'Untitled',
-    link: item.link || '',
-    content: item.content,
-    contentSnippet: item.description,
-    summary: item.description,
-    pubDate: item.pubDate,
-    isoDate: item.pubDate,
-    creator: item.author,
-    author: item.author,
-    imageUrl: item.thumbnail || item.enclosure?.link,
-    videoThumbnail: undefined,
-  }));
-
-  return {
-    title: data.feed.title || 'Untitled Feed',
-    link: data.feed.link || url,
-    items,
-  };
+  throw lastError || new Error('All proxies failed');
 }
 
 /**
