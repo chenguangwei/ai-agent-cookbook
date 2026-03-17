@@ -144,7 +144,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
   // Fetch sources
   const fetchSources = async () => {
     try {
-      const res = await fetch('/api/news/admin/sources');
+      const res = await fetch('/api/news/sources');
       const data = await res.json();
       setSources(data.sources || []);
     } catch (error) {
