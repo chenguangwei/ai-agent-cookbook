@@ -14,8 +14,16 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
 });
 
+function getSiteUrl(): URL {
+  let url = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  return new URL(url);
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com'),
+  metadataBase: getSiteUrl(),
   title: {
     default: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
     template: "%s | Agent Cookbook",
