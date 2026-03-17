@@ -102,23 +102,68 @@ export default async function NewsPage({
                 key={article?.slug || article?.id}
                 className="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300"
               >
-                {/* Image - handle both DB (image_url) and MDX (imageUrl) - clickable */}
-                {(article?.image_url || article?.imageUrl) && (
-                  <Link
-                    href={article.url || article.sourceUrl || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block relative w-full aspect-video bg-slate-100 dark:bg-slate-800"
-                  >
-                    <Image
-                      src={article.image_url || article.imageUrl}
-                      alt={article.title}
-                      fill
-                      className="object-cover hover:opacity-90 transition-opacity"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  </Link>
-                )}
+                {/* Image - extract from content if not available */}
+                {(() => {
+                  // Try to get image from various sources
+                  let imageUrl = article?.image_url || article?.imageUrl;
+
+                  // If no image, try to extract from content
+                  if (!imageUrl && article?.content) {
+                    const content = article.content;
+                    // Try og:image
+                    const ogMatch = content.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+                    if (ogMatch) {
+                      imageUrl = ogMatch[1];
+                    } else {
+                      // Try YouTube thumbnail
+                      const youtubeMatch = content.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                      if (youtubeMatch) {
+                        imageUrl = `https://img.youtube.com/vi/${youtubeMatch[1]}/maxresdefault.jpg`;
+                      } else {
+                        // Try first img tag
+                        const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+                        if (imgMatch && !imgMatch[1].includes('data:') && !imgMatch[1].includes('pixel')) {
+                          imageUrl = imgMatch[1];
+                        }
+                      }
+                    }
+                  }
+
+                  // Show placeholder if still no image
+                  if (!imageUrl) {
+                    return (
+                      <Link
+                        href={article.url || article.sourceUrl || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block relative w-full aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+                      >
+                        <div className="text-center">
+                          <div className="text-4xl mb-2">📰</div>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">{article?.source_name || article?.source}</span>
+                        </div>
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      href={article.url || article.sourceUrl || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block relative w-full aspect-video bg-slate-100 dark:bg-slate-800"
+                    >
+                      <Image
+                        src={imageUrl}
+                        alt={article.title}
+                        fill
+                        className="object-cover hover:opacity-90 transition-opacity"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized
+                      />
+                    </Link>
+                  );
+                })()}
 
                 {/* Content */}
                 <div className="flex flex-col gap-3 p-5 flex-1">

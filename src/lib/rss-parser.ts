@@ -11,6 +11,7 @@ export interface ParsedFeedItem {
   creator?: string;
   author?: string;
   imageUrl?: string;
+  videoThumbnail?: string;
 }
 
 export interface ParsedFeed {
@@ -38,15 +39,19 @@ interface ExtendedItem extends Item {
  * Extract image URL from various RSS feed sources
  */
 function extractImageUrl(item: ExtendedItem): string | undefined {
-  // Try enclosure
+  // Try enclosure - direct image link
   if (item.enclosure?.url && item.enclosure.type?.startsWith('image/')) {
     return item.enclosure.url;
   }
 
-  // Try mediaContent (custom field)
-  const mediaContent = item['media:content'] as { $?: { url?: string } } | undefined;
+  // Try mediaContent (custom field) - could be video or image
+  const mediaContent = item['media:content'] as { $?: { url?: string; type?: string } } | undefined;
   if (mediaContent?.$?.url) {
-    return mediaContent.$.url;
+    // If it's an image type, use it
+    if (mediaContent.$?.type?.startsWith('image/')) {
+      return mediaContent.$.url;
+    }
+    // For videos, try to get thumbnail from media:thumbnail instead
   }
 
   // Try mediaThumbnail (custom field)
@@ -55,17 +60,70 @@ function extractImageUrl(item: ExtendedItem): string | undefined {
     return mediaThumbnail.$.url;
   }
 
-  // Try to extract from content using regex
-  const content = item.content || item.contentSnippet || '';
-  const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (imgMatch) {
-    return imgMatch[1];
-  }
+  // Combine all content fields to search
+  const content = item.content || item.contentSnippet || item.summary || '';
 
-  // Try og:image meta tag
+  // Try og:image meta tag (most reliable for modern feeds)
   const ogMatch = content.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
   if (ogMatch) {
     return ogMatch[1];
+  }
+
+  // Try alternate og:image format
+  const ogMatch2 = content.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+  if (ogMatch2) {
+    return ogMatch2[1];
+  }
+
+  // Try to extract from content img tag - find first valid image
+  const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
+  let imgMatch;
+  while ((imgMatch = imgRegex.exec(content)) !== null) {
+    const src = imgMatch[1];
+    // Skip data URIs, tracking pixels, and invalid URLs
+    if (src && !src.startsWith('data:') && !src.includes('pixel') && !src.includes('tracking')) {
+      return src;
+    }
+  }
+
+  // Try twitter:image as fallback
+  const twitterMatch = content.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+  if (twitterMatch) {
+    return twitterMatch[1];
+  }
+
+  // Try to find image in links/anchors
+  const linkImgMatch = content.match(/<a[^>]+><img[^>]+src=["']([^"']+)["'][^>]*><\/a>/i);
+  if (linkImgMatch) {
+    return linkImgMatch[1];
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract video thumbnail URL from RSS item
+ */
+function extractVideoThumbnail(item: ExtendedItem): string | undefined {
+  const content = item.content || item.contentSnippet || '';
+
+  // Try media:thumbnail for videos
+  const mediaThumbnail = item['media:thumbnail'] as { $?: { url?: string } } | undefined;
+  if (mediaThumbnail?.$?.url) {
+    return mediaThumbnail.$.url;
+  }
+
+  // Try to find YouTube thumbnail from content
+  const youtubeMatch = content.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  if (youtubeMatch) {
+    const videoId = youtubeMatch[1];
+    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  }
+
+  // Try to find video player iframe and extract thumbnail
+  const vimeoMatch = content.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) {
+    // For Vimeo, we'd need an API call - skip for now
   }
 
   return undefined;
@@ -110,6 +168,7 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
         creator: item['dc:creator'] || item.creator,
         author: item.author,
         imageUrl: extractImageUrl(item),
+        videoThumbnail: extractVideoThumbnail(item),
       }));
 
       return {
