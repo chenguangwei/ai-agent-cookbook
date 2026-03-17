@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
+  const siteUrl = getSiteUrl();
   const projects = getAllShowcaseProjects(locale);
   const project = projects.find(p => p?.slug === slug);
   const path = `showcase/${slug}`;

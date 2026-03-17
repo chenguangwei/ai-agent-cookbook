@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllTutorials, getTutorialBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 interface TutorialPageProps {
@@ -23,10 +24,9 @@ export async function generateStaticParams() {
   }));
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
-
 export async function generateMetadata({ params }: TutorialPageProps): Promise<Metadata> {
   const { slug, locale } = await params;
+  const siteUrl = getSiteUrl();
   const tutorial = await getTutorialBySlug(slug, locale);
   const t = await getTranslations('Tutorial');
 

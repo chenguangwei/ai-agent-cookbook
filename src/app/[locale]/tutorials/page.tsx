@@ -10,6 +10,7 @@ import { FilterSelect } from '@/components/features/FilterSelect';
 import { getAllTutorials } from '@/lib/content';
 import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 const ITEMS_PER_PAGE = 50;
@@ -18,7 +19,7 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
+  const siteUrl = getSiteUrl();
   const resolvedLocale = locale || 'en';
 
   const canonicalUrl = resolvedLocale === 'en'

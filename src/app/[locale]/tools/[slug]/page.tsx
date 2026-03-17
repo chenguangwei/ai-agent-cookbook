@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getAllTools } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
+  const siteUrl = getSiteUrl();
   const tools = getAllTools(locale);
   const tool = tools.find(t => t?.slug === slug);
   const path = `tools/${slug}`;

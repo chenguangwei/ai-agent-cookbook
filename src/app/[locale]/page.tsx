@@ -7,13 +7,13 @@ import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
 import { getFeaturedNewsByCategory } from '@/lib/db/news';
 import { getTranslations } from 'next-intl/server';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Home');
+  const siteUrl = getSiteUrl();
 
   // Build canonical URL based on locale
   const canonicalUrl = locale === 'en'

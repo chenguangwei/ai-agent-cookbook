@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
+import { getSiteUrl } from "@/lib/utils";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -14,16 +15,8 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
 });
 
-function getSiteUrl(): URL {
-  let url = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = `https://${url}`;
-  }
-  return new URL(url);
-}
-
 export const metadata: Metadata = {
-  metadataBase: getSiteUrl(),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
     template: "%s | Agent Cookbook",

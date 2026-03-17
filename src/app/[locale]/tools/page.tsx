@@ -8,13 +8,13 @@ import { getAllTools } from '@/lib/content';
 import { TOOL_CATEGORIES, toolCategoryIdToValue, toolCategoryValueToId } from '@/lib/tool-categories';
 import { getTranslations } from 'next-intl/server';
 import { ToolCard } from './ToolCard';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Tools');
+  const siteUrl = getSiteUrl();
   const path = 'tools';
   const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 

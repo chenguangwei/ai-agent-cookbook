@@ -5,13 +5,13 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { LabCard } from '@/components/features/LabCard';
 import { getAllPracticeLabs } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
+import { getSiteUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Practice');
+  const siteUrl = getSiteUrl();
   const path = 'practice';
   const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 

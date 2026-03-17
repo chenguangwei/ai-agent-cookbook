@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
+import { getSiteUrl } from '@/lib/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }): Promise<Metadata> {
   const { locale, id } = await params;
+  const siteUrl = getSiteUrl();
 
   // Build canonical URL based on locale
   const canonicalUrl = locale === 'en'
