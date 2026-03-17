@@ -187,11 +187,6 @@ export default async function NewsPage({
                         className="object-cover hover:opacity-90 transition-opacity"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         unoptimized
-                        onError={(e) => {
-                          // Hide broken images, show placeholder
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
                       />
                     </Link>
                   );

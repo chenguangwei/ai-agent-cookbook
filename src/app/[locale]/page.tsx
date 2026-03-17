@@ -331,10 +331,6 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                             className="object-cover"
                             sizes="(max-width: 768px) 100vw, 33vw"
                             unoptimized
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
                           />
                         </div>
                       );
