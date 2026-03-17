@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
   // Build canonical URL based on locale
   const canonicalUrl = locale === 'en'
-    ? `${siteUrl}/`
-    : `${siteUrl}/${locale}/`;
+    ? siteUrl
+    : `${siteUrl}/${locale}`;
 
   return {
     title: t('seoTitle') || t('title'),
@@ -26,9 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     alternates: {
       canonical: canonicalUrl,
       languages: {
-        'en': `${siteUrl}/`,
-        'zh': `${siteUrl}/zh/`,
-        'ja': `${siteUrl}/ja/`,
+        'en': siteUrl,
+        'zh': `${siteUrl}/zh`,
+        'ja': `${siteUrl}/ja`,
       },
     },
   };
