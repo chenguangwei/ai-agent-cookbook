@@ -129,11 +129,6 @@ function extractVideoThumbnail(item: ExtendedItem): string | undefined {
   return undefined;
 }
 
-/**
- * Parse RSS 2.0 and Atom feeds
- * Try HTTPS first, then fall back to HTTP if SSL fails
- * Reduced timeout to 5s for faster failure
- */
 export async function parseRssFeed(url: string): Promise<ParsedFeed> {
   const isServer = typeof window === 'undefined';
   console.log(`[RSS Parser] Parsing ${url} (Environment: ${isServer ? 'Server' : 'Browser'})`);
@@ -143,28 +138,50 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
       item: [
         'media:content',
         'media:thumbnail',
-        'media:content',
         'dc:creator',
       ],
       feed: ['atom:link'],
     },
-    timeout: 5000,
+    timeout: 8000,
     headers: {
-      // Use application/xml instead of application/rss+xml
-      // Some servers (like api.xgo.ing) return 406 for rss+xml
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'Accept': 'application/xml, application/rss+xml, text/xml, */*',
     },
   });
 
-  // Try HTTP first for better compatibility, then HTTPS
   const urls = url.startsWith('https://')
     ? [url, url.replace('https://', 'http://')]
-    : [url];
+    : [url, url.replace('http://', 'https://')];
 
   let lastError;
   for (const tryUrl of urls) {
     try {
-      const feed = await parser.parseURL(tryUrl);
+      let feed;
+      if (isServer) {
+        // Use native fetch for better SSL handling on server
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        try {
+          const response = await fetch(tryUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+              'Accept': 'application/xml, application/rss+xml, text/xml, */*',
+            },
+            signal: controller.signal
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const xml = await response.text();
+          feed = await parser.parseString(xml);
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      } else {
+        // Client-side direct fetch (likely to fail CORS unless allowed)
+        feed = await parser.parseURL(tryUrl);
+      }
+
       const items: ParsedFeedItem[] = feed.items.map((item: ExtendedItem) => ({
         title: item.title || 'Untitled',
         link: item.link || '',
@@ -187,18 +204,7 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
     } catch (err: any) {
       lastError = err;
       console.error(`[RSS Parser] Failed to fetch ${tryUrl}:`, err.message);
-      // Skip to next URL if this one failed
       continue;
-    }
-  }
-
-  // If both direct and fallbacks fail, try our internal proxy if on server
-  if (isServer) {
-    console.log(`[RSS Parser] Direct fetch failed for ${url}. Trying internal proxy...`);
-    try {
-      return await parseRssFeedViaInternalProxy(url);
-    } catch (proxyErr: any) {
-      console.error(`[RSS Parser] Internal proxy also failed:`, proxyErr.message);
     }
   }
 
@@ -211,6 +217,10 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
  */
 export async function parseRssFeedViaInternalProxy(url: string): Promise<ParsedFeed> {
   try {
+    const isServer = typeof window === 'undefined';
+    // If on server, just call parseRssFeed directly (avoid network loop)
+    if (isServer) return await parseRssFeed(url);
+
     const proxyUrl = `/api/news/proxy?url=${encodeURIComponent(url)}`;
     const response = await fetch(proxyUrl);
     

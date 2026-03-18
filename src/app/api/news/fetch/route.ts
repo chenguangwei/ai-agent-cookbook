@@ -3,6 +3,7 @@ import { parseRssFeed, parseRssFeedViaProxy } from '@/lib/rss-parser';
 import { addNewsItem, updateNewsStatus, getAllRssSources, getRssSourceById } from '@/lib/db/news';
 import { v4 as uuidv4 } from 'uuid';
 import { getTranslateConfig } from '@/lib/translate.config';
+import * as cheerio from 'cheerio';
 
 const MAX_ITEMS_PER_SOURCE = 20;
 
@@ -138,9 +139,8 @@ export async function POST(request: Request) {
 
         try {
           if (contentStr.includes('<')) {
-            const cheerio = require('cheerio');
             const $ = cheerio.load(contentStr);
-            cleanText = $.text();
+            cleanText = $.root().text();
             imgCount = $('img').length;
             codeCount = $('code, pre').length;
           }
@@ -225,6 +225,7 @@ export async function POST(request: Request) {
 
     async function processSource(source: typeof sources[0]) {
       try {
+        console.log(`[RSS] Processing source: ${source.name} (${source.url})`);
         let feed;
         try {
           feed = await parseRssFeed(source.url);
@@ -246,9 +247,8 @@ export async function POST(request: Request) {
 
           try {
             if (contentStr.includes('<')) {
-              const cheerio = require('cheerio');
               const $ = cheerio.load(contentStr);
-              cleanText = $.text();
+              cleanText = $.root().text();
               imgCount = $('img').length;
               codeCount = $('code, pre').length;
             }
@@ -316,12 +316,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Process in batches
-    for (let i = 0; i < sources.length; i += CONCURRENCY) {
-      const batch = sources.slice(i, i + CONCURRENCY);
-      const batchResults = await Promise.all(batch.map(processSource));
-      results.push(...batchResults);
-      totalAdded += batchResults.reduce((sum, r) => sum + r.addedCount, 0);
+    // Process sequentially to avoid worker crashes or timeouts in serverless
+    for (const source of sources) {
+      const result = await processSource(source);
+      results.push(result);
+      totalAdded += result.addedCount;
     }
 
     return NextResponse.json({
