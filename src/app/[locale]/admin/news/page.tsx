@@ -68,6 +68,8 @@ export default function AdminNewsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [fetching, setFetching] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState(0);
+  const [fetchingTotal, setFetchingTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
@@ -218,42 +220,69 @@ export default function AdminNewsPage() {
 
   // Handle fetch RSS
   const handleFetchRss = async () => {
-    setFetching(true);
-    try {
-      const res = await fetch('/api/news/fetch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      const data = await res.json();
-      if (res.ok) {
-        // Show summary with error count
-        const results = data.results || [];
-        const failedSources = results.filter((r: any) => r.error);
-        const errorCount = failedSources.length;
-        const successCount = results.length - errorCount;
-        
-        let message = `成功获取 ${data.totalAdded || 0} 条新新闻\n成功: ${successCount} 个源`;
-        if (errorCount > 0) {
-          message += `\n失败: ${errorCount} 个源:`;
-          failedSources.slice(0, 5).forEach((f: any) => {
-            message += `\n- ${f.sourceName}: ${f.error}`;
-          });
-          if (errorCount > 5) {
-            message += `\n... 以及其他 ${errorCount - 5} 个源`;
-          }
-        }
-        alert(message);
-        fetchItems();
-      } else {
-        alert(`获取失败: ${data.error}`);
-      }
-    } catch (error) {
-      console.error('Failed to fetch RSS:', error);
-      alert('获取失败，请检查网络连接');
-    } finally {
-      setFetching(false);
+    const enabledSources = sources.filter(s => s.enabled);
+    if (enabledSources.length === 0) {
+      alert('没有启用的源');
+      return;
     }
+
+    setFetching(true);
+    setFetchProgress(0);
+    setFetchingTotal(enabledSources.length);
+    
+    let successCount = 0;
+    let totalAdded = 0;
+    const failedSources: any[] = [];
+
+    for (let i = 0; i < enabledSources.length; i++) {
+      const source = enabledSources[i];
+      setFetchProgress(i + 1);
+      
+      try {
+        const res = await fetch('/api/news/fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceId: source.id })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          successCount++;
+          totalAdded += data.addedCount || 0;
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          failedSources.push({
+            sourceName: source.name,
+            error: errorData.error || `HTTP ${res.status}`
+          });
+        }
+      } catch (error: any) {
+        console.error(`Failed to fetch ${source.name}:`, error);
+        failedSources.push({
+          sourceName: source.name,
+          error: error.message || 'Network error'
+        });
+      }
+    }
+
+    const errorCount = failedSources.length;
+    let message = `获取完成！\n成功获取 ${totalAdded} 条新内容\n成功: ${successCount} 个源`;
+    
+    if (errorCount > 0) {
+      message += `\n失败: ${errorCount} 个源:`;
+      failedSources.slice(0, 5).forEach((f: any) => {
+        message += `\n- ${f.sourceName}: ${f.error}`;
+      });
+      if (errorCount > 5) {
+        message += `\n... 以及其他 ${errorCount - 5} 个源`;
+      }
+    }
+    
+    alert(message);
+    setFetching(false);
+    setFetchProgress(0);
+    setFetchingTotal(0);
+    fetchItems();
   };
 
   // Handle import default
@@ -424,8 +453,17 @@ export default function AdminNewsPage() {
               disabled={fetching}
               className="gap-2"
             >
-              {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              抓取 RSS
+              {fetching ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  抓取中 ({fetchProgress}/{fetchingTotal})
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  抓取 RSS
+                </>
+              )}
             </Button>
           </div>
         </div>

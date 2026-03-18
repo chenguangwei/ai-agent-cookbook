@@ -5,6 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { getTranslateConfig } from '@/lib/translate.config';
 import * as cheerio from 'cheerio';
 
+export const maxDuration = 60; // 60 seconds (Pro plan limit)
+export const dynamic = 'force-dynamic';
+
 const MAX_ITEMS_PER_SOURCE = 20;
 
 const AI_TAG_CATEGORIES = [
@@ -27,30 +30,38 @@ ${AI_TAG_CATEGORIES.join('、')}
 标题：${title}
 摘要：${(summary || '').substring(0, 500)}`;
 
-    const response = await fetch(`${config.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.1,
-        max_tokens: 20,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for AI
 
-    if (!response.ok) return '媒体资讯';
+    try {
+      const response = await fetch(`${config.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.1,
+          max_tokens: 20,
+        }),
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    const result = (data.choices?.[0]?.message?.content || '').trim();
+      if (!response.ok) return '媒体资讯';
 
-    // Validate: must be one of the allowed tags
-    const matched = AI_TAG_CATEGORIES.find(tag => result.includes(tag));
-    return matched || '媒体资讯';
+      const data = await response.json();
+      const result = (data.choices?.[0]?.message?.content || '').trim();
+      
+      // Validate: must be one of the allowed tags
+      const matched = AI_TAG_CATEGORIES.find(tag => result.includes(tag));
+      return matched || '媒体资讯';
+    } finally {
+      clearTimeout(timeoutId);
+    }
   } catch (e) {
     console.error('[AI Tag] Classification failed:', e);
     return '媒体资讯';
