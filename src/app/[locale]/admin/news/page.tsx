@@ -229,11 +229,19 @@ export default function AdminNewsPage() {
       if (res.ok) {
         // Show summary with error count
         const results = data.results || [];
-        const errorCount = results.filter((r: any) => r.error).length;
+        const failedSources = results.filter((r: any) => r.error);
+        const errorCount = failedSources.length;
         const successCount = results.length - errorCount;
+        
         let message = `成功获取 ${data.totalAdded || 0} 条新新闻\n成功: ${successCount} 个源`;
         if (errorCount > 0) {
-          message += `\n失败: ${errorCount} 个源 (可能是 SSL/HTTP 错误)`;
+          message += `\n失败: ${errorCount} 个源:`;
+          failedSources.slice(0, 5).forEach((f: any) => {
+            message += `\n- ${f.sourceName}: ${f.error}`;
+          });
+          if (errorCount > 5) {
+            message += `\n... 以及其他 ${errorCount - 5} 个源`;
+          }
         }
         alert(message);
         fetchItems();

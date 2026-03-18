@@ -74,7 +74,14 @@ export async function POST(request: Request) {
 
     // If sourceUrl provided, fetch and return without saving
     if (sourceUrl) {
-      const feed = await parseRssFeed(sourceUrl);
+      console.log(`[RSS Fetch] Direct fetch requested for URL: ${sourceUrl}`);
+      let feed;
+      try {
+        feed = await parseRssFeed(sourceUrl);
+      } catch (err: any) {
+        console.log(`[RSS Fetch] Direct fetch failed for ${sourceUrl}, trying external proxy...`);
+        feed = await parseRssFeedViaProxy(sourceUrl);
+      }
       return NextResponse.json({
         message: 'Feed fetched successfully',
         feedTitle: feed.title,
@@ -110,8 +117,14 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-
-      const feed = await parseRssFeed(source.url);
+      console.log(`[RSS Fetch] Fetching single source: ${source.name} (${source.url})`);
+      let feed;
+      try {
+        feed = await parseRssFeed(source.url);
+      } catch (err: any) {
+        console.log(`[RSS Fetch] Direct fetch failed for ${source.name}, trying external proxy...`);
+        feed = await parseRssFeedViaProxy(source.url);
+      }
       let addedCount = 0;
 
       for (const item of feed.items.slice(0, MAX_ITEMS_PER_SOURCE)) {

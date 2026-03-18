@@ -135,6 +135,9 @@ function extractVideoThumbnail(item: ExtendedItem): string | undefined {
  * Reduced timeout to 5s for faster failure
  */
 export async function parseRssFeed(url: string): Promise<ParsedFeed> {
+  const isServer = typeof window === 'undefined';
+  console.log(`[RSS Parser] Parsing ${url} (Environment: ${isServer ? 'Server' : 'Browser'})`);
+
   const parser = new Parser({
     customFields: {
       item: [
@@ -189,7 +192,68 @@ export async function parseRssFeed(url: string): Promise<ParsedFeed> {
     }
   }
 
+  // If both direct and fallbacks fail, try our internal proxy if on server
+  if (isServer) {
+    console.log(`[RSS Parser] Direct fetch failed for ${url}. Trying internal proxy...`);
+    try {
+      return await parseRssFeedViaInternalProxy(url);
+    } catch (proxyErr: any) {
+      console.error(`[RSS Parser] Internal proxy also failed:`, proxyErr.message);
+    }
+  }
+
   throw lastError || new Error('Failed to parse feed');
+}
+
+/**
+ * Alternative: fetch RSS using our internal proxy API
+ * This can bypass CORS and SSL issues when called from the client
+ */
+export async function parseRssFeedViaInternalProxy(url: string): Promise<ParsedFeed> {
+  try {
+    const proxyUrl = `/api/news/proxy?url=${encodeURIComponent(url)}`;
+    const response = await fetch(proxyUrl);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Internal proxy failed: ${response.status}`);
+    }
+
+    const xml = await response.text();
+    const parser = new Parser({
+      customFields: {
+        item: [
+          'media:content',
+          'media:thumbnail',
+          'dc:creator',
+        ],
+      }
+    });
+    
+    const feed = await parser.parseString(xml);
+    const items: ParsedFeedItem[] = feed.items.map((item: ExtendedItem) => ({
+      title: item.title || 'Untitled',
+      link: item.link || '',
+      content: item.content,
+      contentSnippet: item.contentSnippet,
+      summary: item.summary,
+      pubDate: item.pubDate,
+      isoDate: item.isoDate,
+      creator: item['dc:creator'] || item.creator,
+      author: item.author,
+      imageUrl: extractImageUrl(item),
+      videoThumbnail: extractVideoThumbnail(item),
+    }));
+
+    return {
+      title: feed.title || 'Untitled Feed',
+      link: feed.link || url,
+      items,
+    };
+  } catch (err: any) {
+    console.error(`[RSS Parser] Internal proxy error for ${url}:`, err.message);
+    throw err;
+  }
 }
 
 /**
