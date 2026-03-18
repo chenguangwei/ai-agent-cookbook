@@ -74,6 +74,7 @@ export default defineConfig({
         thumbnail: s.string().optional(),
         launchUrl: s.string().optional(),
         launchMode: s.string().optional(),
+        date: s.isodate().optional(),
       }),
     },
     showcase: {
@@ -97,6 +98,7 @@ export default defineConfig({
         repoUrl: s.string().optional(),
         websiteUrl: s.string().optional(),
         thumbnail: s.string().optional(),
+        date: s.isodate().optional(),
         body: s.raw(),
       }),
     },

@@ -42,7 +42,7 @@ interface ToolsPageProps {
 
 export default async function ToolsPage({ params, searchParams }: ToolsPageProps) {
   const { locale } = await params;
-  const { cat: categoryParam, pricing: pricingFilter, sort: sortParam = 'alphabetical' } = await searchParams;
+  const { cat: categoryParam, pricing: pricingFilter, sort: sortParam = 'newest' } = await searchParams;
 
   const t = await getTranslations('Tools');
   const tCat = await getTranslations('ToolCategories');

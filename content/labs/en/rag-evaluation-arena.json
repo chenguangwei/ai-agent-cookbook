@@ -8,5 +8,6 @@
   "usersOnline": 89,
   "thumbnail": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800",
   "launchUrl": "https://colab.research.google.com/github/{GITHUB_REPO}/blob/main/content/labs/templates/rag-evaluation/notebook.ipynb",
-  "launchMode": "external"
+  "launchMode": "external",
+  "date": "2026-03-04"
 }

@@ -8,5 +8,6 @@
   "usersOnline": 156,
   "thumbnail": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800",
   "launchUrl": "https://stackblitz.com/github/{GITHUB_REPO}/tree/main/content/labs/templates/ai-agent-chatbot?embed=1&file=index.js&view=editor",
-  "launchMode": "iframe"
+  "launchMode": "iframe",
+  "date": "2026-03-01"
 }
