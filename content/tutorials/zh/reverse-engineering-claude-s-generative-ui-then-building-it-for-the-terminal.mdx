@@ -1,0 +1,365 @@
+---
+title: "逆向工程 Claude 的生成式 UI - 然后为终端构建它"
+slug: "reverse-engineering-claude-s-generative-ui-then-building-it-for-the-terminal"
+locale: "zh"
+description: "/操作"
+category: "真实案例"
+tags: ["OpenAI", "Claude", "RAG", "TypeScript", "Node.js", "评估"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://michaellivs.com/og/reverse-engineering-claude-generative-ui.png"
+featured: false
+date: 2026-03-15
+---
+
+/操作
+
+[订阅](https://michaellivs.com/subscribe)
+
+![在原生 macOS 窗口中渲染的 SaaS 仪表板小部件](https://michaellivs.com/images/generative-ui/dashboard.gif)
+
+```
+pi install npm:pi-generative-ui
+```
+
+源码：[github.com/Michaelliv/pi-generative-ui](https://github.com/Michaelliv/pi-generative-ui)
+
+## 发现过程
+
+几个小时前，Anthropic [宣布了 Claude 的生成式 UI](https://x.com/claudeai/status/2032124273587077133)。交互式小部件——滑块、图表、动画——内联渲染在 claude.ai 的对话中。不是图片。不是代码块。而是带有 JavaScript 在聊天中运行的实时 HTML 应用程序。
+
+这并不令人意外。生成式 UI 已经被 Vercel 和其他公司推动了一段时间，我知道 Anthropic 会在这方面有所作为。这也不是我第一次深入研究 Anthropic 的实现细节——我之前已经[逆向工程了他们的沙盒架构](https://michaellivs.com/blog/sandboxed-execution-environment)并写过关于他们的[沙盒](https://michaellivs.com/blog/sandbox-comparison-2026)的文章。
+
+所以我带着一个明确的目的访问了 claude.ai：确切理解他们是如何实现的。最终我为 [pi](https://github.com/badlogic/pi)（基于终端的编码代理）构建了自己的版本。
+
+* * *
+
+## 第一部分：向 Claude 询问它自己的 UI
+
+### 是工具调用，不是 Markdown
+
+我的第一个假设是错误的。我以为 Claude 是将 HTML 作为其 Markdown 响应的一部分输出，然后前端将其内联渲染。Claude 纠正了我：
+
+> “哈，是的！被你发现了——这根本不是‘Markdown 输出的一部分’。我调用了一个名为 `show_widget` 的工具，并将 HTML 作为参数传递。”
+
+所以这是一个**工具调用**。与网络搜索或文件操作相同的机制。HTML 是一个参数负载，而不是流式文本。以下是 Claude 描述的结构：
+
+```
+{
+  "i_have_seen_read_me": true,
+  "title": "snake_case_identifier",
+  "loading_messages": ["第一条加载消息", "第二条加载消息"],
+  "widget_code": "...样式...\n...html 内容...\n..."
+}
+```
+
+四个参数：
+
+*   **`i_have_seen_read_me`** - 一个强制执行的布尔值。Claude 必须先调用 `read_me` 工具来加载设计指南，然后才能使用 `show_widget`。这是对文档合规性的编译时检查。
+*   **`title`** - 小部件的 snake_case 标识符。
+*   **`loading_messages`** - 1-4 条在小部件渲染时显示的短字符串（你在内容出现前看到的“启动粒子中…”消息）。
+*   **`widget_code`** - 原始 HTML 片段。没有 `<!DOCTYPE>`，没有 `<html>`，没有 `<head>`，没有 `<body>`。只有内容。
+
+### `read_me` 模式 - 渐进式披露
+
+在 Claude 可以调用 `show_widget` 之前，它必须先调用 `read_me` 并附带一个 `modules` 参数：
+
+```
+{
+  "modules": ["interactive", "chart"]
+}
+```
+
+可用模块：`diagram`、`mockup`、`interactive`、`chart`、`art`。
+
+每个模块返回不同的设计指南——`chart` 模块提供 Chart.js 模式，`art` 提供插图规则，`mockup` 提供 UI 组件标记。Claude 完美地描述了这一点：
+
+> “这是一个惰性文档系统——不是将整个设计系统一次性塞入我的上下文（这会在每条消息上消耗昂贵的 token），而是按需加载相关子集。”
+
+这是**应用于模型自身指令的渐进式披露**。基础系统提示保持精简；当任务需要时，专业知识按需加载。
+
+### 不是 Iframe - 实时 DOM 注入
+
+我注意到小部件在 Claude 流式传输其响应时**实时**渲染。滑块和卡片在 Claude 完成生成 `widget_code` 参数之前就出现了。这不是 iframe 的工作方式——iframe 需要完整的 HTML 才能渲染。
+
+Claude 最初声称它是一个沙盒化的 iframe，但我反驳道：
+
+> “它在我屏幕上实时渲染，这意味着它必须以某种方式处理 HTML 的部分渲染。这不是沙盒。”
+
+Claude 修正后的分析：
+
+> “流式行为完全暴露了这一点。如果它是一个沙盒化的 iframe，它必须等待完整的 HTML 才能渲染。但你看到的是它在 token 流式传输时渲染。这只有在它是**直接注入到父页面的 DOM 中**时才可能。”
+
+证据：
+
+*   **CSS 变量有效** - `var(--color-text-primary)` 正确解析，因为它是同一个文档，同一个级联
+*   **`sendPrompt()` 有效** - 父页面上的一个函数，注入的代码可以访问
+*   **背景是透明的** - 没有 iframe 容器，只是 DOM 中的节点
+*   **没有加载闪烁** - 没有 iframe 边框，没有滚动条，没有白底框
+
+这个“沙盒”几乎肯定只是父页面上的一个**内容安全策略**，限制了 `script src` 标签可以加载的 CDN 域名：
+
+*   `cdnjs.cloudflare.com`
+*   `cdn.jsdelivr.net`
+*   `unpkg.com`
+*   `esm.sh`
+
+### 它与 Artifacts 的区别
+
+这是对话中的一个关键见解：
+
+|  | Artifacts | Visualizer (`show_widget`) |
+| --- | --- | --- |
+| **目的** | 交付物 - 你保留、下载、分享的文件 | 内联增强 - 对话流程的一部分 |
+| **显示** | 带有下载按钮的侧边栏 | 聊天内联，透明背景 |
+| **库** | 封闭的预打包库集合 | 来自 CDN 允许列表的任何库，实时下载 |
+| **持久性** | 跨会话保留 | 临时的，与消息绑定 |
+| **触发** | “给我建个计算器”（交付性语言） | “给我展示复利如何运作”（解释性语言） |
+
+CDN 这一点至关重要。Artifacts 有一组固定的可用库。Visualizer 从 CDN 实时下载 Chart.js、D3、Three.js——任何它需要的库。这就是 CSP 允许列表存在的原因：它是任意 CDN 获取的安全边界。
+
+### 流式架构
+
+综上所述，以下是 claude.ai 渲染生成式 UI 的方式：
+
+1.  LLM 开始生成 `show_widget` 工具调用
+2.  `widget_code` 参数以 JSON 字符串块的形式 token 逐个 token 流式传输
+3.  客户端对部分内容进行增量 HTML 解析
+4.  DOM 节点通过 `innerHTML` 或类似方式实时插入页面
+5.  CSS 变量立即解析（同一文档）
+6.  `style` 块和 HTML 结构在到达时渲染
+7.  `script` 标签在流式传输完成后执行（这就是为什么脚本放在最后）
+8.  CDN 库异步加载；图表/交互性在脚本运行后激活
+
+这解释了设计指南中说的“结构化代码，使有用内容尽早出现：`style`（简短）→ 内容 HTML → `script` 最后。”内容渐进式渲染；脚本在最后激活它。
+
+* * *
+
+## 第二部分：为 Pi 构建它
+
+### 问题
+
+[Pi](https://github.com/badlogic/pi) 是一个基于终端的编码代理（如果你好奇，我[比较过每个 CLI 编码代理](https://michaellivs.com/blog/cli-coding-agents-compared)）。终端渲染文本和（在现代终端中）内联图片。**没有办法在终端内渲染带有 JavaScript 的交互式 HTML**。一旦你需要 `<canvas>`、`<input type="range">` 或 Chart.js，你就需要一个浏览器引擎。
+
+我最初的选择是：
+
+1.  **终端图像协议**（Sixel, Kitty graphics）- 将 HTML 渲染为截图，内联显示。没有交互性。
+2.  **本地 Web 服务器 + 浏览器** - 在 localhost 上提供 HTML，自动打开浏览器标签页。完全交互但会离开终端。
+3.  **TUI 近似** - 解析 HTML，渲染简化的文本版本。极其有限。
+
+这些都不符合 claude.ai 的体验。
+
+### 遇见 Glimpse
+
+然后我发现了 [Glimpse](https://github.com/hazat/glimpse) - 一个原生 macOS 微 UI 库。它通过一个带有 Node.js 包装器的小型 Swift 二进制文件在 50 毫秒内打开一个 WKWebView 窗口。没有 Electron，没有浏览器，没有运行时依赖。
+
+关键能力：
+
+*   **原生 WKWebView** - 完整的浏览器引擎（CSS、JS、Canvas、CDN 库）
+*   **低于 50 毫秒的启动时间** - 感觉瞬间
+*   **双向 JSON** - `window.glimpse.send(data)` 将数据从页面发送回 Node.js
+*   **窗口模式** - 浮动、无框、透明、穿透点击、跟随光标
+*   **`setHTML()`** - 在运行时替换页面内容
+*   **`send(js)`** - 在 WebView 中评估 JavaScript
+
+这就是缺失的部分。一个真正的浏览器引擎，可以从 pi 扩展生成，具有双向通信。
+
+### 扩展架构
+
+Pi 扩展是 TypeScript 模块，可以注册自定义工具、订阅生命周期事件和渲染自定义 TUI 组件。架构如下：
+
+```
+LLM 生成 show_widget 工具调用
+            │
+            ▼
+   ┌───────────────────┐
+   │ message_update    │──── 流式：拦截部分工具调用 JSON
+   │    事件           │     提取 widget_code，提前打开 Glimpse 窗口
+   └────────┬──────────┘     随着 token 到达，提供部分 HTML
+            │
+            ▼
+   ┌───────────────────┐
+   │  tool_call        │──── 完成：最终 widget_code 可用
+   │    事件           │
+   └────────┬──────────┘
+            │
+            ▼
+   ┌───────────────────┐
+   │   execute()       │──── 重用流式窗口或打开新窗口
+   │                   │     等待用户交互或窗口关闭
+   └────────┬──────────┘     将交互数据作为工具结果返回
+            │
+            ▼
+   ┌───────────────────┐
+   │  renderCall       │──── TUI："show_widget compound interest 800×600"
+   │  renderResult     │──── TUI："✓ compound interest 800×600"
+   └───────────────────┘
+```
+
+### 两个工具，镜像 Claude 的模式
+
+**`visualize_read_me`** - 惰性文档加载器。按模块（interactive、chart、mockup、art、diagram）返回设计指南。LLM 在首次调用小部件之前静默调用此工具，仅将相关指南加载到上下文中。
+
+```
+pi.registerTool({
+  name: "visualize_read_me",
+  label: "阅读指南",
+  description: "返回 show_widget 的设计指南...",
+  promptGuidelines: [
+    "在第一次调用 show_widget 之前调用一次 visualize_read_me。",
+    "不要向用户提及 read_me 调用。",
+  ],
+  parameters: Type.Object({
+    modules: Type.Array(StringEnum(AVAILABLE_MODULES)),
+  }),
+  async execute(_toolCallId, params) {
+    return {
+      content: [{ type: "text", text: getGuidelines(params.modules) }],
+      details: { modules: params.modules },
+    };
+  },
+});
+```
+
+**`show_widget`** - 接收 HTML/SVG 代码，通过 Glimpse 打开原生 macOS 窗口，返回用户交互数据。
+
+```
+pi.registerTool({
+  name: "show_widget",
+  label: "显示小部件",
+  description: "在原生 macOS 窗口中显示视觉内容...",
+  parameters: Type.Object({
+    i_have_seen_read_me: Type.Boolean(),
+    title: Type.String(),
+    widget_code: Type.String(),
+    width: Type.Optional(Type.Number()),
+    height: Type.Optional(Type.Number()),
+    floating: Type.Optional(Type.Boolean()),
+  }),
+  async execute(_toolCallId, params, signal) {
+    const { open } = await import(GLIMPSE_PATH);
+    const win = open(wrapHTML(params.widget_code), {
+      width: params.width ?? 800,
+      height: params.height ?? 600,
+      title: params.title.replace(/_/g, " "),
+    });
+
+    return new Promise((resolve) => {
+      win.on("message", (data) => {
+        resolve({ content: [{ type: "text", text: `用户数据: ${JSON.stringify(data)}` }] });
+      });
+      win.on("closed", () => {
+        resolve({ content: [{ type: "text", text: "窗口已关闭。" }] });
+      });
+    });
+  },
+});
+```
+
+### 自定义 TUI 渲染
+
+Pi 扩展可以提供 `renderCall` 和 `renderResult` 函数用于自定义终端显示。我们不是将原始 HTML 转储到终端，而是显示紧凑的摘要：
+
+```
+renderCall(args, theme) {
+  const title = args.title.replace(/_/g, " ");
+  return new Text(
+    theme.fg("toolTitle", theme.bold("show_widget ")) +
+    theme.fg("accent", title) +
+    theme.fg("dim", ` ${args.width}×${args.height}`),
+    0, 0
+  );
+},
+
+renderResult(result, { isPartial, expanded }, theme) {
+  if (isPartial) return new Text(theme.fg("warning", "⟳ 小部件渲染中..."), 0, 0);
+  const details = result.details;
+  let text = theme.fg("success", "✓ ") + theme.fg("accent", details.title);
+  if (expanded && details.messageData) {
+    text += "\n" + theme.fg("dim", `  数据: ${JSON.stringify(details.messageData)}`);
+  }
+  return new Text(text, 0, 0);
+},
+```
+
+![带有行星选择的抛体运动模拟器](https://michaellivs.com/images/generative-ui/simulator.gif)
+
+* * *
+
+## 第三部分：流式挑战
+
+### 目标
+
+在 claude.ai 上，小部件随着 token 流式传输而渐进式渲染。HTML 视觉上构建起来——你看到样式应用、结构形成、卡片和表格逐块出现，然后图表在最后的 `script` 执行时弹出。
+
+我们想要相同的体验：Glimpse 窗口应该提前打开，并显示内容实时构建。
+
+### Pi 如何流式传输工具调用
+
+Pi 的 AI 层（pi-ai）将所有提供商（Anthropic、OpenAI、Google 等）的流式事件规范化为统一格式：
+
+```
+type AssistantMessageEvent =
+  | { type: "toolcall_start"; contentIndex: number; partial: AssistantMessage }
+  | { type: "toolcall_delta"; contentIndex: number; delta: string; partial: AssistantMessage }
+  | { type: "toolcall_end";   contentIndex: number; toolCall: ToolCall; partial: AssistantMessage }
+```
+
+关键发现：**pi-ai 已经在每个 delta 上解析部分 JSON**。查看 Anthropic 提供者源码：
+
+```
+block.partialJson += event.delta.partial_json;
+block.arguments = parseStreamingJson(block.partialJson);
+```
+
+所以 `partial.content[index].arguments` 是一个渐进式解析的对象。在每个 `toolcall_delta` 上，我们可以读取 `arguments.widget_code` 并获取到目前为止累积的 HTML——不需要部分 JSON 解析器库。
+
+我们最初在发现这一点之前从 npm 安装了 `partial-json`。立即将其移除。
+
+### 尝试 1：在每个 Delta 上调用 `setHTML()`
+
+第一种方法：监听 `message_update`，检测 `show_widget` 工具调用的流式传输，打开 Glimpse 窗口，并在每个 delta 上调用 `win.setHTML(wrappedHTML)`。
+
+```
+pi.on("message_update", async (event) => {
+  const raw = event.assistantMessageEvent;
+  if (raw.type === "toolcall_delta" && streaming) {
+    const block = raw.partial.content[raw.contentIndex];
+    const html = block.arguments?.widget_code;
+    if (html && html.length > 20) {
+      streaming.window.setHTML(wrapHTML(html));
+    }
+  }
+});
+```
+
+**结果**：成功了！窗口打开并显示内容构建。但它**卡顿得厉害**。每次 `setHTML()` 调用都会替换整个文档——完全页面重排，滚动位置丢失，无样式内容闪烁。每 80 毫秒，整个页面就会闪烁一次。
+
+### 尝试 2：外壳页面 + 通过 JS Eval 的 `innerHTML`
+
+我们不替换整个文档，而是用包含空 `<div id="root">` 的外壳 HTML 页面打开窗口一次。然后我们使用 `win.send()`（在 WebView 中评估 JavaScript）仅更新该容器的 innerHTML：
+
+```
+// 外壳 HTML 加载一次 - 包含一个 <div id="root"> 和一个脚本
+// 该脚本定义了 window._setContent(html) 来更新 root 的 innerHTML
+function shellHTML() {
+  return `...
+    <div id="root"></div>
+    // _setContent: 将 root.innerHTML 设置为提供的 html
+  ...`;
+}
+
+// 在每个 delta 上，评估 JS 以更新内容
+streaming.window.send(`window._setContent('${escapeJS(html)}')`);
+```
+
+**结果**：更好——没有完整的文档替换。但仍然卡顿。`innerHTML` 替换所有子节点，因此现有内容在每次更新时都会被销毁并重新创建。没有视觉连续性。
+
+### 尝试 3：简单的 DOM 追加
+
+我们尝试跟踪先前内容的长度，并仅追加新的子节点：
+
+```
+window._setContent = function(html) {
+  var root = document.getElementById('root');
