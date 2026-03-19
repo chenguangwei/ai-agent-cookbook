@@ -1,0 +1,96 @@
+---
+title: "Tried 200+ Skills in Half a Month, These 8 Are the Most Essential. You Definitely Need the Last One"
+slug: "200-skills-8"
+locale: "en"
+description: "Tried 200+ skills in half a month, these 8 are the most essential. You definitely need the last one."
+category: "Real-world Cases"
+tags: []
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDrA026XgAErfJi.jpg"
+featured: false
+date: 2026-03-19
+---
+
+# Tried 200+ Skills in Half a Month, These 8 Are the Most Essential. You Definitely Need the Last One
+
+Installed, uninstalled, reinstalled. After two weeks of tinkering, I finally found that only these 8 are truly essential.
+
+It's not that they have the most features, but they solve my most real pain points: no more QR code logins, no more repetitive web operations, no more worrying about the agent forgetting, and no more manually managing the state of seven or eight agents.
+
+I've written the installation command after each skill. Just copy and use it.
+
+## agent-browser — Let the Agent Operate the Web for You
+
+Want to scrape a page? Just say: "Go to [website], and fetch the [list]." The agent opens the browser itself, operates the page, and returns structured data. No need to configure environments, handle anti-scraping measures, or maintain code.
+
+```text
+npx skills add vercel-labs/agent-browser@agent-browser
+```
+
+## bb-browser — The No-Login Magic Tool
+
+Previously, if you wanted the agent to post on Xiaohongshu, you had to scan a QR code to log in first, and rescan when the session expired. bb-browser directly uses the state of your local browser—you're already logged in, and the agent operates using your identity. No need to scan the QR code every time to post on Xiaohongshu.
+
+```text
+npx skills add epiral/bb-browser@bb-browser
+```
+
+## OpenCLI — One-Command Operations Across 18 Platforms
+
+Turns manual operations like commenting, following, and searching into command-line interfaces. Covers 18 platforms including Bilibili, Zhihu, Xiaohongshu, X, Reddit, GitHub, etc. It can also self-iterate, turning new web pages into CLIs.
+
+```text
+npx skills add joeseesun/opencli-skill@opencli
+
+```
+
+## skill-vetter — Security Check Before Installing New Skills
+
+The skill market is getting richer, but so are the risks. skill-vetter scans before installation: checks for network outbound calls, reading of sensitive environment variables, writing to system directories, and suspicious base64 decoding.
+
+```text
+npx skills add useai-pro/openclaw-skills-security@skill-vetter
+
+```
+
+## self-improving-agent — Let the Agent Learn from Reflection
+
+It automatically records the mistakes you've corrected, the pitfalls you've encountered, and the work habits you frequently mention. Then it organizes them into "knowledge cards" for proactive use in subsequent tasks. An agent that doesn't reflect will remain a novice no matter how long you train it.
+
+```text
+npx skills add charon-fan/agent-playbook@self-improving-agent
+
+```
+
+## lossless-claw — Give Your Agent Long-Term Memory
+
+A solution recommended by the OpenClaw author. Persistently stores all your conversations in a database, then packages old conversations into tree-structured summaries in the background to control token consumption. Your agent won't "forget" anymore.
+
+```text
+npx skills add Martian-Engineering/lossless-claw
+```
+
+## control-center — The Dashboard for Managing Your Agents
+
+Managing seven or eight agents, and each one goes silent—you don't know if they're dead or alive. This panel solves that: see how many tokens each task consumed, check if each agent is healthy or stuck, and view/modify each agent's memory, persona, and task documents.
+
+```text
+npx skills add aradotso/trending-skills@openclaw-control-center
+
+```
+
+## openclaw-backup — The Final Safety Net for Your Agents
+
+Scheduled backups of the entire agent's configuration files and memory database. If you accidentally "kill" your agent, you can restore it. Configuration, memory, historical conversations—all rolled back with one click.
+
+```text
+npx skills add theagentservice/skills@openclaw-backup
+```
+
+The value of a tool isn't in how many features it has, but in what pain points it solves for you.
+
+These 8 skills are the ones I truly kept after two weeks of tinkering and trying over 200 of them.
+
+Hope they're useful to you.

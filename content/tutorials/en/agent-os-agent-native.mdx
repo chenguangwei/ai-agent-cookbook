@@ -1,0 +1,113 @@
+---
+title: "Recent Thoughts on Agents: OS and Agent-native Applications"
+slug: "agent-os-agent-native"
+locale: "en"
+description: "Recent Thoughts on Agents: OS and Agent-native Applications"
+category: "Real-world Cases"
+tags: ["OpenAI"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://abs.twimg.com/rweb/ssr/default/v2/og/image.png"
+featured: false
+date: 2026-03-17
+---
+
+# Recent Thoughts on Agents: OS and Agent-native Applications
+
+## 1. Agent is an OS; Building a Vertical OS is a Dead End
+
+1/ An Agent is an interaction paradigm, just like a smartphone is an interaction paradigm. You shop, socialize, and manage finances through your phone, but you don't buy a phone specifically for shopping. The same goes for Agents. Vertical domains should not try to build Agents (build phones); they should build applications on top of Agents.
+
+2/ Because the battlefields are completely different. The battlefield for Agents is reasoning capability, orchestration efficiency, and interaction experience. The strengths of vertical domains are domain depth, business understanding, and industry data—these advantages are useless on the OS battlefield. Using domain knowledge to compete with OpenAI or Anthropic on reasoning is like fighting a tank with a knife.
+
+3/ Moreover, the market structure at the OS layer naturally converges. In the PC era, Windows and Mac survived; in the mobile era, iOS and Android survived. There won't be dozens of winners in the Agent OS space either. Spending three years building a vertical Agent to fight head-on is three years you could have spent building an impenetrable stronghold in your own domain.
+
+## 2. Skills Aren't the Answer Either—The Ceiling is Selling Copies
+
+4/ If not building an Agent, what about building a Skill? A Skill has two sides: prompt and script.
+
+5/ A Prompt is a set of instructions that gives the Agent a nudge—"Oh, it can be done this way." It has value; it gives the Agent a direction. But the reasoning work is still done by the Agent itself; the capacity and bandwidth are consumed by the Agent. You haven't helped it reduce any burden. And prompts are text, which can be copied.
+
+6/ A Script is encapsulated external logic—scripts, binary programs, APIs, any form works. The logic is executed externally, so the Agent doesn't have to reason about this domain problem itself. The attention bandwidth consumed to handle this task is reduced. This is one step better than a prompt—from "giving directions" to "doing the work for you."
+
+7/ But if a script has no external state—no database, no accumulated user data, nothing remains after input and output—then the logic is reproducible. Someone else can understand your approach, rewrite it, and achieve the exact same functionality.
+
+8/ So the ceiling for a Skill is selling copies. It's the same as selling Notion templates or GPTs. The better you make it, the easier it is to copy; the more successful you are, the more you prove the demand exists, and the more people rush in to do the same thing. A Skill is an interface, and if there's nothing behind the interface, you're running naked.
+
+## 3. Two Physical Constraints of Agents
+
+9/ Agents have two physical constraints. They are not bugs; they cannot be fixed by the next generation of models. Like the speed of light, you can't wish them away; you can only engineer around them.
+
+10/ First: Context Capacity. Context is a finite container; the more you stuff into it, the worse the performance. This is easy to understand.
+
+11/ Second: Attention Bandwidth. This is less intuitive. In Jin Yong's novels, Zhou Botong has a technique called "Simultaneous Left-Right Mutual Combat"—drawing a circle with the left hand and a square with the right hand. Drawing a circle alone is simple. Drawing a square alone is also simple. But together, both become distorted. It's not that the hands aren't enough; it's that attention is fighting between the two tasks. An Agent simultaneously performs legal reasoning, tracks user intent, and plans the next action within one context—the quality of each task declines. It's not that any single task exceeds its capability; it's that they are competing for the same attention. Attention is zero-sum.
+
+12/ If Agents had infinite capacity and perfect attention, they could do everything themselves and wouldn't need anyone. But reality is: capacity is limited, bandwidth is limited. The fundamental reason Agent-native Applications exist is these two physical constraints.
+
+## 4. Agent-native Application
+
+13/ Back to the barrier problem. The root cause of a Skill's reproducibility is "no external state." The solution is to grow something non-replicable behind the interface. Three things:
+
+14/ Domain State—The user's business context within your service, growing with each interaction. Legal services remember case progress and precedent citations; investment services remember portfolio logic and rebalancing reasons. The more it's used, the thicker it gets; others can't catch up from scratch.
+
+15/ Infrastructure Cost—Domain-fine-tuned small models, specialized knowledge bases, real-time data pipelines. Sustained investment of real money, not something you can get by copying a piece of code.
+
+16/ Cost Advantage from Economies of Scale—Serving 100,000 users simultaneously, the unit cost of infrastructure crushes anyone building their own. A mathematical advantage, unrelated to intelligence.
+
+17/ When a Skill has these three things behind it, it's no longer a Skill; it's an Agent-native Application.
+
+18/ An Application provides two types of value to an Agent, corresponding to the two physical constraints:
+
+    Capability Unlock: Things that couldn't be done before can now be done—breaking through context capacity. Domain knowledge and user history that can't fit into the context are managed externally by the Application, ready to be called upon.
+
+    Cognitive Offload: Things that were done with great effort before are now done easily—releasing attention bandwidth. Domain reasoning is moved externally, no longer fighting with other tasks. It's not done faster; the interference disappears, and everything else is done more accurately.
+
+19/ Here, a common misconception needs correction: Domain State is not memory. Memory suggests general memory management—what to remember, what to forget. That's a topic for the Agent OS layer. Domain State is the user's business context within a specific vertical, a clearly bounded business state machine. Its commercial attribute is asset accumulation—the more it's used, the thicker it gets, the harder it is to migrate. This is your stronghold. Others can copy your Skill, but they can't copy your stronghold.
+
+## 5. OS and Application
+
+20/ Each side has its own proposition. The OS's proposition is WHAT—helping the user accomplish as many and as good things as possible within limited capacity and bandwidth. The Application's proposition is HOW—providing maximum domain value each time it's called. The OS decides what to do; the Application decides how to do it. State is also divided along this line: the OS holds user intent and cross-domain context; the Application holds domain state and business history. Each manages its own, without overstepping.
+
+21/ In previous computing paradigms, the relationship between App and OS was one-way. Word didn't make Windows faster; Taobao didn't make iOS smoother. In the Agent paradigm, it's different—a good Application makes the Agent OS smarter. A legal Application moves legal reasoning out of the Agent's attention; attention is no longer interfered with, other tasks are reasoned more accurately, leading to more precise calls to more Applications, which get more data, become better, and offload more cognitive load... The flywheel spins. This is cognitive symbiosis—a general intelligence and a specialized intelligence coupled through an interface, stronger together than operating alone. This didn't happen in previous computing paradigms.
+
+22/ The best context is no context. The lighter the Agent, the better it performs.
+
+## AI Summary
+
+Below is a structured summary based on the above insights.
+
+### Causal Chain
+
+Agent is an OS → Vertical domains building an OS is a dead end (wrong battlefield, wrong opponent, predetermined outcome) → Skill's ceiling is selling copies (prompts are copyable, scripts without external state are reproducible) → Root cause: Agents have two physical constraints: Context Capacity (can't fit) and Attention Bandwidth (can fit but can't perform well, tasks interfere) → Solution: Agent-native Application (Domain State + Infrastructure + Economies of Scale) → Two values: Capability Unlock (break capacity) + Cognitive Offload (release bandwidth) → OS and Application cognitive symbiosis → The best context is no context.
+
+![](https://pbs.twimg.com/media/HDk5lq5bgAAoWwV.jpg)
+
+### Three-Layer Spectrum
+
+From instruction to tool to service is the process of gradually moving complexity outside the Agent:
+
+- Instruction (Prompt): Gives the Agent a nudge, but the Agent still does the work, bandwidth not reduced. Text is copyable, zero barrier.
+- Tool (Script): External execution returns results, bandwidth reduced. But no external state, logic is reproducible, low barrier.
+- Service (Application): External execution + Persistent State + Infrastructure, bandwidth and capacity significantly reduced. Not reproducible, high barrier.
+
+The leap from Instruction to Tool: from "giving directions" to "doing the work." The leap from Tool to Service: adding Domain State, Infrastructure Cost, Cost Advantage from Economies of Scale.
+
+![](https://pbs.twimg.com/media/HDk55X-bEAAkmwX.jpg)
+
+### Three Non-Replicable Elements (Conditions for the Leap from Skill to Application)
+
+- Domain State: Grows with each interaction, can't catch up from zero.
+- Infrastructure Cost: Requires sustained real monetary investment, not obtainable by copying code.
+- Cost Advantage from Economies of Scale: Mathematical dominance, unrelated to capability.
+
+### Two Values × Two Constraints
+
+- Capability Unlock → Break Context Capacity → Things that couldn't be done, now can.
+- Cognitive Offload → Release Attention Bandwidth → Things done with effort, now done easily (eliminate interference).
+
+### Boundary Between OS and Application
+
+The Agent OS's proposition is WHAT (what to do), holding user intent and cross-domain context. The Agent Application's proposition is HOW (how to do it), holding domain state and business history. Their unique relationship is cognitive symbiosis: good Applications make the OS smarter, a smarter OS calls Applications more precisely.
+
+![](https://pbs.twimg.com/media/HDk6C0abEAcTGZd.jpg)

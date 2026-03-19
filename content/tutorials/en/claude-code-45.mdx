@@ -1,0 +1,84 @@
+---
+title: "45 Most Worth-Knowing Tips for Claude Code After a Year"
+slug: "claude-code-45"
+locale: "en"
+description: "After using Claude Code for almost a year, I just found out someone has compiled all the 45 most worth-knowing tips."
+category: "Real-world Cases"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://abs.twimg.com/rweb/ssr/default/v2/og/image.png"
+featured: false
+date: 2026-03-19
+---
+
+## After using Claude Code for almost a year, I just found out someone has compiled all the 45 most worth-knowing tips.
+
+↓ The conclusion first: most people only use about 30% of its potential.
+
+───
+
+🔋 **Save Tokens / Reduce Costs**
+
+Claude Code's default system prompt consumes nearly 20k tokens—burning 10% of your context before you even start working. After patching, it can be reduced to around 9k, saving about 10k tokens per conversation. The difference is significant with long-term use.
+
+For MCP tools, it's recommended to enable lazy loading (`ENABLE_TOOL_SEARCH: "true"`). Tools are only loaded when needed, not occupying space unnecessarily.
+
+Actively use `/compact` or write a `HANDOFF.md` to hand over to a new session. This is much more precise than waiting for automatic compression.
+
+───
+
+🧠 **Context Management**
+
+AI context is like milk—the fresher, the better. Start a new session for new topics; don't force continuation.
+
+For ultra-long conversations, don't rely on summaries. Use "semi-cloning": keep only the real messages from the latter half of the conversation. This preserves information without distortion. You can configure a hook to trigger automatically when context exceeds 85%.
+
+───
+
+🚀 **Workflow Speed Boost**
+
+Voice is faster than typing, and significantly so. Even if local Whisper models occasionally make transcription errors, Claude can still understand. You can even use it on a plane.
+
+For multitasking, the "cascade method" is recommended: open 3-4 terminal tabs side-by-side and process tasks from left to right in rotation. This keeps you focused on one direction without jumping around.
+
+Git worktree: Work on multiple branches in separate directories independently without interference. Combined with multiple tabs, the efficiency doubles.
+
+Claude can't access sites like Reddit? Configure Gemini CLI as a fallback, relay through tmux, and research tasks can still run.
+
+───
+
+🔍 **Code Quality**
+
+TDD pairs surprisingly well with Claude Code: First, write and commit a failing test, then let Claude write the code to pass the test. With a clear goal, its accuracy is much higher.
+
+Don't sift through GitHub Actions logs yourself. Use `/gha <url>` for one-click analysis: It automatically determines if it's a sporadic flake, a breaking commit, or a configuration issue, providing precise diagnosis.
+
+Regularly run `cc-safe` to scan your `settings.json`, checking if you've accidentally approved dangerous commands like `rm -rf` or `sudo`.
+
+───
+
+🤖 **Advanced: Multi-Agent Orchestration**
+
+Put Claude Code into a Docker container, start it with `--dangerously-skip-permissions`, and let it iterate, fix, and test autonomously. If something goes wrong, it's contained within the sandbox, keeping the host safe.
+
+Go further: Have an outer Claude control a worker Claude inside the container via tmux. Send commands, read outputs, pull results—all without manually switching terminals. A fully automated agent pipeline.
+
+Need to analyze a large codebase in parallel? Let Claude launch multiple sub-agents simultaneously, dividing work across different modules. You can even allocate compute power by task complexity, specifying Opus / Sonnet / Haiku models.
+
+───
+
+📁 **Configuration Habits**
+
+Start `CLAUDE.md` from an empty file. Only add things you find yourself saying repeatedly. Keep it lean. Review it periodically and delete outdated content.
+
+Set up terminal aliases: `c = claude`, `ch = claude --chrome`. The time saved daily is no joke.
+
+Disable auto-updates (`DISABLE_AUTOUPDATER: "1"`) to prevent new versions from breaking your system prompt patches.
+
+───
+
+**The complete list of 45 tips + a one-click installation script** (configuring status bar, dx plugins, aliases, lazy-loaded MCP all at once):
+
+👉 https://t.co/28rVNYEQvR

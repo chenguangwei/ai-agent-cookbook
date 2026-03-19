@@ -1,0 +1,255 @@
+---
+title: "Lessons from Building Claude Code: How We Use Skills [Translated]"
+slug: "claude-code-skills"
+locale: "en"
+description: "Lessons from Building Claude Code: How We Use Skills [Translated]"
+category: "Real-world Cases"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDo4-t_W8AAbv9D.jpg"
+featured: false
+date: 2026-03-18
+---
+
+# Lessons from Building Claude Code: How We Use Skills [Translated]
+
+Author: Thariq Shihipar
+Original: [Lessons from Building Claude Code: How We Use Skills](https://x.com/trq212/status/2033949937936085378)
+
+> **Guide**
+> The author, Thariq Shihipar (@trq212), is an engineer on Anthropic's Claude Code team and one of the core drivers behind the Skills feature. Before joining Anthropic, he co-founded the open-source academic publishing platform PubPub while a graduate student at the MIT Media Lab, and later participated in Y Combinator (W20 batch). He frequently shares firsthand experience and updates on new Claude Code features on X.
+>
+> The value of this article lies in the fact that it's a practical summary from within the Anthropic team. There are already hundreds of Skills actively used internally at Anthropic. The classification system and writing tips presented here are distilled from these real internal practices. If you're already using Claude Code but haven't seriously created Skills, this article can help you establish a systematic approach: what types of Skills to make, how to write them, and how to promote them within your team.
+> Quoted tweet
+> https://t.co/45C3gKydTK
+> https://x.com/i/web/status/2033949937936085378
+
+Skills have become one of the most widely used extension points in Claude Code. They are flexible, easy to create, and simple to distribute.
+
+But precisely because they are so flexible, it can be hard to know how to use them best. What types of Skills are worth creating? What's the secret to writing a good Skill? When should you share them with others?
+
+We use Claude Code Skills extensively within Anthropic, with hundreds currently in active use. Here are the lessons we've learned from using Skills to accelerate development.
+
+## What are Skills?
+
+If you're not familiar with Skills, we recommend first checking out [our documentation](https://code.claude.com/docs/en/skills) or the latest [Skilljar course on Agent Skills](https://anthropic.skilljar.com/introduction-to-agent-skills). This article assumes you have a basic understanding of Skills.
+
+We often hear a misconception that Skills are "just markdown files." But the most interesting thing about Skills is precisely that they are not just text files—they are folders that can contain scripts, resource files, data, and more, which the agent can discover, explore, and use.
+
+In Claude Code, Skills also have [rich configuration options](https://code.claude.com/docs/en/skills#frontmatter-reference), including registering dynamic hooks.
+
+We've found that the most interesting Skills in Claude Code are often those that creatively leverage these configuration options and folder structures.
+
+After reviewing all our Skills, we noticed they roughly fall into several recurring categories. The best Skills clearly fit into one category; confusing Skills often span several. This isn't a definitive list, but it's a good starting point if you want to check what types of Skills your team might be missing.
+
+![](https://pbs.twimg.com/media/HDo5BLyXEAA8McR.jpg)
+
+## 1. Libraries & API References
+
+Skills that help you correctly use a library, command-line tool, or SDK. They can target internal libraries or common libraries that Claude Code occasionally gets wrong. These Skills typically include a folder of reference code snippets and a list of gotchas that Claude should avoid when writing code.
+
+Examples:
+
+- billing-lib — Your internal billing library: edge cases, footguns, etc.
+- internal-platform-cli — Examples for each subcommand of your internal CLI tool and their use cases
+- frontend-design — Helps Claude better understand your design system
+
+## 2. Product Validation
+
+Skills that describe how to test or verify that code works correctly. They are often paired with external tools like Playwright, tmux, etc., to complete the validation.
+
+Validation Skills are very useful for ensuring the correctness of Claude's output. It's worth having an engineer spend a week specifically refining your validation Skills.
+
+Consider techniques like having Claude record a video of the output process so you can see what it actually tested, or enforcing programmatic state assertions at each step. These are typically implemented by including various scripts in the Skill.
+
+Examples:
+
+- signup-flow-driver — Runs the signup → email verification → onboarding flow in a headless browser, with hooks to insert state assertions at each step
+- checkout-verifier — Drives the checkout UI with Stripe test cards, verifying that invoices end up in the correct state
+- tmux-cli-driver — Tests interactive command-line interfaces that require a TTY
+
+## 3. Data Fetching & Analysis
+
+Skills that connect to your data and monitoring systems. These Skills might include data-fetching libraries with credentials, specific dashboard IDs, etc., along with instructions for common workflows and data retrieval methods.
+
+Examples:
+
+- funnel-query — "Which events need to be correlated to see signup → activation → paid conversion?", plus the actual table where the canonical user_id is stored
+- cohort-compare — Compares retention or conversion rates between two user groups, flags statistically significant differences, links to cohort definitions
+- grafana — Data source UIDs, cluster names, issue → dashboard mapping table
+
+## 4. Business Processes & Team Automation
+
+Skills that automate repetitive workflows into a single command. The instructions for these Skills are usually simple, but they may depend on other Skills or MCP (Model Context Protocol). For these Skills, saving previous execution results in log files helps the model maintain consistency and reflect on prior runs.
+
+Examples:
+
+- standup-post — Aggregates your task tracker, GitHub activity, and previous Slack messages → generates a formatted standup report, delta-only
+- create-<ticket-system>-ticket — Enforces schema (valid enum values, required fields) plus post-creation workflows (notify reviewers, post link in Slack)
+- weekly-recap — Merged PRs + closed tickets + deployment records → formatted weekly report
+
+## 5. Code Scaffolding & Templates
+
+Skills that generate boilerplate code for specific functionalities in your codebase. You can combine these Skills with scripts. They are particularly useful when your scaffolding has natural language requirements that can't be covered by code alone.
+
+Examples:
+
+- new-<framework>-workflow — Sets up a new service/workflow/handler with your annotations
+- new-migration — Your database migration file template plus common pitfalls
+- create-app — Creates a new internal application, pre-provisioned with your authentication, logging, and deployment configuration
+
+## 6. Code Quality & Review
+
+Skills that enforce code quality standards within your team and assist with code reviews. They can include deterministic scripts or tools for maximum reliability. You might want to run these Skills automatically as part of a hook or in a GitHub Action.
+
+- adversarial-review — Generates a fresh-perspective subagent to nitpick, implements fixes, iterates until issues degrade into nitpicking [Note: A subagent refers to another independent Claude instance launched by Claude Code while performing a task. The approach here is to have a new instance that "hasn't seen this code" perform the code review to avoid the original instance's mental inertia.]
+- code-style — Enforces code style, especially styles that Claude doesn't handle well by default
+- testing-practices — Guidance on how to write tests and what to test
+
+## 7. CI/CD & Deployment
+
+Skills that help you pull, push, and deploy code. These Skills might reference other Skills to gather data.
+
+Examples:
+
+- babysit-pr — Monitors a PR → retries flaky CI → resolves merge conflicts → enables auto-merge
+- deploy-<service> — Build → smoke test → progressive traffic shifting with error rate comparison → automatic rollback on metric degradation
+- cherry-pick-prod — Isolated worktree → cherry-pick → resolve conflicts → create PR using a template
+
+## 8. Runbooks
+
+Skills that take a symptom (e.g., a Slack message, an alert, or an error signature), guide you through a multi-tool investigation process, and finally generate a structured report.
+
+Examples:
+
+- <service>-debugging — Maps symptoms to tools → query patterns, covering your highest-traffic services
+- oncall-runner — Pulls alerts → checks common suspects → formats investigation conclusions
+- log-correlator — Given a request ID, pulls matching logs from all systems it might have passed through
+
+## 9. Infrastructure Operations
+
+Skills that perform routine maintenance and operational tasks—some involving destructive operations that require safety guardrails. These Skills make it easier for engineers to follow best practices when performing critical operations.
+
+Examples:
+
+- <resource>-orphans — Finds orphaned Pods/Volumes → posts to Slack → wait and observe → user confirmation → cascading cleanup
+- dependency-management — Your organization's dependency approval workflow
+- cost-investigation — "Why did our storage/egress costs suddenly spike?", with specific buckets and query patterns
+
+![](https://pbs.twimg.com/media/HDo5Dl9XsAAWY7o.jpg)
+
+Once you've decided what Skill to create, how do you write it? Here are some best practices and tips we've summarized.
+
+We recently also released the [Skill Creator](https://claude.com/blog/improving-skill-creator-test-measure-and-refine-agent-skills), making it even easier to create Skills in Claude Code.
+
+## Don't State the Obvious
+
+Claude Code already knows your codebase very well, and Claude itself is proficient in programming, including many default opinions. If your Skill primarily provides knowledge, focus on information that can break Claude's conventional thinking patterns.
+
+The [frontend design Skill](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) is a great example—it was built by an Anthropic engineer through repeated iteration with users to improve Claude's design taste, specifically avoiding typical tropes like Inter font and purple gradients.
+
+## Create a Gotchas Section
+
+![](https://pbs.twimg.com/media/HDo5GDjbEAMAlZj.jpg)
+
+The most informative part of any Skill is the gotchas section. These sections should be gradually built up based on common failure points Claude encounters when using your Skill. Ideally, you'll continuously update the Skill to document these gotchas.
+
+## Leverage the File System & Progressive Disclosure
+
+![](https://pbs.twimg.com/media/HDo5JN1WQAAPmnG.jpg)
+
+As mentioned earlier, a Skill is a folder, not just a markdown file. You should treat the entire file system as a tool for Context Engineering and progressive disclosure. Tell Claude what files are in your Skill, and it will read them when appropriate. [Note: Context Engineering is a concept proposed and popularized in 2025 by Andrej Karpathy and others, referring to the careful design and management of context information input to large language models to maximize output quality. Progressive disclosure borrows from UI design, meaning not dumping all information to the model at once, but letting it read as needed, thereby saving context window space.]
+
+The simplest form of progressive disclosure is pointing to other markdown files for Claude to use. For example, you can split detailed function signatures and usage examples into references/api.md.
+
+Another example: if your final output is a markdown file, you can place a template file in assets/ for copying.
+
+You can have folders for references, scripts, examples, etc., to help Claude work more efficiently.
+
+## Don't Constrain Claude Too Much
+
+Claude usually tries hard to follow your instructions, and because Skills are highly reusable, you need to be careful not to write instructions that are too specific. Give Claude the information it needs, but leave it the flexibility to adapt to specific situations. For example:
+
+![](https://pbs.twimg.com/media/HDo5Lo1W8AArlpo.jpg)
+
+## Consider Initial Setup
+
+![](https://pbs.twimg.com/media/HDo5OrObEAAENZA.jpg)
+
+Some Skills may require the user to provide context for initial setup. For example, if you create a Skill that posts standup updates to Slack, you might want Claude to first ask the user which Slack channel to post to.
+
+A good practice is to store this setup information in a config.json file within the Skill directory, as in the example above. If the configuration isn't set up yet, the agent will ask the user for the relevant information.
+
+If you want the agent to present the user with structured multiple-choice questions, you can have Claude use the AskUserQuestion tool.
+
+## The description Field is for the Model
+
+When Claude Code starts a session, it builds a list of all available Skills and their descriptions. Claude scans this list to determine "Is there a Skill for this request?" So the description field is not a summary—it describes when this Skill should be triggered. [Note: This advice is often overlooked. Many people write descriptions like "What this Skill does," but Claude needs "When to use this Skill." A good description reads more like an if-then condition than a feature list.]
+
+![](https://pbs.twimg.com/media/HDo5Rspa0AApYXU.jpg)
+
+## Memory & Data Storage
+
+![](https://pbs.twimg.com/media/HDo5UrhbEAAqlvQ.jpg)
+
+Some Skills can implement a form of memory by storing data internally. You can use the simplest approach—an append-only text log file or JSON file—or a more complex one like a SQLite database.
+
+For example, a standup-post Skill could maintain a standups.log file recording every standup update it has written. Then, the next time it runs, Claude will read its own history and know what has changed since yesterday.
+
+Data stored in the Skill directory might be deleted when the Skill is upgraded, so you should store data in a stable folder. Currently, we provide `${CLAUDE_PLUGIN_DATA}` as a stable data storage directory for each plugin.
+
+## Storing Scripts & Generated Code
+
+One of the most powerful tools you can give Claude is code. Provide Claude with scripts and libraries, letting it focus its energy on orchestration—deciding what to do next, rather than reconstructing boilerplate.
+
+For example, in your data science Skill, you could include a set of function libraries for fetching data from event sources. To enable Claude to perform more complex analysis, you could provide a set of helper functions, like this:
+
+![](https://pbs.twimg.com/media/HDo5XLwXcAA-ocz.jpg)
+
+Claude can then generate scripts on the fly to combine these capabilities for more advanced analysis—like answering questions such as "What happened on Tuesday?"
+
+![](https://pbs.twimg.com/media/HDo5ZkUW0AAMmfP.jpg)
+
+## On-Demand Hooks
+
+Skills can include hooks (On Demand Hooks) that are only activated when the Skill is invoked and remain active for the entire session. This is suitable for hooks that are more subjective, which you don't want running all the time but can be extremely useful sometimes.
+
+Examples:
+
+- /careful — Intercepts dangerous operations in Bash like rm -rf, DROP TABLE, force-push, kubectl delete via a PreToolUse matcher. You only need this when you know you're operating in production—having it on all the time would drive you crazy [Note: PreToolUse is one of Claude Code's hook mechanisms, triggered before Claude calls a tool each time. You can check the command Claude is about to execute in this hook and block it if it's a dangerous operation. Here, /careful is an on-demand activated Skill; this hook is only registered when the user actively invokes it.]
+- /freeze — Prevents any Edit/Write operations outside of specific directories. Particularly useful when debugging: "I want to add logs but keep accidentally 'fixing' unrelated code"
+
+One of the biggest benefits of Skills is that you can share them with others on your team.
+
+You can share Skills in two ways:
+
+- Commit Skills to your code repository (under ./.claude/skills)
+- Create them as plugins, building a Claude Code Plugin Marketplace where users can upload and install plugins (see [documentation](https://code.claude.com/docs/en/plugin-marketplaces))
+
+For small teams collaborating on fewer code repositories, committing Skills to the repository is sufficient. But each Skill committed adds a bit of burden to the model's context. As you scale, an internal plugin marketplace allows you to distribute Skills while letting team members decide which ones to install themselves.
+
+## Managing a Plugin Marketplace
+
+How do you decide which Skills go into the plugin marketplace? How do people submit them?
+
+We don't have a dedicated central team deciding these things; we prefer to let the most useful Skills emerge naturally. If you have a Skill you want others to try, you can upload it to a sandbox folder on GitHub and recommend it to everyone in Slack or other forums.
+
+When a Skill gains enough traction (judged by the Skill's author themselves), a PR can be submitted to move it into the plugin marketplace.
+
+A word of caution: it's easy to create low-quality or duplicate Skills, so it's important to have some review mechanism before official release.
+
+## Composing Skills
+
+You might want Skills to depend on each other. For example, you might have a file-upload Skill for uploading files and a CSV-generation Skill for generating CSVs and uploading them. This dependency management isn't currently supported in the plugin marketplace or within Skills, but you can directly reference other Skills by name; as long as they are installed, the model will call them.
+
+## Measuring Skill Effectiveness
+
+To understand how a Skill is performing, we use a PreToolUse hook to log Skill usage internally within the company ([example code here](https://gist.github.com/ThariqS/24defad423d701746e23dc19aace4de5)). This allows us to discover which Skills are popular or which are triggered less frequently than expected.
+
+Skills are an extremely powerful and flexible tool for AI agents, but this is still early days, and we're all figuring out how to use them well.
+
+Rather than treating this article as an authoritative guide, consider it a collection of practical tips validated through our practice. The best way to understand Skills is to start creating them, experiment, and see what works for you. Most of our Skills started as a few lines of text and a gotcha list, gradually improving as people added new edge cases Claude encountered.
+
+I hope this article is helpful. Please let me know if you have any questions.

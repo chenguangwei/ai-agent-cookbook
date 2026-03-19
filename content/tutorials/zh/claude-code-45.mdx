@@ -1,0 +1,85 @@
+---
+title: "Claude Code 一年最值得知道的 45 条技巧"
+slug: "claude-code-45"
+locale: "zh"
+description: "用 Claude Code 快一年了，才发现有人已经把最值得知道的 45 条技巧全整理出来了。"
+category: "Real-world Cases"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://abs.twimg.com/rweb/ssr/default/v2/og/image.png"
+featured: false
+date: 2026-03-19
+---
+
+## 用 Claude Code 快一年了，才发现有人已经把最值得知道的 45 条技巧全整理出来了。
+
+
+↓ 先说结论：大多数人只用到了 30%。
+
+───
+
+🔋 省 token / 省成本
+
+Claude Code 默认 system prompt 占掉你将近 2 万 token——还没开始干活就先烧了 10% context。打补丁之后能压到 9k，每次对话省约 1 万 token，长期用差距非常明显。
+
+MCP 工具建议开懒加载（ENABLE_TOOL_SEARCH: "true"），用到时才载入，不白白占位。
+
+主动 /compact 或写 HANDOFF.md 交接给新会话，比等自动压缩精准得多。
+
+───
+
+🧠 Context 管理
+
+AI 的 context 像牛奶——越新鲜越好用。新话题就开新会话，不要硬续。
+
+超长对话别靠摘要，用"半克隆"：只保留后半段的真实消息，不丢信息、不失真。可以配置 hook，context 超过 85% 时自动触发。
+
+───
+
+🚀 工作流提速
+
+语音比打字快，而且快得多。本地 Whisper 模型转录偶尔出错，Claude 照样能理解，在飞机上都能用。
+
+多任务推荐"级联法"：3-4 个终端标签页并排，从左到右轮流处理，专注一个方向不乱跳。
+
+Git worktree：多分支在不同目录独立工作，互不干扰，配合多标签效果翻倍。
+
+Claude 无法访问 Reddit 等网站？配置 Gemini CLI 作 fallback，通过 tmux 中转，研究类任务照样跑。
+
+───
+
+🔍 代码质量
+
+TDD 配 Claude Code 意外好用：先写失败的测试并提交，再让 Claude 写代码通过测试——有了明确目标，它的准确率高得多。
+
+GitHub Actions 报错别自己翻 log，用 /gha <url> 一键分析：自动判断是偶发 flake、breaking commit 还是配置问题，定位精准。
+
+定期跑 cc-safe 扫描你的 settings.json，检查有没有不小心批准过 rm -rf、sudo 这类危险命令。
+
+───
+
+🤖 进阶：多 Agent 编排
+
+把 Claude Code 扔进 Docker 容器，开 --dangerously-skip-permissions，让它自主迭代、自主修复、自主测试——出了问题也只在沙盒里，主机安全。
+
+更进一步：外层 Claude 通过 tmux 控制容器内的 worker Claude。发指令、读输出、拉结果，全程不用手动切换终端，完全自动化的 agent 流水线。
+
+需要并行分析大型代码库？让 Claude 同时启动多个子 agent，分工处理不同模块，还可以按任务复杂度指定 Opus / Sonnet / Haiku 分配算力。
+
+───
+
+📁 配置习惯
+
+CLAUDE.md 从空文件开始，只把你反复说的话加进去，保持精简。定期审查，删掉过时内容。
+
+设置终端别名：c = claude，ch = claude --chrome，每天省出来的时间不是玩笑。
+
+关掉自动更新（DISABLE_AUTOUPDATER: "1"），避免新版本让 system prompt 补丁失效。
+
+───
+
+完整的 45 条技巧 + 一键安装脚本（状态栏、dx 插件、别名、懒加载 MCP 全部一次配好）：
+
+👉 https://t.co/28rVNYEQvR

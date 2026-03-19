@@ -1,0 +1,97 @@
+---
+title: "半个月试了200多个skills，最刚需的就这8个，最后一个你一定需要"
+slug: "200-skills-8"
+locale: "zh"
+description: "半个月试了200多个skills，最刚需的就这8个，最后一个你一定需要"
+category: "Real-world Cases"
+tags: []
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDrA026XgAErfJi.jpg"
+featured: false
+date: 2026-03-19
+---
+
+# 半个月试了200多个skills，最刚需的就这8个，最后一个你一定需要
+
+
+装了删，删了装，折腾半个月，最后发现最刚需的其实就这8个。
+
+不是它们功能最全，是它们解决了我最真实的痛苦：不再扫码登录、不再重复操作网页、不再担心龙虾失忆、不再手动管理七八只龙虾的状态。
+
+安装命令我直接写在每个技能后面，复制就能用。
+
+agent-browser —— 让龙虾替你操作网页
+
+想爬个页面？直接说："去某某网站，把某某列表抓下来"。龙虾自己打开浏览器，操作页面，把数据结构化返回。不需要配置环境、不需要处理反爬、不需要维护代码。
+
+```text
+npx skills add vercel-labs/agent-browser@agent-browser
+```
+
+bb-browser —— 免登录神器
+
+以前想让龙虾去小红书发个帖，你得先扫码登录，session过期了还要重新扫。bb-browser直接调用你本地浏览器的状态——你已经登录过了，龙虾直接用你的身份操作。某书发帖不用每次扫码了。
+
+```text
+npx skills add epiral/bb-browser@bb-browser
+```
+
+OpenCLI —— 18个平台一句话操作
+
+把评论、关注、搜索这些手动操作，全部做成命令行接口。覆盖B站、某乎、小红书、X、Reddit、GitHub等18个平台。还能自迭代，把新的网页也做成CLI。
+
+```text
+npx skills add joeseesun/opencli-skill@opencli
+
+```
+
+skill-vetter —— 装新技能前先安检
+
+技能市场越来越丰富，风险也在增加。skill-vetter会在安装前扫描：是否有网络外发、是否读取敏感环境变量、是否写入系统目录、是否有可疑的base64解码。
+
+```text
+npx skills add useai-pro/openclaw-skills-security@skill-vetter
+
+```
+
+self-improving-agent —— 让龙虾学会复盘
+
+它会自动记录你纠正过的错误、踩过的坑、反复提到的工作习惯。然后整理成"知识卡片"，在后续任务中主动调用。不会复盘的龙虾，养多久都是新手。
+
+```text
+npx skills add charon-fan/agent-playbook@self-improving-agent
+
+```
+
+lossless-claw —— 给龙虾长记忆
+
+OpenClaw作者推荐的方案。把你的对话都持久化存到数据库，然后在后台把旧对话打包成树状结构的摘要，来控制Token消耗。龙虾不会再"失忆"了。
+
+```text
+npx skills add Martian-Engineering/lossless-claw
+```
+
+control-center —— 养龙虾的仪表盘
+
+养了七八只龙虾，每只都失联了，你不知道它们死没死。这个面板解决它：看每个任务消耗了多少Token、看每只龙虾健不健康有没有卡住、查看和修改每只龙虾的记忆人设任务文档。
+
+```text
+npx skills add aradotso/trending-skills@openclaw-control-center
+
+```
+
+openclaw-backup —— 养龙虾的最后一道保险
+
+定时备份整个龙虾的配置文件和记忆库。不小心把龙虾养死了也能恢复。配置、记忆、历史对话，全部一键回档。
+
+```text
+npx skills add theagentservice/skills@openclaw-backup
+```
+
+其实工具的价值不在于功能多全，在于解决你的什么痛点。
+
+这8个技能，是我折腾半个月，试了200多个之后，真正留下来的。
+
+希望对你有用。
