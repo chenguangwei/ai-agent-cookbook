@@ -1,0 +1,166 @@
+---
+title: "🔥别再为图床交\"智商税\"了 Cloudflare R2 + PicList 配一次，躺平一辈子😄"
+slug: "cloudflare-r2-piclist"
+locale: "zh"
+description: "🔥别再为图床交\"智商税\"了 Cloudflare R2 + PicList 配一次，躺平一辈子😄"
+category: "Real-world Cases"
+tags: ["RAG"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDsZaJNbIAAFhoJ.jpg"
+featured: false
+date: 2026-03-19
+---
+
+# 🔥别再为图床交"智商税"了 Cloudflare R2 + PicList 配一次，躺平一辈子😄
+
+
+免费、快、零维护！！！
+
+如果你还在为图床流量费焦虑，或者受够了 GitHub 图床被墙的窘境，这套方案值得一试。本文带你从零配置 Cloudflare R2 + PicList，实现「截图 → 粘贴 → 自动上传 → 拿到链接」的完整工作流。
+
+## 一、为什么选 Cloudflare R2 + PicList
+
+
+用过图床的人多少都踩过坑：七牛、又拍的免费额度越缩越小，阿里云 OSS 的下行流量按 GB 收费让人提心吊胆，GitHub 图床在国内访问全靠缘分。
+
+Cloudflare R2 的出现基本终结了这些烦恼。它基于 S3 协议，但下行流量完全免费——这是和其他对象存储最大的区别。搭配 PicList 客户端，原生支持 R2，不用装插件，还自带 WebP 转换和云端相册管理。
+
+简单对比一下主流方案的费用：
+
+![费用对比](https://pbs.twimg.com/media/HDsLMPObcAAN2Yq.png)
+
+对于个人博客、笔记配图这种量级，R2 的免费额度基本用不完。
+
+## 二、Cloudflare R2 配置
+
+
+2.1 创建 Bucket + 生成 API Token
+
+登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)，进入左侧 R2 Object Storage，点击 Create bucket。
+
+![](https://pbs.twimg.com/media/HDsMz3Pa8AAlVfS.jpg)
+
+Bucket 命名建议简洁有意义，比如 img 或 blog-images。
+
+![](https://pbs.twimg.com/media/HDsNtb9agAANUCX.jpg)
+![](https://pbs.twimg.com/media/HDsOG3caoAAkn-J.jpg)
+
+创建完成后，进入 R2 概览页 → Manage R2 API Tokens → Create API Token，权限选择 Object Read & Write，作用范围可以限定到刚才创建的 Bucket。
+
+![](https://pbs.twimg.com/media/HDsOc5kaEAAJ3xO.jpg)
+![](https://pbs.twimg.com/media/HDsOqr4aMAAUQJN.jpg)
+![](https://pbs.twimg.com/media/HDsOzhya0AA4QGw.jpg)
+
+创建成功后会显示三个关键值，务必保存好：
+
+- Access Key ID
+- Secret Access Key
+- Endpoint URL（格式类似 https://<account_id>.r2.cloudflarestorage.com）
+
+![](https://pbs.twimg.com/media/HDsPTIubIAAmWiv.jpg)
+
+> ⚠️ Secret Access Key 只显示一次，关掉就看不到了。建议立刻保存好
+
+2.2 绑定自定义域名 & WAF 防护
+
+如果你的域名已经托管在 Cloudflare（或通过 CNAME 接入），绑定自定义域名非常简单：进入 Bucket → Settings → Custom Domains → Connect Domain，输入你想用的子域名（比如 img.yourdomain.com），Cloudflare 会自动添加 DNS 记录并签发 SSL 证书。
+
+![](https://pbs.twimg.com/media/HDsRm6Ya4AA1RLC.jpg)
+![](https://pbs.twimg.com/media/HDsR8kHaUAAThjo.jpg)
+![](https://pbs.twimg.com/media/HDsShV9acAA5Wd0.jpg)
+
+绑定完成后，浏览器访问 https://img.yourdomain.com 确认生效。
+
+(也可以不做，不影响使用) WAF 防护建议一并配置，防止有人恶意高频请求刷你的操作次数。进入域名的 Security → WAF，添加一条 Rate Limiting 规则：比如同一 IP 每分钟请求超过 100 次就 Block。还可以加一条 Referer 校验规则，只允许你自己的域名引用图片。
+
+## 三、PicList 客户端配置
+
+
+3.1 连接 R2
+
+到 [PicList GitHub Releases](https://github.com/Kuingsmile/PicList/releases) 下载最新版本安装。
+
+打开 PicList，进入 图床设置，选择 Amazon S3（R2 兼容 S3 协议）。填入以下信息：
+
+![](https://pbs.twimg.com/media/HDsUkyRa4AA0fJb.jpg)
+![](https://pbs.twimg.com/media/HDsUbP0bgAEaxS-.jpg)
+
+存储路径模板用 {year}/{month} 按月归档，{md5} 作为文件名避免重名，整理起来会很清晰。
+
+填好后点击 确认 并 设为默认图床，随便上传一张图测试，能拿到链接就说明配置成功。
+
+3.2 WebP 自动转换 & 相册管理
+
+PicList 内置了上传前格式转换功能。进入 PicList 设置 → 上传处理 →图片预处理设置 →图片格式选择→目标 WebP，开启后所有图片在上传前会自动转为 WebP 格式。实测一张 500 KB 的 PNG 截图转换后通常在 100–150 KB 左右，体积缩减约 70%。
+
+![](https://pbs.twimg.com/media/HDsVTMOb0AAtjBr.jpg)
+![](https://pbs.twimg.com/media/HDsVWJLaEAAnWei.jpg)
+
+🔥PicList 中设置功能很多，不一一赘述自行研究即可。🚀
+
+【亮点功能】PicList 的相册功能可以直接读取 R2 Bucket 中的文件列表，相当于一个云端图片管理器。支持批量删除、搜索、一键复制 Markdown / HTML / URL 格式链接，管理起来比登录 Cloudflare Dashboard 方便得多。
+
+![](https://pbs.twimg.com/media/HDsWEPua8AAEFis.jpg)
+
+## 四、Obsidian 集成
+
+
+如果你用 Obsidian 写笔记或博客，可以实现粘贴图片自动上传。
+
+安装社区插件 Image Auto Upload（作者 renmu123），在插件设置中将上传方式设为 PicList，确保 PicList 客户端在后台运行。配置完成后，在 Obsidian 里直接粘贴截图，插件会自动调用 PicList 上传到 R2 并替换为远程链接，写作流程完全无感。
+
+![](https://pbs.twimg.com/media/HDsWfBibkAACzJH.jpg)
+
+## 
+
+🚀网上教程有很多，可以参考下面这篇🔥
+
+
+> Quoted tweet
+> https://t.co/lvvO3dO6eh
+> https://x.com/i/web/status/2029762985628160110
+
+## 五、常见问题 FAQ
+
+
+R2 什么情况会产生费用？
+
+存储超过 10 GB、Class A 写操作超过 100 万次/月、Class B 读操作超过 1000 万次/月才会开始计费。个人图床场景下很难触及这些上限。超出部分的价格也很低，存储 $0.015/GB/月，操作 $4.50/百万次（Class A）。
+
+图片访问 403 怎么排查？
+
+最常见的原因是 Bucket 没有开启公开访问，或者自定义域名没有正确绑定。进入 Bucket Settings 确认 Custom Domain 状态为 Active，或者检查是否开启了 Allow Public Access。
+
+域名没有托管在 Cloudflare 能用吗？
+
+可以，但稍微麻烦一点。你需要在原 DNS 服务商添加 CNAME 记录指向 R2 提供的域名。不过如果域名本身已经在 Cloudflare 管理，整个流程会顺滑很多。
+
+PicList 和 PicGo 怎么选？
+
+PicList 是 PicGo 的增强分支，完全兼容 PicGo 插件生态。对于 R2 图床场景，两者差异还是挺明显的：
+
+![](https://pbs.twimg.com/media/HDsWla_aYAAzDm8.jpg)
+
+简单来说，PicGo 搭配 R2 需要装插件、配参数，PicList 开箱即用。如果你是新用户，直接选 PicList 省事。
+
+## 六、总结
+
+
+Cloudflare R2 + PicList 是目前个人图床的最优解之一：零流量费、全球 CDN 加速、客户端原生支持、WebP 自动转换，配置一次后基本不用再操心。
+
+如果后续想折腾更多，可以研究 Cloudflare Workers 做图片实时处理（裁剪、缩放），或者开启 Cloudflare 的 Image Resizing 功能按需生成不同尺寸。
+
+有问题欢迎评论区交流。
+
+如果对你有用，欢迎关注 收藏  转发！
+
+## Thread
+
+
+### 🙂
+
+https://x.com/Lonely__MH/status/2034258027646456124
+
+_No text or media._

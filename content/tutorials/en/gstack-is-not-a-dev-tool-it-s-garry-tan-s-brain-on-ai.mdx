@@ -1,0 +1,126 @@
+---
+title: "gstack is not a dev tool. it’s Garry Tan’s brain on AI"
+slug: "gstack-is-not-a-dev-tool-it-s-garry-tan-s-brain-on-ai"
+locale: "en"
+description: "gstack is not a dev tool. it’s Garry Tan’s brain on AI"
+category: "Real-world Cases"
+tags: ["Claude", "Planning", "Evaluation"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDuNQrCbMAAoKrd.jpg"
+featured: false
+date: 2026-03-19
+---
+
+# gstack is not a dev tool. it’s Garry Tan’s brain on AI
+
+
+[gstack](https://github.com/garrytan/gstack) hit 23,000+ GitHub stars in less than a week. i’ve been using it for a few days. the /plan-ceo-review skill alone convinced me this belongs in a different category than most AI dev toolkits.
+
+not another spec-driven dev kit
+
+gstack is not a coding boilerplate or a prompt collection.
+
+spec-driven development tools give you templates. describe what you want, get code back. useful, but predictable.
+
+gstack turns Claude Code into a virtual engineering team: a CEO rethinks your product, an engineering manager locks your architecture, a paranoid reviewer finds production bugs, a QA lead opens a real browser and clicks through your app.
+
+each skill encodes a way of thinking.
+
+![gstack workflow: planning-first, review-heavy](https://pbs.twimg.com/media/HDuO2iDW4AEMihN.jpg)
+
+who built this
+
+don't laugh at me here, he is excellent
+
+but lets skip his background introduction, and only need to frame that gstack developed by YC CEO who has evaluated and advised thousands of startups, a person who absorbs patterns about what works and what doesn’t at a rate very few people can match.
+
+if you want advice about your startup idea or product strategy, he’s among the most qualified people you could talk to. that accumulated judgment is what he put into gstack.
+
+/plan-ceo-review alone is worth the install
+
+/plan-ceo-review puts Claude into CEO/founder mode. it rethinks the problem to find what it calls the “10-star product hiding inside your request.” four modes:
+
+- scope expansion: what’s the real opportunity?
+- selective expansion: hold scope, cherry-pick the best expansions
+- hold scope: maximum rigor on the current plan
+- scope reduction: strip to essentials
+
+this is how a seasoned startup evaluator thinks about products, structured as a repeatable methodology. startup consultants charge lots of money for similar thinking, often with less structure.
+
+where a consultant gives you opinion shaped by experience, /plan-ceo-review runs a structured evaluation framework on an AI that can research your market in real-time. the framework encodes how someone who has evaluated thousands of startups approaches the problem. the AI supplies the research depth and stamina.
+
+not just planning — judgmental planning
+
+ gstack isn’t the only framework with planning phases. SpecKit has specify, clarify, plan, analyze. OpenSpec has explore, propose, specs, design, tasks. BMAD has analyst, PM, architect agents. GSD has init, discuss, plan, verify. HumanLayer’s RPI has research, plan, implement with human gates.
+
+most SDD frameworks plan before they build. many of them validate and review too. gstack does all of that.
+
+the difference is whose thinking drives the planning.
+
+![SDD frameworks vs gstack: generic planning process vs founder-grade evaluation](https://pbs.twimg.com/media/HDuS1nkWYAA16Vt.jpg)
+
+other frameworks encode a generic planning process: generate specs, break into tasks, validate consistency, review, execute. any experienced engineering team could have written those workflows.
+
+gstack encodes the method, workflow, scope, and mindset of a specific person who has reviewed thousands of startups over many years. when /plan-ceo-review asks “what’s the 10-star product hiding inside this request,” that’s not a generic prompt. that’s how Garry Tan actually evaluates ideas at YC. the four modes (scope expansion, selective expansion, hold scope, scope reduction) reflect real patterns from someone who has seen what works and what doesn’t across thousands of companies.
+
+other frameworks give you a planning process. gstack gives you a planning perspective — one shaped by years of evaluating real startups at the highest level.
+
+this addresses the biggest problem with AI-assisted development: hallucination.
+
+the AI confidently produces code that looks correct but is wrong. there’s a human version of this too. we overestimate our ideas and skip validation because building feels like progress. i’ve been there.
+
+gstack’s planning catches both kinds:
+
+- /plan-ceo-review validates whether you’re building the right thing before you write a line
+- /plan-eng-review locks architecture so the AI doesn’t hallucinate a broken system
+- /plan-design-review catches design assumptions before they become expensive redesigns
+- /review catches implementation hallucinations after code is written
+
+by the time you start coding, your idea has been stress-tested and your architecture validated.
+
+![how gstack catches both AI and human hallucination](https://pbs.twimg.com/media/HDuTiRFXgAAZrL0.jpg)
+
+the human side is where this got interesting for me. after /plan-ceo-review pushes back on your assumptions, you end up with a more honest picture of your idea. left to my own devices, i tend toward optimism about my projects. having something systematically challenge that optimism before i spend a week building saves real time.
+
+hot take: better than talking to Garry Tan himself
+
+Garry Tan is one person with 24 hours in a day. his knowledge has blind spots.
+
+/plan-ceo-review takes his evaluation framework and questioning methodology and runs it on an AI agent that can:
+
+- research your market in real-time instead of relying on memory
+- go deep in domains he can’t personally cover (niche technologies, regional markets, regulatory details)
+- never fatigue or rush because the next meeting starts in five minutes
+- apply the same rigorous process consistently
+
+what makes him valuable in a conversation is how he approaches a problem, which questions he asks, and the order he asks them in. that’s what he packaged into gstack. combine that questioning methodology with an AI that has the internet and unlimited patience, and the result can be more thorough than a 30-minute conversation with the man himself.
+
+don’t just copy the output
+
+if you run /plan-ceo-review and accept the suggestion without reading it, you lose most of the value.
+
+read the reasoning behind the conclusions. push back on what it suggests and notice how well-structured the arguments are. the skills model a way of thinking, and the output is a conversation starter. when you engage with that process, you start absorbing the thinking patterns.
+
+i noticed this concretely with my own project. i had Claude Code skills accumulating across machines and needed to check for duplicates, so i wrote [agent-skill-manager](https://github.com/luongnv89/agent-skill-manager), a basic dedup script. when i ran it through gstack’s review process, the CEO mode rethought the problem, the eng manager locked the architecture, the reviewer caught gaps.
+
+the reviews pushed me somewhere i hadn’t gone on my own: this could be a package manager for AI agent skills. discovery, versioning, dependency resolution, a registry. an npm for skills.
+
+![gstack totally transforms the scope, the vision of agent-skill-manager](https://pbs.twimg.com/media/HDuV8TPXsAEjH0A.jpg)
+
+i was focused on the immediate problem. gstack’s structured questioning showed me what i was sitting on.
+
+something special, still evolving
+
+gstack launched six days ago. it updates every day.
+
+most of my time so far has been with /plan-ceo-review and /plan-eng-review. i haven’t gone deep on the other skills yet. but i’m enjoying every conversation with these two, and i’m looking forward to more hands-on time with the rest — /qa, /review, /browse, /retro.
+
+after running the planning skills on a few of my own projects, i can tell this is different from the other AI dev tools i’ve tried. the packaging of an experienced builder’s thinking methodology as runnable AI skills, available to everyone, is new. i haven’t seen another tool try this.
+
+i want to see where it goes.
+
+[try gstack](https://github.com/garrytan/gstack)
+
+thanks @garrytan , i am one of Tan Clan now!
