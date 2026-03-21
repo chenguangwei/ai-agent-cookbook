@@ -1,0 +1,319 @@
+---
+title: "Uber's 5-Month Enterprise AI Transformation (7 Lessons for Chinese Companies)"
+slug: "uber-ai-7"
+locale: "en"
+description: "Uber's 5-Month Enterprise AI Transformation (7 Lessons for Chinese Companies)"
+category: "Real-world Cases"
+tags: ["Claude", "RAG"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HD17HWoXYAEaxed.jpg"
+featured: false
+date: 2026-03-21
+---
+
+# Uber's 5-Month Enterprise AI Transformation (7 Lessons for Chinese Companies)
+
+Five months ago, an Uber engineer created a repository on their own and put 2 Claude skills in it. No project approval, no formal process, no one knew about it.
+
+Five months later, this repository evolved into an ecosystem of 500+ skills used across Uber, covering the entire development lifecycle from code review to production monitoring.
+
+How did this happen?
+
+> This article is based on a structured summary of an approximately 50-minute official Anthropic live stream interview with Adam Hooda, Head of Uber AI Foundations. Significant structuring and refinement have been applied.
+
+## 1. Background: Who's Speaking and Why It's Worth Listening
+
+Adam Hooda, Head of Uber AI Foundations & DevX.
+
+Early in his career, he was the 8th iOS engineer at Twitter (worked on photo and video tweet features). His core responsibility now: transitioning Uber's entire software development process towards Agentic Engineering.
+
+The interviewer is Dax from the Anthropic Claude Code team.
+
+Why should Chinese companies pay attention to this conversation? Because Uber is not a company that talks about AI transformation in PowerPoint presentations. They have 200+ microservices, thousands of engineers, and global-scale complexity.
+
+And in less than a year, they scaled Claude Skills from 2 to 500+, a process that happened almost entirely from the bottom up.
+
+This is not a "pilot project" story; it's **first-hand data from a real enterprise-level AI engineering transformation**.
+
+## 2. Growth Timeline: From 2 Skills to 500+
+
+This was not a top-down driven project.
+
+**October 2025:**
+A heavy Claude user from the Uber Developer Platform team created the company's first skill marketplace (Marketplace) on their own.
+It contained only 2 skills:
+- CI Log Classification and Fix
+- Code Review
+
+No strategic planning, no management push. Purely a personal experiment by an engineer.
+
+**End of 2025:** Grew to about 20 skills. Slow, organic growth.
+
+**January 2026: The inflection point.** Adam himself started using Claude Code deeply and experienced the power of the skill system. Simultaneously, the same "aha moment" occurred collectively within Uber's engineering teams—as Adam put it, "like dominoes."
+
+**Now (March 2026):**
+- Golden Marketplace: 200+ curated skills
+- Plus team and individual marketplaces: Total exceeds 500
+- 20 new skills added just in the week before the interview
+
+Notable growth pattern: From October to December (3 months), grew to 20.
+From January to March (3 months), exploded from 20 to 500+.
+The first phase was the seeding period; the second phase was network effects.
+The trigger was the engineers' first "aha moment experience."
+When they genuinely used a skill to accomplish something previously impossible, they started actively creating new skills.
+
+![](https://pbs.twimg.com/media/HD12anSboAIvraS.png)
+
+## 3. Architecture Design: A Two-Tier Marketplace System
+
+500 skills sounds like a lot. But if the quality is inconsistent—duplicate, conflicting, or outdated skills mixed together—it can ruin the experience. Uber's solution is a two-tier structure.
+
+**1⃣ First Tier: Golden Marketplace**
+- Out-of-the-box: Automatically loaded when engineers launch Claude Code, no manual marketplace or plugin configuration needed.
+- Strict admission: Each submitted skill undergoes code review, CI/CD pipeline, and LLM-as-Judge automatic evaluation (the system tests based on expected inputs/outputs; only passes meeting sufficient criteria enter).
+- Covers the entire SDLC: From requirements research, code implementation, testing, to production monitoring.
+- Each skill has a clear Owner, documentation, and performance guarantees.
+- Target scale: About 100 core skills (not the more, the better).
+
+**2⃣ Second Tier: Personal and Team Marketplaces**
+- Engineers can quickly experiment in personal repositories.
+- Share skills via URL for small-scale idea validation.
+- Not constrained by the Golden Marketplace's strict standards.
+- Validated effective skills can gradually "graduate" to the Golden Marketplace.
+
+Adam's quote: "The best skills often come from someone's late-night discovery across the entire engineering team, not from centralized team decisions."
+
+Design philosophy: Strict control over core experience + free innovation at the edges.
+Not an either/or choice, but two layers operating in parallel.
+This balancing strategy ensures default experience quality without stifling bottom-up innovation.
+
+![](https://pbs.twimg.com/media/HD123n5acAAnqSH.png)
+
+## 4. Killer Skills: Which Ones Truly Changed How Work Gets Done
+
+**1⃣ Code Review Family**
+Not a single "quick review" button, but an entire family of skills:
+
+![](https://pbs.twimg.com/media/HD13JgIboAA3g3X.png)
+
+Why layer them? Because not every PR needs the same intensity of review. Daily small changes go through a fast track; core business logic changes go through deep review—engineers choose based on the change's importance.
+
+**2⃣ Verification Skills**
+Adam says this is his current primary focus, especially for mobile development:
+- Launch multiple simulators simultaneously.
+- Automatically orchestrate tests under different configurations (light/dark mode, different languages, different device sizes).
+- Core problem: Claude helped you implement a feature; how do you know it actually runs?
+This problem is common to all teams using AI-assisted coding. Code generation is easy; verifying code correctness is hard. Uber's approach is to automate verification itself using the skill system.
+
+**3⃣ Performance Optimization Skills**
+Created by Uber engineers Ankit and Uday.
+They have years of deep experience optimizing Go and Java services and encoded this tribal knowledge into skills.
+Key design principle—deterministic output:
+> "We tried 5 optimizations, 3 succeeded, 2 were not applicable."
+Not vague "I optimized your code."
+
+Why is deterministic output so important?
+Two reasons:
+First, it allows engineers without equivalent expertise to trust and use the skill's results.
+Second, it makes the effect verifiable, providing a baseline for future improvements.
+
+**4⃣ Invisible Skills**
+Adam believes the best Skill is one you don't know is running.
+An engineer came to him saying: "I needed to start a service locally for testing, and Claude just handled it." Later, they discovered a "start service" skill running in the background.
+This seamless experience is the ideal state of skill design—users don't need to know what's helping in the background; the Agent judges what's needed, automatically calls, and completes it.
+
+---
+
+## 5. Meta-Skills: Skills That Make Skills
+
+**1⃣ Skill Workshop—The Core Tool for Internal Training**
+Uber's clever way of teaching engineers about skills:
+1. Don't directly teach Markdown format and syntax for skills.
+2. Let engineers work normally first—implement features, debug issues, complete daily tasks.
+3. Run Skill Workshop; it analyzes your recent conversation sessions and automatically proposes skills that could be extracted from them.
+
+Effect: Engineers suddenly realize—their daily workflows, problem-solving methods, and accumulated experience can be distilled into reusable skills. This is a powerful "aha moment." Skills are no longer an abstract concept requiring extra learning but a natural extension of their own working style.
+
+Moreover, skills have self-healing capabilities. You create a skill, it works for a while, then stops working due to environmental changes—Claude can automatically rewrite and fix it. When engineers see this "skill self-healing" ability, trust builds quickly.
+
+**2⃣ Large-Scale Skill Discovery Experiments**
+Adam and engineer Israel conducted two interesting experiments:
+Experiment 1: Have a Claude Agent team research the entire Uber engineering Wiki, identify all multi-step processes, and propose converting them into skills.
+Experiment 2: Have an Agent run `--help` on all Uber internal CLI tools and propose wrapping them as skills.
+
+Key finding: If it's just basic CLI wrapping (turning command lines into skill calls), the value is limited.
+But if the Skill can modify or enhance CLI functionality—like combining multiple commands, adding intelligent parameter selection, adding error handling—it provides significant additional value.
+This finding helped the team establish a clear judgment standard: what's worth making into a skill, and what's not.
+
+---
+
+## 6. From Custom Agents to General Agent + Skills
+
+Adam has worked in AI for years and describes a clear paradigm shift:
+> **The year before last (2025):** Everyone talked about building custom Agents.
+The typical process was spending weeks developing a specialized Agent using an Agent SDK, making it operate in a specific way, performing specific tasks.
+> **Last year (2026):** General Agent framework (Claude) + Skills = Arbitrary specialization.
+No need to build an Agent for every requirement.
+
+Adam uses a *The Matrix* analogy: When Neo gets the kung fu program uploaded and says "I know kung fu"—loading a skill pack feels like that.
+
+Real-world case:
+Adam himself comes from an iOS development background,
+but with a data science skill pack, he can immediately build data dashboards on any topic, with Claude helping him ask deep analytical questions like a data scientist.
+He doesn't need to spend months learning data science; he just needs to load the right skill pack.
+
+This means:
+- Data Scientist + Engineering Skill Pack → Writes more robust queries and data pipelines.
+- Engineer + Data Science Skill Pack → Quickly validates hypotheses, creates experiments, builds visualizations.
+- Non-technical person + Basic Development Skill Pack → Can complete documentation site setup without knowing Git commands.
+
+Skill packs are breaking down barriers between professional domains.
+Previously, "T-shaped talent" was more of an ideal to cultivate.
+Now, through skill packs, it becomes a reality that can be instantly achieved.
+
+## 7. Feature Pipeline: One Engineer's Crazy Experiment
+
+Uber engineer Ashutosh Bhatia independently created hundreds of skills.
+His most notable work is a feature assembly line system,
+using Skill orchestration to achieve end-to-end feature development:
+
+![](https://pbs.twimg.com/media/HD14_naa0AAHzAJ.png)
+
+The most ingenious part is his debugging philosophy:
+> "If something goes wrong, I don't manually fix that line of code. I go back to the system level, improve the planning skill or testing skill, preventing this type of defect from happening again."
+
+This is a meta-level way of thinking: not fixing symptoms, but improving the system that generates the code.
+In the short term, it might be more time-consuming, but in the long term, it continuously improves the quality of the entire pipeline.
+Adam admits this is still "very experimental" work, but he sees preliminary results. It represents a possibility: the engineer's role shifts from writing code to designing and optimizing the system that generates code.
+
+## 8. SDLC Folding: How Skill Chains Cover the Entire Lifecycle
+
+Adam mentions an important architectural observation:
+Skills are not just point tools; they can be chained together to cover the entire software development lifecycle.
+A complete chain from idea to launch for a feature:
+
+![](https://pbs.twimg.com/media/HD15ecXbYAA1DJi.png)
+
+This means Claude can orchestrate the entire SDLC. Engineers no longer switch between different tools but complete all work in a unified Agent environment.
+Adam emphasizes: "This is not saying Claude is automatically running Uber.
+Humans are still responsible for inputs and outputs. But Claude becomes a powerful coordinator."
+
+## 9. Skill Evaluation: How to Know if a Skill is Good
+
+Adam admits this is still early. But Uber is already building a multi-dimensional evaluation framework:
+
+![](https://pbs.twimg.com/media/HD15xluaQAE3713.png)
+
+Core principle: Don't over-evaluate; it stifles experimentation.
+The goal is to ensure the core ~100 SDLC-critical skills are reliable; let the rest grow freely.
+
+Hard standard for a good skill—deterministic output: A Skill should clearly report what it did, what succeeded, what failed.
+"Tried 5 optimizations, 3 succeeded, 2 were not applicable"—this kind of output is enterprise-grade trustworthy.
+
+## 10. Future Directions: Three Frontiers
+
+**1⃣ Team Memory System**
+Uber engineers Matos and intern Alex are building a team-level memory system:
+- Store valuable conversation sessions into a **graph database**.
+- Provide a "recall" skill to pull previously discovered context via Graph RAG.
+- Target scenarios: New engineers can immediately access accumulated team solutions and architectural decisions upon joining; cross-team collaboration can quickly understand problems other teams have already solved.
+
+Challenges to solve:
+Memory hierarchy (what to forget? what goes into working memory/short-term/long-term?),
+Decay function (when does memory start to expire?),
+Privacy permissions (who can access what memory?),
+Relevance judgment (how to ensure recalled memory is useful, not noise?).
+
+**2⃣ Self-Evolving Skills**
+Vision: Collect telemetry data and actual usage data from all Skills. During CI/CD builds or regularly scheduled tasks, the system automatically analyzes the data, proposes improvements, or even directly upgrades skills.
+Skills are no longer static instruction sets but living entities that continuously learn and evolve from usage.
+
+**3⃣ Skill Inheritance Model**
+A base Skill that users can further specialize while inheriting all capabilities of the base version.
+Core logic is centrally maintained; personalized adjustments are made locally.
+This finds a balance between standardization and personalization.
+
+## 11. Claude as a Personal Extension
+
+Adam also shares his personal usage patterns.
+It's worth mentioning separately because it shows how enterprise managers deeply use AI tools:
+- Added a personal profile MD file in Claude: Writing style, personal information, work background.
+- Ask Claude "Who am I?", and it accurately answers: You are Adam, leading the AI Foundations team at Uber, these are your collaborators, main projects, and work style.
+- Created an "Agentic EM" (Agentic Engineering Management) marketplace: No longer manually asking engineers for status updates; use Claude to pull scattered existing information and generate reports matching his style.
+- Run multiple Claude instances simultaneously—one for research, one for building internal tools.
+- Development environment configuration, shell setup, debugging—all things previously "didn't have time to handle" are now handed to Claude.
+
+Adam says: "I've never felt this creative in my career.
+I actually work more hours than before because there's so much I can do.
+I need to consciously hit the brakes and pause, otherwise I'd be overwhelmed by ideas."
+
+He describes Claude as "my extension"—not just a generic tool, but a personalized assistant that understands his style, priorities, and work context.
+
+## 12. Lessons for Chinese Companies
+
+Uber's AI engineering transformation has direct reference value for Chinese companies—especially those with a certain R&D scale, considering or already using AI-assisted development (To B users).
+
+**1⃣ Lesson 1: Don't Wait for Strategy; Start with 1 Person's Experiment**
+Uber's 500 skills weren't planned; they grew from 1 engineer's 2 skills.
+The most common trap for Chinese companies is "plan first, then approve projects, then hire people, then pilot."
+Uber's experience shows: **Let the most active engineers play with it first.
+The seeding period doesn't need management permission, doesn't need a budget,
+just needs one passionate person and a repository.
+
+**2⃣ Lesson 2: Two-Tier Governance is the Right Architecture**
+Completely open = Skill quality collapses, user experience fragments.
+Completely centralized = Innovation suffocates, engineers feel no ownership.
+Uber's Golden Marketplace + Personal Marketplace two-tier structure precisely solves this contradiction.
+If you're promoting the scaled adoption of AI tools within your company,
+this governance model is worth copying directly:
+A central team maintains the core skill library (strict quality standards), while allowing teams and individuals to freely experiment (low barrier, fast iteration).
+
+**3⃣ Lesson 3: Skills > Custom Agents**
+The mainstream approach for Chinese companies' AI adoption is "build an Agent for each business scenario."
+Uber's experience is: This path doesn't work—high development cost, even higher maintenance cost, each Agent is independent technical debt.
+The new paradigm is: General Agent + Skill Packs.
+One Claude (or any sufficiently good base model) plus domain skills can cover the vast majority of scenarios.
+Skills are lightweight Markdown files, low creation cost, fast iteration speed, and can be maintained by business engineers themselves.
+
+**4⃣ Lesson 4: Encode Tribal Knowledge into Skills**
+All companies have this problem: The most valuable knowledge is in the heads of a few senior engineers.
+They leave, the knowledge disappears. Code comments and documentation never keep up with reality.
+Uber's performance optimization skill is a perfect case—two senior engineers encoded years of Go/Java tuning experience into a skill; now any engineer can use it. **Skills are the best container for tribal knowledge** because they don't just record knowledge; they turn knowledge into executable actions.
+
+**5⃣ Lesson 5: Deterministic Output is the Foundation of Enterprise Trust**
+"I optimized your code"—this output is acceptable for personal use, not in an enterprise environment.
+Enterprises need:
+"Tried 5 optimizations, 3 succeeded, 2 were not applicable; here are the specific changes and rationale for each optimization."
+When designing enterprise-grade Skills, **always pursue verifiable, deterministic output**. This isn't just a technical requirement; it's a prerequisite for building organizational trust.
+
+**6⃣ Lesson 6: Prioritize Investing in Meta-Skills**
+Skills that make skills (Skill Workshop), skills that evaluate skills (LLM-as-Judge pipeline), tools that extract skills from conversations—these "meta-layer" capabilities yield exponential returns.
+Simple reason: 1 meta-skill can spawn 100 business skills. If your resources are limited, build the meta-infrastructure first, automate skill production and evaluation.
+
+**7⃣ Lesson 7: Redefining the Engineer's Role**
+Adam puts it bluntly:
+In the AI era, those foundational engineering practices important to humans—commit queues, CI systems, various toolchains—become more important, not less.
+Because now not only humans rely on these systems; Agents rely on them too.
+Implication for Chinese companies: Don't neglect engineering infrastructure because you have AI.
+On the contrary, invest more resources to strengthen it, because quality gates now constrain not only people but also Agents.
+The new role for the best engineers isn't writing more code but designing and optimizing the systems that generate code.
+
+---
+
+Is your company using AI-assisted development? What pitfalls have you encountered? I'd love to hear real experiences from teams of different sizes.
+
+---
+
+*Data source: Anthropic official live stream, March 2026. Interviewer Dax (Anthropic Claude Code team) with Adam Hooda (Head of Uber AI Foundations & DevX).
+
+## Thread
+
+### Dear Respected Readers,
+
+https://x.com/li9292/status/2035018424859205938
+
+The Li Jiu Er Editorial Team extends to you
+our most solemn and sincere apology and correction:
+The timeframe is these five months from October

@@ -1,0 +1,75 @@
+---
+title: "Harness Engineering is Cybernetics"
+slug: "harness"
+locale: "en"
+description: "Harness Engineering is Cybernetics"
+category: "Agentic Workflows"
+tags: ["OpenAI", "Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://abs.twimg.com/rweb/ssr/default/v2/og/image.png"
+featured: false
+date: 2026-03-19
+---
+
+Harness Engineering is Cybernetics
+
+While reading OpenAI's article on Harness Engineering[1], I had an indescribable feeling. Then it suddenly clicked: I've seen this pattern before—not once, but three times.
+
+The first time was in the 1780s with Watt's centrifugal governor[2]. Before it existed, a worker had to stand next to the steam engine and manually adjust the valve. With it, a mechanical device with weighted flyballs could automatically sense speed and regulate the valve. The worker didn't disappear, but their job changed: from turning the valve by hand to designing the governor.
+
+The second time was Kubernetes[3]. You declare the desired state—three replicas, this image, these resource limits. A controller continuously observes the actual state. When a discrepancy arises, the controller reconciles: restarting crashed pods, scaling replicas, rolling back problematic deployments. The engineer's job shifted from restarting services to writing the specifications the system uses to reconcile.
+
+The third time is now. OpenAI describes a group of engineers who no longer write code. Instead, they design environments, build feedback loops, encode architectural constraints into rules—and then AI agents write the code. Five months, one million lines of code[1], not a single line handwritten. They call this "Harness Engineering" (building constraint frameworks like "reins" and "harnesses" for AI agents).
+
+Three times, the same pattern. Norbert Wiener[4] gave it a name in 1948: Cybernetics, from the Greek κυβερνήτης—the steersman. You no longer turn the valve by hand; you steer the ship.
+
+Every time this pattern emerges, it's because someone has created sensors and actuators powerful enough to close the feedback loop at that level.
+
+Why the Codebase is the Last Fortress
+
+Codebases aren't devoid of feedback loops; they just exist at lower levels. Compilers close the loop at the syntax level. Test suites close the loop at the behavior level. Linters close the loop at the style level. These are genuine cybernetic controls—but they can only check properties that can be mechanically verified. Does it compile? Do the tests pass? Does it follow the rules?
+
+Everything above that—does this change align with the system architecture? Is this the right approach? Will this abstraction create hidden problems as the codebase grows?—has neither sensors nor actuators. Only humans could operate at that level, and they had to handle both sides simultaneously: judging quality and writing fixes.
+
+Large language models change both ends at once. They can perceive at levels previously reserved for humans—and can also act at those same levels: refactoring a module, redesigning an inconsistent interface, rewriting an entire test suite around the truly important contracts. For the first time, the feedback loop can close at the level where critical decisions are made.
+
+But closing the loop is a necessary condition, not a sufficient one. Watt's governor needed tuning. Kubernetes controllers need correct specifications. And getting LLMs to work on your codebase requires something even harder.
+
+Calibrating Sensors and Actuators
+
+Getting a basic feedback loop running—tests the agent can run, CI that outputs parseable results, error messages that point toward fixes—is just the baseline. Carlini has already demonstrated this[5]: he had 16 parallel agents build a C compiler using surprisingly simple prompts[6], but the testing infrastructure was meticulously designed. "Most of my effort went into designing the environment around Claude—tests, environment, feedback mechanisms."
+
+The harder problem is calibrating the sensors and actuators with knowledge specific to your system. Most people get stuck here and then blame the agents.
+
+"It keeps getting it wrong. It doesn't understand our codebase." This diagnosis is almost always wrong. Agents fail not due to lack of capability, but because the knowledge they need—what "good" looks like, which patterns your architecture encourages, which ones it avoids—is locked in your head, never externalized. Agents don't learn by osmosis. If you don't write it down, they'll make the same mistake on the hundredth run as they did on the first.
+
+The essence of this work is making your judgment machine-readable. Architecture documents describing actual layers and dependency directions. Custom linting rules with built-in fix guidance. Golden examples encoding your team's aesthetic standards. OpenAI discovered this too[1]: they spent 20% of their Fridays cleaning up "AI garbage code"—until they encoded the standards into the Harness itself.
+
+The Only Way Out
+
+Everything these practices demand—documentation, automated testing, codified architectural decisions, fast feedback loops—has always been correct. Every software engineering book published in the last three decades recommends them. Most people skip these steps because the cost of skipping is slow and diffuse: gradual quality decline, painful onboarding for newcomers, silently accumulating technical debt.
+
+Agentic engineering makes that cost extreme. Skip documentation, and agents will ignore your specifications—not on one PR, but on every PR, at machine speed, around the clock. Skip tests, and the feedback loop simply cannot close. Skip architectural constraints, and drift will outpace your ability to fix it. And the trap is: if the agents don't know what "clean" looks like, you can't use agents to clean up the mess. Without calibration, the machine that creates the problems is equally incapable of solving them.
+
+The practices haven't changed. The cost of ignoring them has become unbearable.
+
+The generate-verify asymmetry—the intuition behind P vs NP[7], empirically validated with LLMs by Cobbe et al.[8]—points the way forward. Generating a correct solution is harder than verifying one. You don't need to surpass the machine in implementation ability; you need to surpass it in judgment ability: defining what "correct" looks like, identifying where the output is wrong, judging if the direction is right.
+
+The workers who designed Watt's governor never went back to turning the valve. Not because they couldn't, but because it no longer made sense.
+
+Reference Links
+[1] Harness Engineering article: https://t.co/jzMo4arK5s
+[2] Watt's centrifugal governor: https://t.co/ctRxZYFXeZ
+[3] Kubernetes: https://t.co/D7NdAdi8tV
+[4] Norbert Wiener: https://t.co/LGPwF5eL0u
+[5] Carlini has already demonstrated this: https://t.co/2C8va2j7tE
+[6] Surprisingly simple prompts: https://t.co/deEuA0EPtz
+[7] P vs NP: https://t.co/i5fKjcuDd0
+[8] Empirically validated with LLMs: https://t.co/ekSHhMP6zK
+
+> Author: George (@odysseus0z)
+> URL: https://x.com/odysseus0z/status/2030416758138634583
+>
+> https://t.co/GqhyL4KRJw
