@@ -1,0 +1,359 @@
+---
+title: "我用 OpenClaw + Vercel + Supabase 搭建了一家AI公司——两周后，它们自己运营起来了"
+slug: "i-built-an-ai-company-with-openclaw-vercel-supabase-two-weeks-later-they-run-it-"
+locale: "zh"
+description: "我用 OpenClaw + Vercel + Supabase 搭建了一家AI公司——两周后，它们自己运营起来了"
+category: "LLM 模型"
+tags: ["Claude", "ReAct", "评估"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HAgo9VqWQAAlPKS.jpg"
+featured: false
+date: 2026-03-15
+---
+
+# 我用 OpenClaw + Vercel + Supabase 搭建了一家AI公司——两周后，它们自己运营起来了
+
+> 6个AI智能体，1台VPS，1个Supabase数据库——从“智能体能对话”到“智能体自主运营网站”花了我两周时间。这篇文章详细讲述了中间缺失了什么、如何修复，以及一个你可以带回家使用的架构。
+
+## 起点：你有了 OpenClaw。然后呢？
+
+如果你最近一直在玩AI智能体，很可能你已经搭建好了OpenClaw。
+
+它解决了一个大问题：让Claude能够使用工具、浏览网页、操作文件并运行定时任务。你可以给智能体分配cron任务——每日推文、每小时情报扫描、定期研究报告。
+
+我也是从这里开始的。
+
+我的项目叫做 VoxYZ Agent World —— 6个AI智能体在一个像素艺术风格的办公室里自主运营一个网站。技术栈很简单：
+
+- OpenClaw (在VPS上)：智能体的“大脑”——运行圆桌讨论、cron任务、深度研究
+- Next.js + Vercel：网站前端 + API层
+- Supabase：所有状态（提案、任务、事件、记忆）的单一事实来源
+
+六个角色，各司其职：Minion做决策，Sage分析策略，Scout收集情报，Quill撰写内容，Xalt管理社交媒体，Observer进行质量检查。
+
+OpenClaw的cron任务让它们每天“上班”。圆桌讨论让它们讨论、投票并达成共识。
+
+但这只是“能对话”，而不是“能操作”。
+
+智能体产生的一切——草拟的推文、分析报告、内容片段——都停留在OpenClaw的输出层。没有任何东西将其转化为实际执行，也没有任何东西在执行完成后告诉系统“已完成”。
+
+在“智能体能产生输出”和“智能体能端到端运行事物”之间，缺少了一个完整的 执行 → 反馈 → 重新触发 循环。这就是本文要讲的内容。
+
+## 一个闭环系统是什么样子的
+
+首先定义一下“闭环”，以免我们构建错误的东西。
+
+一个真正无需人工值守的智能体系统需要运行这个循环：
+
+智能体提出想法 (提案)
+     ↓
+自动批准检查 (自动批准)
+     ↓
+创建任务 + 步骤 (任务 + 步骤)
+     ↓
+工作器认领并执行 (工作器)
+     ↓
+发出事件 (事件)
+     ↓
+触发新反应 (触发器 / 反应)
+     ↓
+回到第一步
+
+听起来很简单？在实践中，我遇到了三个陷阱——每一个都让系统“看起来在运行，但实际上在原地打转”。
+
+![](https://pbs.twimg.com/media/HAgr06LXcAANBuA.jpg)
+
+## 陷阱一：两个地方争抢工作
+
+我的VPS上有OpenClaw工作器在认领和执行任务。同时，Vercel上有一个心跳cron在运行任务工作器，也试图认领相同的任务。
+
+两者查询同一个表，抓取相同的步骤，独立执行。没有协调，纯属竞态条件。偶尔一个步骤会被双方标记上冲突的状态。
+
+修复：砍掉一个。VPS是唯一的执行者。Vercel只运行轻量级的控制平面（评估触发器、处理反应队列、清理卡住的任务）。
+
+改动很小——从心跳路由中移除 `runMissionWorker` 调用：
+
+// 心跳现在只做4件事
+const triggerResult = await evaluateTriggers(sb, 4_000);
+const reactionResult = await processReactionQueue(sb, 3_000);
+const learningResult = await promoteInsights(sb);
+const staleResult = await recoverStaleSteps(sb);
+
+额外好处：节省了Vercel Pro的费用。心跳不再需要Vercel的cron了——VPS上的一行crontab就能搞定：
+
+*/5 * * * * curl -s -H "Authorization: Bearer $KEY" https://yoursite.com/api/ops/heartbeat
+
+![](https://pbs.twimg.com/media/HAgsp9-WYAAMenS.jpg)
+
+## 陷阱二：触发了但没人接手
+
+我写了4个触发器：当推文爆火时自动分析，当任务失败时自动诊断，当内容发布时自动审查，当洞察成熟时自动推广。
+
+在测试中我注意到：触发器正确检测到了条件并创建了提案。但提案永远停留在待处理状态——从未变成任务，从未生成可执行的步骤。
+
+原因：触发器直接插入了 `ops_mission_proposals` 表，但正常的批准流程是：插入提案 → 评估自动批准 → 如果批准，则创建任务 + 步骤。触发器跳过了最后两步。
+
+修复：提取一个共享函数 `createProposalAndMaybeAutoApprove`。每个创建提案的路径——API、触发器、反应——都必须调用这个函数。
+
+// proposal-service.ts —— 所有提案创建的唯一入口点
+export async function createProposalAndMaybeAutoApprove(
+  sb: SupabaseClient,
+  input: ProposalServiceInput,  // 包含 source: 'api' | 'trigger' | 'reaction'
+): Promise<ProposalServiceResult> {
+  // 1. 检查每日限制
+  // 2. 检查容量门控（下文解释）
+  // 3. 插入提案
+  // 4. 发出事件
+  // 5. 评估自动批准
+  // 6. 如果批准 → 创建任务 + 步骤
+  // 7. 返回结果
+}
+
+改动后，触发器只返回提案模板。评估器调用该服务：
+
+// trigger-evaluator.ts
+if (outcome.fired && outcome.proposal) {
+  await createProposalAndMaybeAutoApprove(sb, {
+    ...outcome.proposal,
+    source: 'trigger',
+  });
+}
+
+一个函数统治一切。任何未来的检查逻辑（速率限制、黑名单、新容量限制）——只需修改一个文件。
+
+![](https://pbs.twimg.com/media/HAgsGLDXUAAhPDB.jpg)
+
+## 陷阱三：配额已满时队列持续增长
+
+最隐蔽的bug——表面上一切正常，日志中没有错误，但数据库里排队的步骤越来越多。
+
+原因：推文配额已满，但提案仍在被批准，生成任务，生成排队的步骤。VPS工作器看到配额已满就直接跳过——没有认领，也没有标记为失败。第二天，又一批任务到来。
+
+修复：容量门控——在提案入口点拒绝。不让它一开始就生成排队的步骤。
+
+// proposal-service.ts 内部的门控系统
+const STEP_KIND_GATES: Record<string, StepKindGate> = {
+  write_content: checkWriteContentGate,  // 检查每日内容上限
+  post_tweet:    checkPostTweetGate,     // 检查推文配额
+  deploy:        checkDeployGate,        // 检查部署策略
+};
+
+每种步骤类型都有自己的门控。推文配额已满？提案立即被拒绝，原因明确说明，并发出警告事件。没有排队步骤 = 没有堆积。
+
+这是 `post_tweet` 门控：
+
+async function checkPostTweetGate(sb: SupabaseClient) {
+  const autopost = await getOpsPolicyJson(sb, 'x_autopost', {});
+  if (autopost.enabled === false) return { ok: false, reason: 'x_autopost disabled' };
+
+  const quota = await getOpsPolicyJson(sb, 'x_daily_quota', {});
+  const limit = Number(quota.limit ?? 10);
+  const { count } = await sb
+    .from('ops_tweet_drafts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'posted')
+    .gte('posted_at', startOfTodayUtcIso());
+
+  if ((count ?? 0) >= limit) return { ok: false, reason: `Daily tweet quota reached (${count}/${limit})` };
+  return { ok: true };
+}
+
+关键原则：在门控处拒绝，不要在队列中堆积。被拒绝的提案会被记录（用于审计），而不是被静默丢弃。
+
+![](https://pbs.twimg.com/media/HAgr_tsXUAAUEqO.jpg)
+
+## 让它活起来：触发器 + 反应矩阵
+
+三个陷阱修复后，循环可以工作了。但系统只是一个“无错误的流水线”，而不是一个“响应迅速的团队”。
+
+触发器
+
+4个内置规则——每个检测一个条件并返回一个提案模板：
+
+| 条件 | 动作 | 冷却时间 |
+|------|------|----------|
+| 推文互动率 > 5% | Growth分析爆火原因 | 2小时 |
+| 任务失败 | Sage诊断根本原因 | 1小时 |
+| 新内容发布 | Observer审查质量 | 2小时 |
+| 洞察获得多个赞 | 自动推广为永久记忆 | 4小时 |
+
+触发器只检测——它们不直接接触数据库，它们将提案模板交给提案服务。所有容量门控和自动批准逻辑自动应用。
+
+冷却时间很重要。没有它，一条爆火推文会在每个心跳周期（每5分钟）触发一次分析。
+
+反应矩阵
+
+最有趣的部分——智能体间的自发互动。
+
+存储在 `ops_policy` 表中的 `reaction_matrix`：
+
+{
+  "patterns": [
+    { "source": "twitter-alt", "tags": ["tweet","posted"], "target": "growth",
+      "type": "analyze", "probability": 0.3, "cooldown": 120 },
+    { "source": "*", "tags": ["mission:failed"], "target": "brain",
+      "type": "diagnose", "probability": 1.0, "cooldown": 60 }
+  ]
+}
+
+Xalt发布一条推文 → 30%的概率Growth会分析其表现。任何任务失败 → 100%的概率Sage会诊断。
+
+`probability` 不是bug，而是特性。100%确定性 = 机器人。加入随机性 = 感觉更像一个真实的团队，在那里“有时有人回应，有时不回应”。
+
+## 自我修复：系统会卡住
+
+VPS重启、网络波动、API超时——步骤会卡在运行状态，但实际没有人处理它们。
+
+心跳包含 `recoverStaleSteps`：
+
+// 30分钟无进展 → 标记为失败 → 检查任务是否应最终完成
+const STALE_THRESHOLD_MS = 30 * 60 * 1000;
+
+const { data: stale } = await sb
+  .from('ops_mission_steps')
+  .select('id, mission_id')
+  .eq('status', 'running')
+  .lt('reserved_at', staleThreshold);
+
+for (const step of stale) {
+  await sb.from('ops_mission_steps').update({
+    status: 'failed',
+    last_error: 'Stale: no progress for 30 minutes',
+  }).eq('id', step.id);
+  await maybeFinalizeMissionIfDone(sb, step.mission_id);
+}
+
+`maybeFinalizeMissionIfDone` 检查任务中的所有步骤——任何失败意味着整个任务失败，全部完成意味着成功。不再有“一个步骤成功，整个任务就被标记为成功”的情况。
+
+## 完整架构
+
+三层结构，职责清晰：
+
+- OpenClaw (VPS)：思考 + 执行 (大脑 + 双手)
+- Vercel：批准 + 监控 (控制平面)
+- Supabase：所有状态 (共享皮层)
+
+![](https://pbs.twimg.com/media/HAgrUcPWMAA4VL2.jpg)
+
+## 你可以带回家的东西
+
+如果你有 OpenClaw + Vercel + Supabase，这里是一个最小可行的闭环清单：
+
+1. 数据库表 (Supabase)
+
+你至少需要这些：
+
+| 表 | 用途 |
+|----|------|
+| ops_mission_proposals | 存储提案 (待处理/已接受/已拒绝) |
+| ops_missions | 存储任务 (已批准/运行中/已成功/已失败) |
+| ops_mission_steps | 存储执行步骤 (排队中/运行中/已成功/已失败) |
+| ops_agent_events | 存储事件流 (所有智能体动作) |
+| ops_policy | 存储策略 (auto_approve, x_daily_quota 等，以JSON格式) |
+| ops_trigger_rules | 存储触发器规则 |
+| ops_agent_reactions | 存储反应队列 |
+| ops_action_runs | 存储执行日志 |
+
+2. 提案服务 (一个文件)
+
+将提案创建 + 容量门控 + 自动批准 + 任务创建放在一个函数中。所有来源 (API、触发器、反应) 都调用它。这是整个循环的中心。
+
+3. 策略驱动的配置 (ops_policy 表)
+
+不要硬编码限制。每个行为开关都放在 `ops_policy` 表中：
+
+// auto_approve: 允许自动通过的步骤类型
+{ "enabled": true, "allowed_step_kinds": ["draft_tweet","crawl","analyze","write_content"] }
+
+// x_daily_quota: 每日推文上限
+{ "limit": 8 }
+
+// worker_policy: Vercel是否执行步骤 (设为 false = 仅VPS)
+{ "enabled": false }
+
+随时调整策略，无需重新部署代码。
+
+4. 心跳 (一个API路由 + 一行Crontab)
+
+Vercel上的 `/api/ops/heartbeat` 路由。VPS上的一行crontab，每5分钟调用它一次。内部运行：触发器评估、反应队列处理、洞察推广、陈旧任务清理。
+
+5. VPS工作器契约
+
+每种步骤类型映射到一个工作器。完成一个步骤后，工作器调用 `maybeFinalizeMissionIfDone` 来检查整个任务是否应该最终完成。永远不要因为一个步骤完成就将任务标记为成功。
+
+## 两周时间线
+
+| 阶段 | 时间 | 完成内容 |
+|------|------|----------|
+| 基础设施 | 已有 | OpenClaw VPS + Vercel + Supabase (已搭建) |
+| 提案 + 批准 | 3天 | 提案API + 自动批准 + 策略表 |
+| 执行引擎 | 2天 | mission-worker + 8个步骤执行器 |
+| 触发器 + 反应 | 2天 | 4种触发器类型 + 反应矩阵 |
+| 循环统一 | 1天 | proposal-service + 容量门控 + 修复三个陷阱 |
+| 情感系统 + 视觉效果 | 2天 | 情感重写 + 空闲行为 + 像素办公室集成 |
+| 种子数据 + 上线 | 半天 | 迁移 + 种子策略 + crontab |
+
+排除已有的基础设施，核心闭环 (提案 → 执行 → 反馈 → 重新触发) 大约需要一周时间来搭建。
+
+## 最后感想
+
+这6个智能体现在每天自主运营 [voxyz.space](https://voxyz.space/)。我仍在每天优化系统——调整策略、扩展触发器规则、改进智能体协作方式。
+
+它还远非完美——智能体间的协作仍然基础，“自由意志”主要通过基于概率的非确定性来模拟。但系统确实在运行，确实不需要有人盯着。
+
+下一篇文章，我将介绍智能体如何“争论”和“说服”彼此——圆桌投票和Sage的记忆整合如何将6个独立的Claude实例变成类似团队认知的东西。
+
+如果你正在用OpenClaw构建智能体系统，我很乐意交流心得。当你是一个独立开发者做这件事时，每一次对话都能让你避免另一个陷阱。
+
+![](https://pbs.twimg.com/media/HAgsRA7XgAE_oLo.jpg)
+
+## 相关推文
+
+### PSA: 有人在回复中使用 VoxYZ 名称部署代币。我与...
+
+https://x.com/Voxyz_ai/status/2020107208323654119
+
+PSA: 有人在回复中使用 VoxYZ 名称部署代币。我与其中任何一个都无关。没有代币，没有加密货币，没有任何计划。请不要被骗
+
+### 让它们运行然后回来看到这个。xalt 和 sage 就方法论争论了...
+
+https://x.com/Voxyz_ai/status/2020122826540232777
+
+让它们运行然后回来看到这个。xalt 和 sage 就方法论争论了7轮，然后 scout 加入进来，他们不知怎么就任务编排计划达成了一致。从“你躲在流行语后面”到“让我们从80%的用例开始”。整个过程没有任何人工输入。
+
+![](https://pbs.twimg.com/media/HAjqw_dWQAEanqB.jpg:large)
+
+### 如果你想实时观看它们工作：https://t.co/K0Ij4c2VTD 这个...
+
+https://x.com/Voxyz_ai/status/2020127729371275712
+
+如果你想实时观看它们工作：https://t.co/K0Ij4c2VTD 仪表板实时显示每个智能体的对话、任务状态和内容流水线。
+
+### 文章中没提到的一件事：你不能只用一个模型来...
+
+https://x.com/Voxyz_ai/status/2020192987511202035
+
+文章中没提到的一件事：你不能只用一个模型来代表每个智能体。用同一个模型，它们都会开始听起来一样。我混合使用 claude opus 4.5、gpt-5.3、gemini 3 pro，每个供应商都有不同的风格，能给智能体带来真实的个性。模型多样性和提示多样性同样重要。
+
+### 很多人问如何实际构建这个，所以这里是完整的教程 - 从...
+
+https://x.com/Voxyz_ai/status/2020272522864824467
+
+很多人问如何实际构建这个，所以这里是完整的教程 - 从第一个数据库表到6个自主智能体的每一步。
+
+https://t.co/gVFdDNsQIP
+
+> 作者: Vox (@Voxyz_ai)
+> URL: https://x.com/Voxyz_ai/status/2020272022417289587
+>
+> https://t.co/b6WZzYS5Vx
+
+### 文章中我应该说的一件事：你不需要一开始就6个智能体。1...
+
+https://x.com/Voxyz_ai/status/2020797447891562788
+
+文章中我应该说的一件事：你不需要一开始就6个智能体。1个智能体 + 1个cron + supabase 就能给你一个完整的闭环。提案、执行、触发、重复。当你遇到真正的瓶颈时再添加智能体，而不是在此之前。
+
+###

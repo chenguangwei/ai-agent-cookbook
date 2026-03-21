@@ -1,0 +1,216 @@
+---
+title: "50 个 Claude Code 日常使用技巧与最佳实践"
+slug: "50-claude-code-tips-and-best-practices-for-daily-use"
+locale: "zh"
+description: "50 个 Claude Code 日常使用技巧与最佳实践"
+category: "真实案例"
+tags: ["Claude", "RAG", "TypeScript"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HDyluaFWAAAu231.jpg"
+featured: false
+date: 2026-03-20
+---
+
+# 50 个 Claude Code 日常使用技巧与最佳实践
+
+你已经使用 [Claude Code](https://www.builder.io/blog/claude-code) 足够久，知道它确实有效，现在你正在寻找每一个可以获得的优势。我整理了 50 个 Claude Code 最佳实践和技巧，无论你刚使用一周还是已经深入数月，这些技巧都能提供帮助。这些内容来源于 Anthropic 官方文档、Boris Cherny（构建者本人）、社区经验以及我自己一年的日常使用。
+
+## 1. 设置 cc 别名
+
+这是我开始每次 Claude Code 会话的方式。将此添加到你的 `~/.zshrc`（或 `~/.bashrc`）：
+
+```bash
+alias cc='claude --dangerously-skip-permissions'
+```
+
+运行 `source ~/.zshrc` 来加载它。现在你可以输入 `cc` 而不是 `claude`，并且跳过所有权限提示。这个标志名是故意起得吓人的。只有在完全理解 Claude Code 能够且将会对你的代码库做什么之后才使用它。我在[自定义 Claude Code](https://www.builder.io/blog/claude-code-settings) 中介绍了这个以及更多别名。
+
+## 2. 使用 `!` 前缀来内联运行 bash 命令
+
+输入 `!git status` 或 `!npm test`，命令会立即运行。命令及其输出会进入上下文，因此 Claude 可以看到结果并采取行动。这比要求 Claude 运行命令更快。
+
+## 3. 按 `Esc` 停止 Claude。按 `Esc+Esc` 回退任何操作
+
+`Esc` 可以在 Claude 执行中途停止操作，而不会丢失上下文。你可以立即重定向。
+
+`Esc+Esc`（或 `/rewind`）会打开一个可滚动的菜单，显示 Claude 创建的每个检查点。你可以恢复代码、对话，或两者都恢复。"Undo that" 也有效。有四种恢复选项：代码和对话、仅对话、仅代码，或从检查点开始总结。
+
+这意味着你可以尝试你只有 40% 把握的方法。如果有效，很好。如果无效，回退。零损失。一个注意事项：检查点只跟踪文件编辑。来自 bash 命令的更改（迁移、数据库操作）不会被捕获。
+
+要从中断的地方继续，`claude --continue` 会恢复你最近的对话，`claude --resume` 会打开一个会话选择器。
+
+## 4. 给 Claude 一个检查自己工作的方法
+
+给 Claude 一个反馈循环，这样它就能发现自己的错误。在你的提示中包含测试命令、linter 检查或预期输出。
+
+```markdown
+重构认证中间件，使用 JWT 而不是会话令牌。
+更改后运行现有的测试套件。
+在完成之前修复所有失败。
+```
+
+Claude 运行测试，看到失败，并在你介入之前修复它们。Boris Cherny [说仅此一项就能带来 2-3 倍的质量提升](https://x.com/bcherny/status/2007179861115511237)。对于 UI 更改，设置 [Playwright MCP 服务器](https://www.builder.io/blog/claude-code-playwright-mcp-server)，这样 Claude 就可以打开浏览器，与页面交互，并验证 UI 是否按预期工作。这个反馈循环能捕获单元测试遗漏的问题。
+
+## 5. 为你的语言安装代码智能插件
+
+LSP 插件在每次文件编辑后为 Claude 提供自动诊断。类型错误、未使用的导入、缺失的返回类型。Claude 在你甚至注意到问题之前就能看到并修复它们。这是你可以安装的单一最高影响力的插件。
+
+选择你的插件并运行安装命令：
+
+```bash
+/plugin install typescript-lsp@claude-plugins-official
+/plugin install pyright-lsp@claude-plugins-official
+/plugin install rust-analyzer-lsp@claude-plugins-official
+/plugin install gopls-lsp@claude-plugins-official
+```
+
+C#、Java、Kotlin、Swift、PHP、Lua 和 C/C++ 的插件也可用。运行 `/plugin` 并转到 Discover 选项卡以浏览完整列表。你需要在系统上安装相应的语言服务器二进制文件（插件会告诉你是否缺失）。
+
+## 6. 使用 gh CLI 并教 Claude 任何 CLI 工具
+
+[gh CLI](https://cli.github.com/) 处理 PR、issue 和评论，无需单独的 MCP 服务器。CLI 工具比 MCP 服务器更节省上下文，因为它们不会将工具模式加载到你的上下文窗口中。同样适用于 `jq`、`curl` 和其他标准 CLI 工具。
+
+对于 Claude 还不知道的工具："使用 'sentry-cli --help' 来了解它，然后使用它查找生产环境中最新的错误。" Claude 读取帮助输出，找出语法，并运行命令。即使是小众的内部 CLI 也有效。
+
+## 7. 使用 "ultrathink" 进行复杂推理
+
+这是一个关键词，将努力程度设置为高，并在 Opus 4.6 上触发自适应推理。Claude 根据问题动态分配思考。将其用于架构决策、棘手的调试、多步推理，或任何你希望 Claude 在行动前思考的事情。
+
+你也可以使用 `/effort` 永久设置努力程度。对于不太复杂的任务，较低的努力程度可以保持快速和廉价。根据问题匹配努力程度。在变量重命名上浪费思考 token 是没有意义的。
+
+## 8. 利用技能获取按需知识
+
+技能是扩展 Claude 按需知识的 Markdown 文件。与每次会话都加载的 [CLAUDE.md](http://claude.md/) 不同，技能仅在当前任务相关时加载。这使你的上下文保持精简。
+
+在 `.claude/skills/` 中创建技能，或安装捆绑了预构建技能的插件（运行 `/plugin` 浏览可用内容）。将技能用于 Claude 有时需要但并非总是需要的专业领域知识（API 约定、部署流程、编码模式）。
+
+## 9. 从手机控制 Claude Code
+
+运行 `claude remote-control` 启动一个会话，然后从 [claude.ai/code](https://claude.ai/code) 或 iOS/Android 上的 Claude 应用连接到它。会话在你的机器上本地运行。手机或浏览器只是它的一个窗口。你可以从任何地方发送消息、批准工具调用并监控进度。
+
+如果你正在使用技巧 #1 中的 `cc` 别名，Claude 已经拥有完全权限，不需要为每个操作都获得批准。这使得远程控制更加顺畅：启动一个任务，走开，只在 Claude 完成或遇到意外情况时从手机上查看。
+
+## 10. 将你的上下文窗口扩展到 1M token
+
+Sonnet 4.6 和 Opus 4.6 都支持 1M token 的上下文窗口。在 Max、Team 和 Enterprise 计划中，Opus 会自动升级到 1M 上下文。你也可以在会话中途使用 `/model opus[1m]` 或 `/model sonnet[1m]` 切换模型。
+
+如果你担心较大上下文大小下的质量，可以从 500k 开始，逐渐增加。更高的上下文意味着在压缩触发之前有更多空间，但响应质量可能因任务而异。使用 `CLAUDE_CODE_AUTO_COMPACT_WINDOW` 控制压缩何时触发，使用 `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` 设置百分比阈值。为你的工作流程找到最佳点。
+
+## 11. 当你不确定如何着手某事时，使用计划模式
+
+对于多文件更改、不熟悉的代码和架构决策，使用[计划模式](https://www.builder.io/blog/claude-code-plan-mode)。开销是真实存在的（前期需要几分钟），但它能防止 Claude 花 20 分钟自信地解决完全错误的问题。
+
+对于范围小、清晰的任务，跳过它。如果你能用一句话描述差异，直接做就行。你可以随时按 `Shift+Tab` 切换到计划模式，在不离开对话的情况下在 Normal、Auto-Accept 和 Plan 权限模式之间循环切换。
+
+## 12. 在不相关的任务之间运行 `/clear`
+
+一个带有清晰提示的干净会话胜过混乱的三小时会话。不同的任务？先运行 `/clear`。
+
+我知道这感觉像是抛弃进度，但重新开始你会得到更好的结果。会话会退化，因为早期工作积累的上下文淹没了你当前的指令。花五秒钟运行 `/clear` 并写一个专注的起始提示，可以为你节省 30 分钟的收益递减。
+
+## 13. 停止为 Claude 解释 bug。粘贴原始数据
+
+用语言描述 bug 很慢。你看着 Claude 猜测、纠正它，然后重复。
+
+直接粘贴错误日志、CI 输出或 Slack 线程，然后说 "fix"。Claude 读取分布式系统的日志并追踪问题所在。你的解释增加了抽象，常常会丢失 Claude 定位根本原因所需的细节。给 Claude 原始数据，然后让开。
+
+这对 CI 也有效。"Go fix the failing CI tests" 加上 CI 输出的粘贴是最可靠的模式之一。你也可以粘贴一个 PR URL 或编号，并要求 Claude 检查失败的检查并修复它们。安装了技巧 #6 中的 gh CLI 后，Claude 会处理其余部分。
+
+你也可以直接从终端管道输出：
+
+```bash
+cat error.log | claude "explain this error and suggest a fix"
+npm test 2>&1 | claude "fix the failing tests"
+```
+
+## 14. 使用 `/btw` 快速提问
+
+`/btw` 弹出一个覆盖层，用于快速提问，而不会进入你的对话历史。我将其用于当前会话的澄清："你为什么选择这种方法？" 或 "与其他选项相比有什么权衡？" 答案显示在一个可关闭的覆盖层中，你的主上下文保持精简，Claude 继续工作。
+
+## 15. 使用 `--worktree` 进行隔离的并行分支
+
+`claude --worktree feature-auth` 创建一个带有新分支的隔离工作副本。Claude 为你处理 git worktree 的设置和清理。
+
+Claude Code 团队称这是[最大的生产力解锁之一](https://x.com/bcherny/status/2017742743125299476)。启动 3-5 个工作树，每个都并行运行自己的 Claude 会话。我通常运行 2-3 个。每个工作树都有自己的会话、自己的分支和自己的文件系统状态。
+
+本地工作树的上限是你的机器。多个开发服务器、构建和 Claude 会话都在竞争 CPU。[Builder.io](https://www.builder.io/) 将每个代理移动到自己的云容器中，并带有浏览器预览，因此你的机器可以保持空闲，用于需要你大脑的工作。
+
+## 16. 使用 `Ctrl+S` 暂存你的提示
+
+你写了一个很长的提示，写到一半时意识到需要先快速回答一个问题。`Ctrl+S` 暂存你的草稿。输入你的快速问题，提交它，然后你的暂存提示会自动恢复。
+
+## 17. 使用 `Ctrl+B` 将长时间运行的任务放到后台
+
+当 Claude 启动一个长时间的 bash 命令（测试套件、构建、迁移）时，按 `Ctrl+B` 将其发送到后台。Claude 在进程运行时继续工作，你可以继续聊天。结果在进程完成时出现。
+
+## 18. 添加实时状态行
+
+状态行是一个在每次 Claude 回合后运行的 shell 脚本。它在终端底部显示实时信息：当前目录、git 分支、上下文使用情况（根据窗口的满度进行颜色编码）。
+
+最快的设置方法是在 Claude Code 中运行 `/statusline`。它会询问你想显示什么，并为你生成脚本。我在[自定义 Claude Code](https://www.builder.io/blog/claude-code-settings) 中介绍了完整的设置，并提供了可复制粘贴的脚本。
+
+## 19. 使用子代理保持主上下文清洁
+
+"使用子代理来弄清楚支付流程如何处理失败的交易。" 这会生成一个具有自己上下文窗口的独立 Claude 实例。它读取所有文件，推理代码库，并返回一个简洁的摘要。
+
+你的主会话保持清洁，有足够的空间来构建东西。深度调查可能会在你编写任何代码之前消耗掉一半的上下文窗口。子代理将这些成本排除在你的主会话之外。内置类型包括 Explore（Haiku，快速文件搜索）和 Plan（只读分析）。完整信息请参阅我们关于[子代理和代理团队](https://www.builder.io/blog/claude-code-agents)的指南。
+
+## 20. 使用代理团队进行多会话协调
+
+这是实验性的，但功能强大。首先通过将 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 添加到你的设置或环境变量中来启用它。然后告诉 Claude 创建一个团队："创建一个有 3 个队友的代理团队，并行重构这些模块。" 一个团队领导将工作分配给队友，每个队友都有自己的上下文窗口和一个共享的任务列表。队友可以直接互相发送消息以协调。
+
+从 3-5 个队友和每个队友 5-6 个任务开始。避免分配修改相同文件的任务。两个队友编辑同一个文件会导致覆盖。先从研究和审查任务（PR 审查、bug 调查）开始，然后再尝试并行实现。
+
+## 21. 通过指令引导压缩
+
+当上下文压缩时（自动或通过 `/compact`），告诉 Claude 要保留什么："/compact focus on the API changes and the list of modified files." 你也可以将常驻指令添加到你的 [CLAUDE.md](http://claude.md/) 中："When compacting, preserve the full list of modified files and current test status."
+
+## 22. 使用 `/loop` 进行重复检查
+
+`/loop 5m check if the deploy succeeded and report back` 安排一个在后台触发的重复提示，而你的会话保持打开状态。间隔是可选的（默认为 10 分钟），支持 s、m、h 和 d 单位。你也可以循环其他命令：`/loop 20m /review-pr 1234`。任务是会话范围的，3 天后过期，因此一个被遗忘的循环不会永远运行。使用 `/loop` 来监控部署、观察 CI 管道或在专注于其他事情时轮询外部服务。
+
+## 23. 使用语音听写获得更丰富的提示
+
+运行 `/voice` 启用 push-to-talk，然后按住 `Space` 键听写。你的语音实时转录到提示中，你可以在同一条消息中混合语音和打字。口语提示自然包含比打字更多的上下文，因为你解释了背景，提到了约束，并描述了你的需求，而不会为了节省击键而偷工减料。需要 [Claude.ai](http://claude.ai/) 账户（不是 API 密钥）。你可以在 `~/.claude/keybindings.json` 中将 push-to-talk 键重新绑定到像 `meta+k` 这样的修饰键组合，以跳过按住检测的热身。
+
+## 24. 在同一件事上纠正两次后，重新开始
+
+当你和 Claude 陷入纠正的兔子洞，而问题仍未解决时，上下文现在充满了失败的尝试，这些尝试正在积极损害下一次尝试。运行 `/clear` 并写一个更好的起始提示，其中包含你学到的东西。一个带有更清晰提示的干净会话几乎总是胜过被积累的死胡同拖累的长时间会话。
+
+## 25. 明确告诉 Claude 要查看哪些文件
+
+使用 `@` 直接引用文件：`@src/auth/middleware.ts` 包含会话处理。`@` 前缀会自动解析为文件路径，因此 Claude 确切知道在哪里查看。
+
+Claude 可以自己 grep 和搜索你的代码库，但它仍然需要缩小候选范围并识别正确的文件。每个搜索步骤都会消耗 token 和上下文。从一开始就将 Claude 指向正确的文件可以跳过整个过程。
+
+## 26. 使用模糊提示探索不熟悉的代码
+
+"你会改进这个文件中的什么？" 是一个很好的探索提示。并非每个提示都需要具体。当你希望用新的眼光审视现有代码时，一个模糊的问题给 Claude 空间来提出你没想到要问的事情。
+
+我在加入一个不熟悉的仓库时使用这个。Claude 指出我在第一次阅读时会忽略的模式、不一致性和改进机会。
+
+## 27. 使用 `Ctrl+G` 编辑计划
+
+当 Claude 呈现一个计划时，`Ctrl+G` 在你的文本编辑器中打开它进行直接编辑。在 Claude 编写一行代码之前，添加约束、删除步骤、重定向方法。当计划基本正确，但你想在不重新解释整个事情的情况下调整几个步骤时，这很有用。
+
+## 28. 运行 `/init`，然后将结果减半
+
+[CLAUDE.md](http://claude.md/) 是项目根目录下的一个 Markdown 文件，为 Claude 提供持久指令：构建命令、编码标准、架构决策、仓库约定。Claude 在每次会话开始时读取它。`/init` 根据你的项目结构生成一个起始版本。它会拾取构建命令、测试脚本和目录布局。
+
+输出往往是臃肿的。如果你无法解释某一行为什么存在，就删除它。修剪噪音并添加缺失的内容。关于如何构建这些文件的更多信息，请参阅[如何编写一个优秀的 CLAUDE.md 文件](https://www.builder.io/blog/claude-md-guide)。
+
+## 29. 对 [CLAUDE.md](http://claude.md/) 每一行的试金石测试
+
+对于 [CLAUDE.md](http://claude.md/) 中的每一行，问：没有这个，Claude 会犯错吗？如果 Claude 已经自己正确做了某事，那么这个指令就是噪音。每一行不必要的指令都会稀释那些重要的指令。在合规性下降之前，大约有 150-200 条指令的预算，而系统提示已经使用了大约 50 条。
+
+## 30. 在 Claude 犯错后，说 "更新你的 [CLAUDE.md](http://claude.md/)，这样就不会再发生这种情况了"
+
+当 Claude 犯错时，说 "update the [CLAUDE.md](http://claude.md/) file so this doesn't happen again." Claude 会编写自己的规则。下一次会话，它会自动遵循。
+
+随着时间的推移，你的 [CLAUDE.md](http://claude.md/) 会成为一个由真实错误塑造的活文档。为了防止它无限增长，使用 `@imports`（技巧 #32）来引用一个单独的文件，如 `@docs/solutions.md` 用于模式和修复。你的 [CLAUDE.md](http://claude.md/) 保持精简，Claude 按需读取细节。
+
+## 31. 使用 `.claude/rules/` 存放仅有时适用的规则
+
+将 Markdown 文件放在 `.claude/rules/`
