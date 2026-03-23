@@ -1,0 +1,62 @@
+---
+title: "Karpathy 关于使用 AI 智能体的 10 条实用建议"
+slug: "karpathy-s-10-actionable-insights-for-working-with-ai-agents"
+locale: "zh"
+description: "Karpathy 关于使用 AI 智能体的 10 条实用建议"
+category: "智能体工作流"
+tags: ["RAG"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEAqPuSWUAAULZK.jpg"
+featured: false
+date: 2026-03-22
+---
+
+# Karpathy 关于使用 AI 智能体的 10 条实用建议
+
+或者说，如何修复你的“技能问题”。
+
+运用所有这些建议，让你在使用 AI 智能体时更有效率。
+
+1.  **以宏观动作为单位思考，而非代码行** —— 在非冲突任务上并行运行多个智能体。将你的屏幕平铺多个智能体会话。为每个智能体分配不同的功能，审查它们的输出并进行整合。停止思考“这是一行代码”，开始思考“这是一个完整的新功能——委派出去”。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035683050097369088/img/LihYGQv6ygacadyq.jpg)
+
+2.  **当某件事失败时，首先假设是技能问题** —— 能力几乎肯定存在。如果一个智能体没有达到预期，问题更可能出在你的提示词、你的 `AGENTS.md` 文件、你的记忆工具设置或你的编排上——而不是模型本身。Karpathy 说，当它不工作时，“感觉都像是技能问题”。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035680028881813504/img/kJyPDJToAitU_Dv_.jpg)
+
+3.  **移除你自己这个瓶颈** —— 你不能总是在那里提示下一步。安排你的智能体工作流，使其完全自主。游戏的关键是杠杆效应：偶尔投入极少的 token，大量的事情就会代表你发生。通过不参与循环来最大化你的 token 吞吐量。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035680181776486400/img/leuFBBkCo58KFcUY.jpg)
+
+4.  **建立智能体编排的肌肉记忆** —— 像任何新技能一样，管理智能体需要刻意练习。学会在显示器上平铺多个智能体实例，培养分配工作和审查输出的节奏，并识别何时应该并行化任务，何时应该顺序执行。Karpathy 将此描述为对新工作流“建立肌肉记忆”。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035680501151760384/img/6qwZUhnEkA0h9aiC.jpg)
+
+5.  **将你的智能体指令（ProgramMDs）视为可调优的代码** —— 你的 Markdown 指令文件不是静态文档——它们是你可以迭代的代码。不同的指令会产生不同的行为。你可以运行变体，看看哪些指令能产生更好的结果，甚至可以进行元优化：让智能体根据有效的方法编写更好的指令。（这正是 aceagent.io 为你做的事情。）
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035680949833519104/img/SUJ6TRZG6k9bJK2o.jpg)
+
+6.  **用智能体驱动的 API 胶水替代定制应用** —— 停止登录六个独立的用户界面。如果你的设备和工具暴露了 API，一个智能体就可以在所有设备之间进行编排，并完成任何单个应用都无法做到的事情。Karpathy 将他整个智能家居统一到了一个由 WhatsApp 驱动的助手中。思考 API 端点 + 智能体智能，而不是定制 UI。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035681137465368576/img/jIriPl_9aVw6-jMi.jpg)
+
+7.  **投资于持久、循环的智能体设置** —— 超越单次交互式会话。设置即使在你没有监视时也能持续循环并代表你行动的智能体——它们拥有自己的沙箱、更复杂的记忆系统以及跨会话恢复工作的能力。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035681310648279040/img/Q3yoPINeIcRDR41u.jpg)
+
+8.  **理解模型改进是参差不齐的，而非均匀的** —— 模型在可验证的任务上（通过测试、编写代码）表现出色，但在软性的、不可验证的方面（幽默、细微的意图）则很弱。不要假设一个领域的能力能转移到所有领域。了解盲点，并围绕它们设计你的智能体工作流。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035681495143059456/img/NsWAReGm1lGqwa_U.jpg)
+
+9.  **为智能体编写文档，而非人类** —— 不要为人类编写 HTML 指南，而是为智能体编写 Markdown。如果智能体理解你的代码库，它们会以无限的耐心用人类的语言向每个人解释它。你的工作是那些不可简化的洞见——那些模型自身无法生成的少量信息。其他一切都可以委派。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035681639863611392/img/PquoUR6qa9B1K1eb.jpg)
+
+10. **将精力完全集中在智能体做不到的事情上** —— 智能体能做的事情，它们很快会做得比你好。在时间投入上要有策略。你的增值在于那些不可简化的创造性洞见、品味判断、智能体尚无法产生的新颖框架。其他一切？交给它们。
+
+![](https://pbs.twimg.com/amplify_video_thumb/2035681979153178624/img/qXBA7_WHk8CIdA_I.jpg)
+
+所有建议和片段均来自 @NoPriorsPod: https://youtu.be/kwSVtQ7dziU?si=5MuLx8QVjRvQIWfl

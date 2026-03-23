@@ -1,0 +1,215 @@
+---
+title: "I used Claude Code wrong for months. These 40 practices changed everything"
+slug: "i-used-claude-code-wrong-for-months-these-40-practices-changed-everything"
+locale: "en"
+description: "I used Claude Code wrong for months. These 40 practices changed everything"
+category: "Real-world Cases"
+tags: ["Claude", "TypeScript"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEBUnFHaIAAWOZE.jpg"
+featured: false
+date: 2026-03-23
+---
+
+# I used Claude Code wrong for months. These 40 practices changed everything
+
+
+Most people treat Claude Code like autocomplete.
+The top 1% use it like an operating system.
+
+That’s the difference between “help me write this function” and “ship a full feature while I sleep.”
+
+"The gap between a casual Claude Code user and a power user isn't skill. It's configuration. And that gap is worth 4–6 hours per week."
+
+Here are 40 Claude Code best practices that will 10x your workflow
+
+🔧
+Setup & Basic Configuration
+01 —
+The alias that changes everything
+First thing every serious Claude Code user does: set up the cc alias. Add this to your ~/.zshrc or ~/.bashrc:
+
+alias cc='claude --dangerously-skip-permissions'
+Run source ~/.zshrc. Now you type cc instead of claude, skipping permission prompts on every action. Only use this if you understand what you're authorizing — it's fast because it trusts you.
+
+02 —
+Add a live status line
+Run /statusline inside Claude Code. It generates a shell script that displays live info — directory, branch, context usage — at the bottom of your terminal after every turn. It's like a HUD for your session.
+
+03 —
+Extend your context window to 1M tokens
+Sonnet 4.6 and Opus 4.6 support 1 million token context. Switch mid-session with /model opus[1m]. Start at 500k and work up — find the sweet spot before compaction starts eating output quality.
+
+04 —
+Set your output style once, forget about it forever
+Run /config to pick a style: Explanatory, Concise, or Technical. You can also create fully custom styles in ~/.claude/output-styles/. Stop copy-editing Claude's responses — configure the voice upfront.
+
+05 —
+Control Claude Code from your phone
+Run claude remote-control, then connect from claude.ai or the mobile app. Kick off a long refactor on your PC, go make coffee, check progress from the couch. This one genuinely feels like living in the future.
+
+⚡
+Workflow & Speed Hacks
+06 —
+! prefix: bash commands that land in context
+Type !git status or !npm test. The output lands directly in Claude's context so it can act on it immediately — no copy-paste, no back-and-forth. Huge for debugging loops.
+
+07 —
+Esc stops. Esc+Esc rewinds.
+Esc stops Claude mid-action. Esc+Esc (or /rewind) opens a menu to restore code, conversation, or both. This is your "undo" for ideas you were only 40% sure about — use it liberally.
+
+08 —
+Ctrl+S: stash your prompt draft
+Halfway through a long prompt and suddenly need to ask a quick clarifying question? Ctrl+S stashes your draft. Ask, get the answer, and your draft restores automatically. Game-changer for complex multi-part tasks.
+
+09 —
+Ctrl+B: background long-running tasks
+When Claude's running a test suite or build, hit Ctrl+B. Claude keeps working in the background while you continue chatting. Parallel productivity — it works while you plan what's next.
+
+10 —
+/btw: the side-question overlay
+/btw pops up an overlay for quick questions ("Why this approach?") without polluting your main conversation history. Your primary thread stays clean. Your curiosity still gets answered.
+
+11 —
+Ctrl+G: edit Claude's plan before it writes a single line
+When Claude presents a plan, Ctrl+G opens it in your editor. Tweak the steps. Redirect the strategy. Then let it execute. You stop wasting 20 minutes on the wrong implementation.
+
+12 —
+Voice dictation gives better prompts than typing
+Run /voice for push-to-talk. When you speak a prompt, you naturally include more context, constraints, and nuance than when you're hunting keystrokes. The quality difference is immediate.
+
+🧠
+Context & Prompt Management
+13 —
+/clear between unrelated tasks
+A clean session beats a messy 3-hour one every time. Accumulated context quietly drowns out your instructions. /clear is how you prevent the slow, invisible decline of output quality mid-day.
+
+14 —
+After 2 failed corrections — start fresh
+If you've corrected Claude twice and it's still off, don't correct a third time. /clear and write a new prompt incorporating what you just learned. Continuing a broken thread multiplies the confusion.
+
+15 —
+Stop describing bugs. Paste raw data.
+Don't explain the bug. Paste the error log, CI output, or Slack thread and say "fix". Abstractions lose the details Claude actually needs. Raw data gets raw results.
+
+cat error.log | claude "explain this error and suggest a fix"
+16 —
+Use Plan Mode for anything architectural
+Shift+Tab enters Plan Mode. Use it for multi-file changes or anything structural. The upfront overhead prevents Claude from spending 20 minutes confidently solving the wrong problem.
+
+17 —
+Tell Claude exactly which files to look at
+Use @src/auth/middleware.ts to reference files directly. It resolves automatically, saving the token cost of Claude searching your entire codebase to find context you already know.
+
+18 —
+Explore unfamiliar code with vague prompts
+"What would you improve in this file?" gives Claude room to surface inconsistencies you wouldn't have thought to ask about. Vagueness is a feature when you're mapping unknown territory.
+
+19 —
+Guide compaction with instructions
+When using /compact, tell Claude what to preserve: "focus on the API changes". Compaction without guidance loses the thread. With guidance, it distills perfectly.
+
+20 —
+"ultrathink" unlocks adaptive reasoning
+Add "ultrathink" to any prompt on Opus 4.6. Claude dynamically allocates its reasoning budget based on the problem's actual complexity. For hard problems, the quality jump is real and visible.
+
+🤖
+Automation, Tools & MCP
+21 —
+Give Claude a way to check its own work
+Include test commands in your prompt: "Refactor auth. Run the test suite. Fix failures before calling it done." This one instruction produces a 2–3x quality improvement by closing the feedback loop.
+
+22 —
+Install an LSP plugin
+LSP plugins give Claude automatic diagnostics after edits. Claude catches and fixes type errors before you notice them.
+
+/plugin install typescript-lsp@claude-plugins-official
+23 —
+Use CLI tools over MCP servers
+CLI tools are more context-efficient than MCP servers. Teach Claude to use gh for PRs, or sentry-cli --help to debug production. The context savings compound across long sessions.
+
+24 —
+The right MCP servers to install first
+Four picks with high signal-to-noise: Playwright (UI verification), PostgreSQL/MySQL (schema queries), Slack (reading bug threads directly), and Figma (design-to-code). Don't install more until you've mastered these.
+
+25 —
+/loop for recurring background checks
+/loop 5m check if deploy succeeded schedules a background check while your session stays open. Set it and continue working. Claude reports back when it has news.
+
+26 —
+Allowlist safe commands with /permissions
+Stop approving npm run lint every single time. Allowlist trusted commands to stay in the flow. The constant approval interruptions are a hidden productivity tax — eliminate them.
+
+📝
+Mastering CLAUDE.md & Rules
+27 —
+Run /init, then cut the result in half
+/init generates a starter CLAUDE.md file. Then ruthlessly delete anything you can't explicitly justify. Every unnecessary line is token bloat that quietly degrades attention elsewhere.
+
+28 —
+The CLAUDE.md litmus test
+For every line in your CLAUDE.md, ask: "Would Claude make a mistake without this?" If no — delete it. You have roughly 150–200 instructions before compliance starts dropping. Use that budget wisely.
+
+29 —
+Auto-update rules after every mistake
+When Claude makes an error, say "Update CLAUDE.md so this doesn't happen again." Your rules file becomes a living system that gets smarter with every session.
+
+30 —
+Use .claude/rules/ for conditional rules
+Add paths frontmatter to load rules only when relevant. TypeScript rules only for .ts files. Database rules only in /db. Conditional rules mean zero wasted context when they're irrelevant.
+
+31 —
+Use @imports to keep CLAUDE.md lean
+Reference @docs/git-instructions.md instead of pasting the content inline. Claude only reads it when needed — your base context stays lightweight.
+
+32 —
+Skills: on-demand knowledge without bloat
+Skills in .claude/skills/ extend what Claude knows without inflating your baseline context. Think of them as libraries — loaded when called, invisible when not.
+
+33 —
+CLAUDE.md for suggestions. Hooks for requirements.
+Claude follows CLAUDE.md about 80% of the time. For non-negotiables — formatting, security, code standards — use Hooks. Hooks run every time, no exceptions.
+
+34 —
+Auto-format with a PostToolUse hook
+Add this to .claude/settings.json to auto-run Prettier after every edit — zero manual formatting, ever again.
+
+"hooks": { "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "npx prettier --write \"$CLAUDE_FILE_PATH\" 2>/dev/null || true" }] }] }
+35 —
+Block destructive commands with PreToolUse
+Intercept the Bash tool before it runs to block rm -rf or DROP TABLE. A PreToolUse hook is the safety net that lets you run Claude with more autonomy — confidently.
+
+🚀
+Advanced: Worktrees, Agents & Isolation
+36 —
+--worktree for parallel branches
+claude --worktree feature-auth creates an isolated working copy. Spin up 3 parallel sessions working on different features simultaneously without them touching each other. Multiply your throughput.
+
+37 —
+Use subagents to keep your context window empty
+"Use subagents to figure out the payment flow." This spawns a separate instance, reads the files, and returns a summary — while your main context stays lean and focused.
+
+38 —
+Create custom subagents for recurring tasks
+Use /agents to save pre-configured agents in .claude/agents/ — a Haiku-based quick-search agent, a strict-TypeScript reviewer, a docs writer. Your personal AI team, ready on demand.
+
+39 —
+Agent teams for massive, parallel work
+Enable CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. A team lead distributes tasks to 3–5 subagents working in parallel. For large-scale research or multi-module refactors, this is a different category of speed.
+
+40 —
+/sandbox for unsupervised experimentation
+/sandbox runs Claude with OS-level isolation via Seatbelt or bubblewrap. Let Claude run wild on an experimental refactor with zero risk to your actual system. Then review the diff. Merge what you like.
+
+"Most engineers optimize their code. The fastest ones optimize their AI workflow. Those are two very different compounding advantages."
+
+None of these tips require a new subscription. None require you to be a 10x engineer. They're all sitting inside the tool you're already paying for, waiting to be used.
+
+Pick 5 from this list. Implement them this week. Come back in 30 days and tell me your workflow hasn't fundamentally changed.
+
+If this thread saved you time, share it with one engineer who's still doing things the slow way. That's all.
+
+40 tips. Zero fluff. All signal.
+Save this. Your future self — the one shipping faster with half the friction — will thank you

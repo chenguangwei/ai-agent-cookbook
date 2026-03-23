@@ -1,0 +1,561 @@
+---
+title: "Claude Code深度配置指南，90%的人其实都不会用"
+slug: "claude-code-90"
+locale: "zh"
+description: "Claude Code深度配置指南，90%的人其实都不会用"
+category: "Agentic Workflows"
+tags: ["Claude", "ReAct", "TypeScript"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEF5dR6bUAAEf79.jpg"
+featured: false
+date: 2026-03-23
+---
+
+# Claude Code深度配置指南，90%的人其实都不会用
+
+
+Claude Code 到底听不听话，全看你有没有打开这个隐藏的.claude文件夹。
+
+.claude 文件夹是 Claude 的控制中心。它管着 Claude 怎么理解指令、能跑哪些命令、有啥权限、能记住什么。搞明白了，就能让 Claude Code 按你的规矩干活。
+
+最近 Akshay Pachaar 分享了份完整指南，把 .claude 文件夹的结构拆得很透。我基于他的分享，整理了这篇文章，从基础用法到高级配置都讲到。
+
+# .claude 文件夹是干嘛的？
+
+
+.claude 文件夹就是用来告诉 Claude 该怎么干活的地方。
+
+你可以在里面写规则，比如“写代码时先写测试”、“别用某个命令”、“记住我的编码习惯”。写完之后，Claude 每次工作都会照着做。
+
+这里有个容易搞混的地方：其实有两个 .claude 文件夹。
+
+一个在项目里，一个在你的用户目录：
+
+项目级别的文件夹装的是团队配置。你把它提交到 git，团队所有人都用同样的规则、同样的自定义命令、同样的权限策略。
+
+全局 ~/.claude/ 文件夹装的是你个人的偏好设置和本地状态，比如会话历史和自动记忆。
+
+![](https://pbs.twimg.com/media/HEF5Rd-bQAAbNPJ.jpg)
+
+# [CLAUDE.md](http://claude.md/): Claude 的说明书
+
+
+[CLAUDE.md](http://claude.md/) 可以理解成“给 Claude 的使用说明书”。
+
+每次你启动 Claude Code，它第一件事就是打开这个文件，把里面的内容全记下来，然后整个对话过程都按这个来。
+
+简单说：你在 [CLAUDE.md](http://claude.md/) 里写什么规矩，Claude 就照着做。
+
+比如你写“写代码之前先写测试”，它就会先写测试。
+
+你写“别用 console.log，要用我们自己的 logger”，它每次都会记得。
+
+## 这个文件可以放在三个地方：
+
+
+1. 项目文件夹里 （最常用）
+放在你的项目根目录，比如你的网站项目文件夹里。这样团队所有人打开这个项目，Claude 都会按同样的规矩干活。
+
+2. 你电脑的用户文件夹里 (~/.claude/CLAUDE.md）
+这是你个人的设置，不管打开哪个项目都生效。
+
+比如你喜欢“代码里多写注释”，写在这里，Claude 在所有项目里都会记得。
+
+3. 项目里的某个子文件夹
+比如你的项目里有个 api 文件夹，可以单独给这个文件夹设规矩。
+
+Claude 会把这三个地方的文件都读一遍，合起来用。
+
+# [CLAUDE.md](http://claude.md/) 里该写什么
+
+
+## 建议写什么：
+
+
+1. 常用命令
+比如怎么启动项目、怎么跑测试。像 npm run test（跑测试）、npm run dev（启动项目） 这些。
+
+2. 项目用了什么技术
+比如“我们用 React 写前端”、“数据库用的 PostgreSQL”。
+
+3. 容易踩的坑
+比如“这个项目不能用 var，只能用 let 和 const”、“提交代码前必须先跑测试”。
+
+4. 代码怎么写
+比如“文件名都用小写”、“出错了要用 try-catch”、“import 要写在文件最上面”。
+
+5. 文件夹结构
+比如“所有组件放在 components 文件夹”、“工具函数放在 utils 文件夹”。
+
+## 不建议写什么：
+
+
+1. 代码格式的规则
+比如“空格用 2 个还是 4 个”、“要不要加分号”。这些应该用 Prettier 或 ESLint 这种工具来管，不用写在这里。
+
+2. 已经有详细文档的东西
+如果你的项目已经有完整的开发文档了，直接在 [CLAUDE.md](http://claude.md/) 里写“详细规范看 docs/guide.md”，别把整个文档复制过来。
+
+3. 长篇大论的理论知识
+别写“什么是 React”、“为什么要用 TypeScript”这种教程。Claude 已经懂这些了，你只需要告诉它“我们项目用的是 React”就行。
+
+记住：[CLAUDE.md](http://claude.md/) 最好别超过 200 行。
+
+文件太长，Claude 要花很多精力记这些内容，反而干活效率会下降。保持简短、直接、实用就好。
+
+这里有个简洁但有效的例子：
+
+> # 项目指南
+
+> 
+> ## 技术栈
+
+> - Next.js 14 (App Router)
+> - TypeScript (strict mode)
+> - Tailwind CSS
+> - Prisma ORM
+> 
+> ## 命令
+
+> - `npm run dev` - 启动开发服务器
+> - `npm run test` - 跑测试
+> - `npm run lint` - 检查代码
+> 
+> ## 规则
+
+> - 所有组件用函数式写法,不用 class
+> - API 路由放在 app/api/
+> - 数据库操作都走 lib/db.ts
+> - 错误处理用 lib/errors.ts 里的工具函数
+> 
+> ## 文件结构
+
+> app/ - Next.js 页面和路由
+> components/ - 可复用组件
+> lib/ - 工具函数和配置
+> prisma/ - 数据库 schema
+
+20 行左右就够了，Claude 该知道的都知道了，以后干活不用反复问你。
+
+# [CLAUDE.local.md](http://claude.local.md/)
+
+
+你有些个人偏好的写法，但不需要团队也执行这些写法。
+
+比如你喜欢用 Vitest 测试，但团队用的是 Jest。或者你想让 Claude 记住“给我写代码时多加注释”，但别的同事不需要。
+
+这时候就在项目文件夹里创建一个 [CLAUDE.local.md](http://claude.local.md/) 文件。
+
+Claude 会把它和 [CLAUDE.md](http://claude.md/) 一起读，但这个文件不会被提交到 git 仓库，所以你的个人偏好只有你自己知道，不会影响别人。
+
+# 我的个人偏好
+
+
+- 测试用 Vitest 而不是 Jest
+- 组件文件总是包含 PropTypes
+- 提交信息用中文
+
+# rules/ 文件夹：规则太多了怎么办？
+
+
+你的 [CLAUDE.md](http://claude.md/) 文件一开始只有 20 行，很简洁。
+
+但是半年后，团队不断加新规则，文件变成了 300 行。太长了，没人想看。
+
+## 解决办法：
+
+
+把这 300 行拆成几个小文件，比如：
+
+- [api-conventions.md](http://api-conventions.md/) （写 API 的规则）
+- [testing.md](http://testing.md/) （测试的规则）
+- [security.md](http://security.md/) （安全的规则）
+
+把这些文件都放在 .claude/rules/ 文件夹里。
+
+Claude 会自动把这几个小文件的内容全部读进来，效果和写在一个大文件里一样，但是好管理多了。
+
+比如把规则按类别分开：
+
+> .claude/rules/
+>   ├── api-conventions.md
+>   ├── testing.md
+>   ├── security.md
+>   └── ui-patterns.md
+
+每个文件保持专注，容易更新。负责 API 规范的团队成员编辑 [api-conventions.md](http://api-conventions.md/)，负责测试标准的人编辑 [testing.md](http://testing.md/)。
+
+还有个更高级的玩法：
+
+你可以让某个规则文件只在特定文件夹里生效。
+
+比如你写了一个 [api-rules.md](http://api-rules.md/)，里面是 API 的规则。你在文件开头加上这几行：
+
+---
+paths:
+  - "src/api/**"
+---
+
+这样，Claude 只有在改 src/api/ 文件夹里的代码时，才会读这个规则文件。改其他地方的代码时，就不会读。
+
+好处是什么？
+
+比如你的 API 代码要求“必须返回 JSON 格式”，但前端组件不需要这个规矩。
+
+如果把这条规则写在 [CLAUDE.md](http://claude.md/) 里，Claude 改前端代码时也会记着这条规则。
+
+现在你把它单独写在 [api-rules.md](http://api-rules.md/) 里，并且指定只对 src/api/ 文件夹生效。这样 Claude 改前端代码时就不会被这条规则干扰了。
+
+---
+paths:
+  - "src/api/**"
+  - "src/handlers/**"
+---
+
+# API 开发规范
+
+
+所有 API 端点必须:
+- 返回统一的 JSON 格式
+- 包含错误处理
+- 记录请求日志
+
+# commands/ 文件夹：Claude 快捷键
+
+
+你可以自己做一些快捷命令，让 Claude 一键完成某个任务。
+
+比如你经常让 Claude “帮我审查代码”，每次都要打一堆字。现在你可以做一个 /review 命令，以后直接输入 /review 就行了。
+
+## 做法：
+
+
+在 .claude/commands/ 文件夹里创建一个 markdown 文件。
+
+文件名就是命令名。
+
+- 创建 review.md → 就有了 /project: review 命令
+- 创建 fix-bug.md → 就有了 /project: fix-bug 命令
+
+举个例子：
+
+创建一个文件 .claude/commands/review.md，里面写：
+
+# 代码审查
+
+
+审查最近的代码变更:
+
+!`git diff main...HEAD`
+
+重点检查:
+- 代码风格一致性
+- 潜在的性能问题
+- 安全隐患
+- 测试覆盖率
+
+以后你在 Claude Code 里输入 /project: review, Claude 就会自动执行这个命令。
+
+这里的关键是 ! 反引号：
+
+!git diff main……HEAD`` 这行代码的意思是：先运行 git diff 命令，把结果拿到，然后喂给 Claude。
+
+所以 Claude 看到的不是“git diff”这几个字，而是真实的代码差异内容。
+
+命令还可以带参数
+
+比如你想让命令更灵活，可以这样写：：
+
+# 修复问题
+
+
+获取问题详情并提供修复方案:
+
+!`gh issue view $$ARGUMENTS`
+
+分析这个问题并建议修复步骤。
+
+运行 /project: fix-issue 234 会直接把 issue 234 的内容喂给提示词。
+
+命令放在哪？
+
+项目命令 - 放在 .claude/commands/ 文件夹里
+
+这些命令会被提交到 git，团队所有人都能用。
+
+个人命令 - 放在 ~/.claude/commands/ 文件夹里
+
+这些命令只有你自己能用，会显示成 /user：命令名 的形式。
+
+# skills/ 文件夹：让 Claude 自己判断该干啥
+
+
+你现在知道命令怎么工作了。Skills 和 Commands 看起来很像，但触发方式完全不同。
+
+## 先说清楚关键区别：
+
+
+Skills 是 Claude 可以自动调用的工作流程。你不需要输入斜杠命令，只要你的任务和 skill 的描述匹配上了，Claude 就会自动用它。
+
+Commands（命令） 就像电视遥控器 - 你按一下“开机”键，电视才会开。你不按，它就不动。
+
+Skills（技能） 就像空调的自动模式 - 你只要说“我觉得热”，空调自己判断该降温了，自动开始工作。
+
+## Skills 怎么创建？
+
+
+每个 skill 都放在自己的子文件夹里，里面有个 [SKILL.md](http://skill.md/) 文件：
+
+.claude/skills/
+  └── security-review/
+      ├── SKILL.md
+      └── DETAILED_GUIDE.md
+
+[SKILL.md](http://skill.md/) 用 YAML frontmatter 来描述什么时候用它：
+
+---
+name: security-review
+description: 对代码进行安全审查,检查常见漏洞
+---
+
+# 安全审查
+
+
+按照 @DETAILED_GUIDE.md 的标准审查代码:
+
+1. 检查 SQL 注入风险
+2. 验证输入校验
+3. 检查敏感数据泄露
+4. 审查权限控制
+
+当你说“审查这个 PR 的安全问题”时，Claude 会读取 skill 的描述，发现和你的任务匹配，然后自动调用这个 skill。你也可以直接输入 /security-review 来手动调用它。
+
+## Skills 和 Commands 最大的不同：
+
+
+Commands 就是一个文件，里面写了要干啥。
+
+Skills 可以带一堆相关文件。
+
+比如上面的例子，[SKILL.md ](http://skill.md/)文件里写了 @DETAILED_GUIDE.md，意思是“去读旁边那个 DETAILED_GUIDE.md 文件”。这样 skill 就能用那个文件里的详细规则了。
+
+## 个人 skills 放哪？
+
+
+放在 ~/.claude/skills/ 文件夹里，这样不管你打开哪个项目，这些 skills 都能用。
+
+# agents/ 文件夹
+
+
+有些任务太复杂了，你想让 Claude 请个专家来帮忙。
+
+举个例子：
+
+你让 Claude “帮我全面审查这 500 行代码”。
+
+如果 Claude 在主对话里干这件事，它会把每个文件的检查过程、发现的每个小问题、每一步分析都显示出来。你的聊天记录会被刷屏，塞满几百条中间信息，根本没法看。
+
+这时候就用 agent。
+
+Agent 就是让 Claude 在“后台”干活。它会默默检查完所有代码，然后只把最终结果（比如“发现 3 个安全问题、5 个性能问题”）告诉你。你的聊天记录保持干净，只看到有用的结论。
+
+Agent 就是一个专门干某件事的“小助手”。你在 .claude/agents/ 文件夹里创建一个 markdown 文件，告诉它：
+
+> .claude/agents/
+>   ├── code-reviewer.md
+>   ├── security-auditor.md
+>   └── performance-analyzer.md
+
+[code-reviewer.md](http://code-reviewer.md/) 示例：
+
+> ---
+> name: code-reviewer
+> description: 审查代码质量、风格和最佳实践
+> tools: [Read, Grep, Glob]
+> model: claude-3-5-haiku-20241022
+> ---
+> 
+> 你是一个代码审查专家。审查代码时关注:
+> 
+> 1. 代码风格一致性
+> 2. 潜在的 bug 和边界情况
+> 3. 性能问题
+> 4. 可维护性
+> 
+> 提供具体的改进建议,引用具体代码行。
+
+Claude 会在后台启动这个 agent，让它单独干活。Agent 干完活，把发现整理成简短报告，然后告诉你。你的主对话不会被几百条中间过程刷屏。
+
+tools 字段限制 agent 能用哪些工具。一个代码审查 agent 只需要 Read、Grep 和 Glob，不需要写文件权限。
+
+model 字段决定用哪个 AI 模型。简单任务用 Haiku（便宜、快），复杂任务用 Sonnet 或 Opus（贵但更聪明）。这样省钱又高效。
+
+个人 agents 放在 ~/.claude/agents/，在所有项目里可用。
+
+# settings.json：权限和项目配置
+
+
+.claude/ 里的 settings.json 文件控制 Claude 允许和不允许做什么。这里定义 Claude 可以运行哪些工具、可以读哪些文件、运行某些命令前是否需要询问。
+
+完整文件示例：
+
+> {
+>   "$$schema": "https://cdn.gooo.ai/schemas/claude-settings.json",
+>   "allow": [
+>     "Bash(npm run *)",
+>     "Bash(make *)",
+>     "Bash(git *)",
+>     "Read",
+>     "Write",
+>     "Edit",
+>     "Glob",
+>     "Grep"
+>   ],
+>   "deny": [
+>     "Bash(rm -rf *)",
+>     "Bash(curl *)",
+>     "Read(.env)",
+>     "Read(secrets/**)"
+>   ]
+> }
+
+# 每部分的作用
+
+
+## $$schema 行 - 写配置时，编辑器会提示你能填什么，避免写错。别删这行。
+
+
+## allow 列表 - Claude 可以直接做的事，不用每次问你：
+
+
+- 运行项目命令（npm run *、make *）
+- 查看 git 记录（git *）
+- 读写文件（Read、Write、Edit、Glob、Grep）
+
+## deny 列表 - Claude 绝对不能做的事：
+
+
+- 删除文件（rm -rf）
+- 访问网络（curl）
+- 读密码文件（.env、secrets/）
+
+如果某项内容不在这两个列表里的，Claude 会先问你再做。
+
+settings.local.json：个人权限覆盖
+
+和 [CLAUDE.local.md](http://claude.local.md/) 一样的思路。用来放你个人的权限设置，比如你想在自己电脑上让 Claude 能删文件，但不想让团队其他人也这样。这个文件不会提交到 git，所以只有你自己用得到。
+
+# 全局 ~/.claude/ 文件夹
+
+
+这个文件夹放的是你个人的设置，里面主要有这几样东西：
+
+~/.claude/CLAUDE.md - 你的个人习惯。比如“我喜欢代码多写注释”，写在这里，Claude 会应用在所有项目里。
+
+~/.claude/projects/ - Claude 和你每个项目的聊天记录，还有它自己记的笔记。输入 /memory 就能看。
+
+~/.claude/commands/ 和 ~/.claude/skills/ - 你自己做的快捷命令和技能，在所有项目里都能用。
+
+平时不用管它。但要是 Claude 莫名其妙“记得”一些你压根没说过的事，或者你想删掉某个项目的记忆，就来这里翻。
+
+# 完整结构
+
+
+把前面讲的所有东西放在一起，就是这样：
+
+项目级别 (.claude/)
+├── CLAUDE.md              # 团队指令(必须)
+
+├── CLAUDE.local.md        # 你的个人覆盖(gitignored)
+
+├── settings.json          # 团队权限
+
+├── settings.local.json    # 你的权限覆盖(gitignored)
+
+├── rules/                 # 模块化指令
+
+│   ├── api-conventions.md
+│   ├── testing.md
+│   └── security.md
+├── commands/              # 团队自定义命令
+
+│   ├── review.md
+│   └── fix-issue.md
+├── skills/                # 团队可复用工作流
+
+│   └── security-review/
+│       ├── SKILL.md
+│       └── DETAILED_GUIDE.md
+└── agents/                # 团队专业子 agents
+
+    ├── code-reviewer.md
+    └── security-auditor.md
+
+全局级别 (~/.claude/)
+├── CLAUDE.md              # 你的全局偏好
+
+├── projects/              # 每个项目的会话和记忆
+
+│   └── your-project/
+│       ├── transcripts/
+│       └── memory.md
+├── commands/              # 你的个人命令
+
+├── skills/                # 你的个人 skills
+
+└── agents/                # 你的个人 agents
+
+
+![](https://pbs.twimg.com/media/HEF5jBmaYAAKJHu.jpg)
+
+# 新手怎么开始？
+
+
+如果你是第一次用，按这个顺序来就行：
+
+第一步：让 Claude 自己生成一个起点
+
+在 Claude Code 里输入 /init，它会看你的项目，自动生成一个 [CLAUDE.md](http://claude.md/) 文件。然后你把里面不重要的删掉，只留最关键的几条。
+
+第二步：设置权限
+
+创建 .claude/settings.json 文件，告诉 Claude 什么能做、什么不能做。至少要写两条：允许它运行你的项目命令（比如 npm run dev），禁止它读 .env 文件（里面有密码）。
+
+第三步：做一两个快捷命令
+
+想想你最常让 Claude 干的事，比如“审查代码”、“修 bug”，给它们做成命令。以后直接输入 /review 就行，不用每次打一堆字。
+
+第四步：规则太多了就拆开
+
+等你的 [CLAUDE.md](http://claude.md/) 文件越写越长，就把它拆成几个小文件，放在 .claude/rules/ 文件夹里。API 的规则单独一个文件，测试的规则单独一个文件，这样好管理。
+
+第五步：加上你的个人习惯
+
+在你电脑的用户文件夹里创建 ~/.claude/CLAUDE.md，写上你自己的偏好。比如“我喜欢先写类型再写代码”、“我喜欢用函数式写法”。这样不管打开哪个项目，Claude 都记得你的习惯。
+
+做完这五步，基本就够用了。95% 的项目只需要这些。至于 skills 和 agents，那是你有特别复杂的重复工作时才用得上的高级功能。
+
+![](https://pbs.twimg.com/media/HEF5mg6aUAA8kWB.jpg)
+
+# 最后说几句
+
+
+.claude 文件夹就是用来告诉 Claude：“我是谁、我的项目是干嘛的、你该怎么干活”。
+
+你写得越清楚，Claude 就越少犯错，你就越少返工。
+
+最重要的是 [CLAUDE.md](http://claude.md/) 这个文件，先把它写好，其他都是锦上添花。
+
+别一上来就想把所有功能都用上。从简单的开始，慢慢加东西。
+
+本文基于 Akshay内容深度整理：
+
+https://x.com/akshay_pachaar/status/2035341800739877091
+
+> 🫶感谢看到这里，如果对你有帮助，欢迎关注我的 X 账号[👉@imaxichuh](https://x.com/@imaxichuhai)ai，我会持续分享AI 思考、AI 工具使用体验等内容。
+
+也欢迎关注我的公众号：
+
+![](https://pbs.twimg.com/media/HEF7E15bwAAvOOu.png)
