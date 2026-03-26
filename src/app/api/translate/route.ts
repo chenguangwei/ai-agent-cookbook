@@ -141,6 +141,95 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Max chars per chunk before splitting (~4000 tokens for typical English/Chinese mix)
+const CHUNK_CHAR_LIMIT = 8000;
+
+/**
+ * Call the translation API for a single piece of content.
+ * Returns { content, truncated } where truncated=true means the output was cut off.
+ */
+async function callTranslateAPI(
+  config: ReturnType<typeof getTranslateConfig>,
+  systemPrompt: string,
+  userContent: string
+): Promise<{ content: string | null; truncated: boolean }> {
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      temperature: 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const choice = data.choices?.[0];
+  const content = choice?.message?.content ?? null;
+  const truncated = choice?.finish_reason === 'length';
+  return { content, truncated };
+}
+
+/**
+ * Split MDX content into translatable chunks by top-level headings.
+ * Keeps frontmatter with the first chunk. Splits on ## or # headings.
+ */
+function splitMdxIntoChunks(content: string): string[] {
+  // Extract frontmatter
+  const frontmatterMatch = content.match(/^---\n[\s\S]*?\n---\n/);
+  const frontmatter = frontmatterMatch ? frontmatterMatch[0] : '';
+  const body = frontmatter ? content.slice(frontmatter.length) : content;
+
+  // Split body by H1 or H2 headings (keep heading with its section)
+  const sectionRegex = /(?=^#{1,2} )/m;
+  const sections = body.split(sectionRegex).filter(Boolean);
+
+  if (sections.length === 0) return [content];
+
+  const chunks: string[] = [];
+  let currentChunk = frontmatter + (sections[0] ?? '');
+
+  for (let i = 1; i < sections.length; i++) {
+    const section = sections[i];
+    if ((currentChunk + '\n\n' + section).length > CHUNK_CHAR_LIMIT) {
+      // If the section itself is too large, split it by H3
+      if (section.length > CHUNK_CHAR_LIMIT) {
+        chunks.push(currentChunk.trim());
+        const subSections = section.split(/(?=^### )/m).filter(Boolean);
+        let subChunk = '';
+        for (const sub of subSections) {
+          if ((subChunk + sub).length > CHUNK_CHAR_LIMIT && subChunk) {
+            chunks.push(subChunk.trim());
+            subChunk = sub;
+          } else {
+            subChunk += (subChunk ? '\n\n' : '') + sub;
+          }
+        }
+        currentChunk = subChunk;
+      } else {
+        chunks.push(currentChunk.trim());
+        currentChunk = section;
+      }
+    } else {
+      currentChunk += '\n\n' + section;
+    }
+  }
+
+  if (currentChunk.trim()) chunks.push(currentChunk.trim());
+  return chunks.length > 0 ? chunks : [content];
+}
+
 /**
  * POST /api/translate
  * Translate content from one locale to another
@@ -201,34 +290,43 @@ export async function POST(request: NextRequest) {
       const systemPrompt = buildTranslationPrompt(targetLocale, targetLangName, format);
 
       try {
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: config.model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: sourceContent },
-            ],
-            temperature: 0.3,
-          }),
-        });
+        let translatedContent: string;
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          results.push({ slug, contentType, success: false, message: `API error: ${response.status} - ${errorText}` });
-          continue;
-        }
+        if (format === 'mdx' && sourceContent.length > CHUNK_CHAR_LIMIT) {
+          // Split large MDX into chunks and translate each part
+          const chunks = splitMdxIntoChunks(sourceContent);
+          const translatedChunks: string[] = [];
 
-        const data = await response.json();
-        let translatedContent = data.choices?.[0]?.message?.content;
+          for (let i = 0; i < chunks.length; i++) {
+            const chunkPrompt = i === 0
+              ? systemPrompt
+              : `${systemPrompt}\n\nNote: This is a continuation chunk of a larger document. Translate directly without adding any preamble.`;
 
-        if (!translatedContent) {
-          results.push({ slug, contentType, success: false, message: 'No translation returned' });
-          continue;
+            const result = await callTranslateAPI(config, chunkPrompt, chunks[i]);
+            if (!result.content) {
+              results.push({ slug, contentType, success: false, message: `No translation returned for chunk ${i + 1}/${chunks.length}` });
+              break;
+            }
+            if (result.truncated) {
+              results.push({ slug, contentType, success: false, message: `Translation truncated at chunk ${i + 1}/${chunks.length}. Content may be too long even after chunking.` });
+              break;
+            }
+            translatedChunks.push(result.content);
+          }
+
+          if (translatedChunks.length !== chunks.length) continue;
+          translatedContent = translatedChunks.join('\n\n');
+        } else {
+          const result = await callTranslateAPI(config, systemPrompt, sourceContent);
+          if (!result.content) {
+            results.push({ slug, contentType, success: false, message: 'No translation returned' });
+            continue;
+          }
+          if (result.truncated) {
+            results.push({ slug, contentType, success: false, message: 'Translation was truncated by the model (output limit exceeded). Try using a model with higher output token limits.' });
+            continue;
+          }
+          translatedContent = result.content;
         }
 
         // Clean up: remove code fences if the model wrapped it
