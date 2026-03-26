@@ -39,6 +39,13 @@ IMPORTANT constraints:
 - DO NOT import these components. Assume they are globally available.
 - Ensure all JSX tags are strictly closed.
 - Escape curly braces '{' and '}' in normal text as '\\{' and '\\}'.
+
+CRITICAL MDX SAFETY RULES (violations cause 500 server errors):
+- ANY JSON example (containing { and }) MUST be inside a \`\`\`json code block, NEVER in a blockquote
+- ANY YAML frontmatter example MUST be inside a \`\`\`yaml code block — bare --- delimiters in the body will break the MDX parser
+- ANY shell script, config file, or code snippet shown as an example MUST be in a fenced code block
+- $$ (double dollar sign) in regular text MUST be written as \\$\\$ or as a single $
+- Blockquotes (> lines) must contain ONLY plain text or simple markdown — never JSON, YAML, or code with braces
 `;
 
 const SYSTEM_PROMPT_MDX = `You are an expert technical editor and MDX developer.
@@ -63,7 +70,7 @@ interface ChatMessage {
 }
 
 interface ChatCompletionResponse {
-  choices: { message: { content: string } }[];
+  choices: { message: { content: string }; finish_reason?: string }[];
 }
 
 async function getLLMSettings(): Promise<LLMSettings> {
@@ -87,7 +94,7 @@ async function callLLM(messages: ChatMessage[], llm?: LLMSettings): Promise<stri
       model: config.model,
       messages,
       temperature: 0.3,
-      max_tokens: 4096,
+      max_tokens: 16000,
     }),
   });
 
@@ -97,7 +104,16 @@ async function callLLM(messages: ChatMessage[], llm?: LLMSettings): Promise<stri
   }
 
   const data: ChatCompletionResponse = await response.json();
-  return data.choices[0]?.message?.content?.trim() || '';
+  const choice = data.choices[0];
+
+  if (choice?.finish_reason === 'length') {
+    console.warn('[LLM] Response was truncated (finish_reason=length). Content may be incomplete.');
+    // Append a warning comment so reviewers know the content was cut off
+    const content = choice.message?.content?.trim() || '';
+    return content + '\n\n<!-- ⚠️ Content was truncated by the LLM (output token limit reached). Please review and complete manually. -->';
+  }
+
+  return choice?.message?.content?.trim() || '';
 }
 
 // ============================================================

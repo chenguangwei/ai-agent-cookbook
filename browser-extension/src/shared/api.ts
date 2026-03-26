@@ -7,7 +7,7 @@ import type {
   Locale,
 } from './types';
 import { getSettings } from './storage';
-import { slugify } from './utils';
+import { slugify, sanitizeMdxContent } from './utils';
 
 // ============================================================
 // API response type
@@ -113,14 +113,15 @@ async function submitLab(apiUrl: string, data: LabData): Promise<ApiResponse> {
 // ============================================================
 
 /**
- * Fix common markdown formatting issues from web extraction
+ * Fix common markdown formatting issues from web extraction,
+ * then sanitize for MDX safety (no bare {} or --- in body).
  */
 function formatContent(content: string): string {
   if (!content) return content;
 
   // Note: intentionally no sentence-splitting heuristics here.
   // Patterns like /([.!?])\s+([A-Z])/ break tweet text, URLs, acronyms (e.g. "U.S. News").
-  return content
+  const cleaned = content
     // Fix image links: [![Image](url)](link) -> ![Image](url)
     .replace(/!\[([^\]]*)\]\(([^)]+)\]\([^)]+\)/g, '![$1]($2)')
     // Fix image with no alt: [![Image](url)](link) -> ![](url)
@@ -135,6 +136,9 @@ function formatContent(content: string): string {
     .replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2')
     // Clean up trailing whitespace
     .trim();
+
+  // Sanitize MDX-unsafe patterns: blockquotes with {}, bare --- blocks
+  return sanitizeMdxContent(cleaned);
 }
 
 /**

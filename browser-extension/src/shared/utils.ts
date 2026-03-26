@@ -196,6 +196,125 @@ export function fixMarkdownContent(content: string): string {
 }
 
 /**
+ * Sanitize MDX content to prevent Next.js server component parse errors.
+ *
+ * Fixes two classes of MDX parse errors that commonly occur in scraped content:
+ *
+ * 1. Blockquotes containing { } — MDX interprets these as JSX expressions.
+ *    Solution: convert the blockquote to a ```json or ``` code block.
+ *
+ * 2. Bare --- YAML-like blocks in the body — MDX treats them as frontmatter delimiters.
+ *    Solution: wrap them in ```yaml code fences.
+ *
+ * Lines inside fenced code blocks are never modified.
+ */
+export function sanitizeMdxContent(content: string): string {
+  if (!content) return content;
+
+  const lines = content.split('\n');
+  const output: string[] = [];
+  let inFencedCode = false;
+  let fenceMarker = '';
+
+  // Buffer for consecutive blockquote lines
+  let bqBuffer: string[] = [];
+  let bqHasBraces = false;
+
+  function flushBlockquote(): void {
+    if (bqBuffer.length === 0) return;
+    if (bqHasBraces) {
+      // Strip the leading "> " and emit as a code block
+      const codeLines = bqBuffer.map((l) => l.replace(/^>\s?/, ''));
+      const joined = codeLines.join('\n').trim();
+      // Detect language for nicer output
+      const lang =
+        joined.startsWith('{') || joined.startsWith('[')
+          ? 'json'
+          : joined.includes(':') && joined.includes('\n')
+          ? 'yaml'
+          : '';
+      output.push('```' + lang);
+      output.push(...codeLines);
+      output.push('```');
+    } else {
+      output.push(...bqBuffer);
+    }
+    bqBuffer = [];
+    bqHasBraces = false;
+  }
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Track fenced code block open/close
+    const fenceMatch = line.match(/^(`{3,}|~{3,})/);
+    if (fenceMatch) {
+      if (!inFencedCode) {
+        flushBlockquote();
+        inFencedCode = true;
+        fenceMarker = fenceMatch[1][0];
+        output.push(line);
+        i++;
+        continue;
+      } else if (line.startsWith(fenceMarker)) {
+        inFencedCode = false;
+        fenceMarker = '';
+        output.push(line);
+        i++;
+        continue;
+      }
+    }
+
+    if (inFencedCode) {
+      output.push(line);
+      i++;
+      continue;
+    }
+
+    // Accumulate blockquote lines
+    if (line.startsWith('>')) {
+      if (line.includes('{') || line.includes('}')) bqHasBraces = true;
+      bqBuffer.push(line);
+      i++;
+      continue;
+    }
+
+    // Non-blockquote line: flush pending blockquote buffer first
+    flushBlockquote();
+
+    // Detect bare --- frontmatter-like blocks
+    // Pattern: a line that is exactly "---", followed by any lines, followed by another "---"
+    if (line.trim() === '---') {
+      let j = i + 1;
+      const bodyLines: string[] = [];
+      while (j < lines.length && lines[j].trim() !== '---') {
+        bodyLines.push(lines[j]);
+        j++;
+      }
+      if (j < lines.length) {
+        // Found matching closing ---: wrap the whole block in a yaml code fence
+        output.push('```yaml');
+        output.push('---');
+        output.push(...bodyLines);
+        output.push('---');
+        output.push('```');
+        i = j + 1;
+        continue;
+      }
+    }
+
+    output.push(line);
+    i++;
+  }
+
+  // Flush any remaining blockquote buffer
+  flushBlockquote();
+
+  return output.join('\n');
+}
+
+/**
  * Truncate description/summary to a reasonable length
  */
 export function truncateDescription(text: string, maxLength = 200): string {
