@@ -259,53 +259,83 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                   ))}
                   </div>
 
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-12">
-                      {currentPage > 1 ? (
-                        <Link
-                          href={`?${new URLSearchParams({
-                            ...(categoryParam && { cat: categoryParam }),
-                            ...(localeFilter && { locale: localeFilter }),
-                            ...(difficultyFilter && { difficulty: difficultyFilter }),
-                            ...(tagFilter && { tag: tagFilter }),
-                            page: String(currentPage - 1),
-                          }).toString()}`}
-                          className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                          Previous
-                        </Link>
-                      ) : (
-                        <span className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed">
-                          <ChevronLeft className="w-4 h-4" />
-                          Previous
-                        </span>
-                      )}
-                      <span className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
-                        {tHome('page')} {currentPage} {tHome('of')} {totalPages}
-                      </span>
-                      {currentPage < totalPages ? (
-                        <Link
-                          href={`?${new URLSearchParams({
-                            ...(categoryParam && { cat: categoryParam }),
-                            ...(localeFilter && { locale: localeFilter }),
-                            ...(difficultyFilter && { difficulty: difficultyFilter }),
-                            ...(tagFilter && { tag: tagFilter }),
-                            page: String(currentPage + 1),
-                          }).toString()}`}
-                          className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
-                        >
-                          Next
-                          <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      ) : (
-                        <span className="flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed">
-                          Next
-                          <ChevronRight className="w-4 h-4" />
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {totalPages > 1 && (() => {
+                    const buildHref = (p: number) => `?${new URLSearchParams({
+                      ...(categoryParam && { cat: categoryParam }),
+                      ...(localeFilter && { locale: localeFilter }),
+                      ...(difficultyFilter && { difficulty: difficultyFilter }),
+                      ...(tagFilter && { tag: tagFilter }),
+                      page: String(p),
+                    }).toString()}`;
+
+                    const pageNumbers: (number | '…')[] = [];
+                    if (totalPages <= 7) {
+                      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+                    } else {
+                      pageNumbers.push(1);
+                      if (currentPage > 3) pageNumbers.push('…');
+                      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                        pageNumbers.push(i);
+                      }
+                      if (currentPage < totalPages - 2) pageNumbers.push('…');
+                      pageNumbers.push(totalPages);
+                    }
+
+                    return (
+                      <div className="flex flex-col items-center gap-3 mt-12">
+                        <div className="flex items-center gap-1">
+                          {currentPage > 1 ? (
+                            <Link
+                              href={buildHref(currentPage - 1)}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-500 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </Link>
+                          ) : (
+                            <span className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-700 cursor-not-allowed">
+                              <ChevronLeft className="w-4 h-4" />
+                            </span>
+                          )}
+
+                          {pageNumbers.map((p, i) =>
+                            p === '…' ? (
+                              <span key={`ellipsis-${i}`} className="w-9 h-9 flex items-center justify-center text-slate-400 dark:text-slate-600 text-sm select-none">
+                                …
+                              </span>
+                            ) : (
+                              <Link
+                                key={p}
+                                href={buildHref(p)}
+                                className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                  p === currentPage
+                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    : 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-500 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:text-primary-400'
+                                }`}
+                              >
+                                {p}
+                              </Link>
+                            )
+                          )}
+
+                          {currentPage < totalPages ? (
+                            <Link
+                              href={buildHref(currentPage + 1)}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-500 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </Link>
+                          ) : (
+                            <span className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-700 cursor-not-allowed">
+                              <ChevronRight className="w-4 h-4" />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 dark:text-slate-600">
+                          {tHome('pageOf', { current: currentPage, total: totalPages })}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">

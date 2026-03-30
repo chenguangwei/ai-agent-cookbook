@@ -29,7 +29,10 @@
       "news": "ニュース",
       "newsDesc": "AIエージェントとLLMの最新ブレークスルーをキャッチアップ",
       "llms": "LLM"
-    }
+    },
+    "pageOf": "{current} / {total} ページ",
+    "page": "ページ",
+    "of": "/"
   },
   "Navigation": {
     "tutorials": "チュートリアル",

@@ -1,0 +1,304 @@
+---
+title: "为什么一夜之间大家都在做 CLI ？"
+slug: "cli"
+locale: "zh"
+description: "为什么一夜之间大家都在做 CLI ？"
+category: "LLM Models"
+tags: ["Claude", "RAG"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEoF607aEAAt70E.jpg"
+featured: false
+date: 2026-03-30
+---
+
+# 为什么一夜之间大家都在做 CLI ？
+
+
+飞书、Google、Stripe、ElevenLabs、网易云音乐。
+
+最近几个月，一群看起来毫不相关的公司不约而同做了同一件事：发布 CLI 工具。
+
+Karpathy 最近写了一篇文章记录自己用 AI 做 app 的全过程。
+
+他大部分时间不是在写代码，主要是在浏览器标签之间跳来跳去，配 API Key、改 DNS、填环境变量。
+
+他的原话是：
+
+> "你的服务应该有一个 CLI 工具。不要让开发者去访问、查看或点击。直接指示和赋能他们的 AI。"
+
+2026 年了，为什么大家突然回去做"命令行"这种看起来很复古的东西？
+
+## CLI 到底是什么
+
+
+如果你不是程序员，CLI 听起来很技术。其实概念很简单。
+
+GUI（图形界面）是打开 app，看到按钮菜单，鼠标点来点去。
+
+CLI（命令行）是打开一个黑色窗口，敲一行文字，按回车，事情做完了。
+
+打个比方：GUI 是去餐厅看菜单、指给服务员"我要这个"。
+
+CLI 是直接对厨房喊"宫保鸡丁，少油，多辣"。结果一样，但 CLI 更精确，更容易被自动化。
+
+那为什么 CLI 和 AI 特别适配？因为 AI 就是"文字进、文字出"的。GUI 是给眼睛看的，AI 没有眼睛。
+
+CLI 是纯文字的，AI 天生就在这个世界里运作。
+
+AI 想帮你压缩视频，不需要打开 Premiere 找导出按钮。它跑一行 ffmpeg -i input.mp4 -crf 28 output.mp4 就完事了。
+
+人类没有重新爱上命令行。是 AI 原本就生活在命令行里。
+
+![](https://pbs.twimg.com/media/HEoGA8GbkAAdHtN.jpg)
+
+## AI 的能力边界在哪？
+
+
+很多人把 AI 想象成全知全能的大脑。
+
+更准确的比喻是：一个非常聪明的新员工，什么都能学，学得快，但需要两样东西，工具和说明书。
+
+装了 ffmpeg，AI 能处理视频。装了飞书 CLI，AI 能帮你查日程、发消息。
+
+装了 Google Workspace CLI，AI 能管你的邮箱和云盘。
+
+没装？"不好意思，这个我做不了。"
+
+> ffmpeg：一款开源音视频处理工具，几乎是视频处理的行业标准。brew install ffmpeg 就能装上，AI 从此能帮你压缩视频、转格式、截片段。
+
+AI 的实际能力 = 它能调用的工具 + 它拿到的上下文。
+
+工具好理解。"上下文"是什么？简单说就是说明书。
+
+对于 ffmpeg 这种经典工具，AI 在训练时已经见过海量用法，不需要额外说明书。
+
+但飞书 CLI 是 2026 年刚发布的，AI 的训练数据里完全没有，你不给说明书，AI 根本不知道它存在。
+
+所以新一代 CLI 工具都自带一种叫 Skills 的文件，本质就是 Markdown 写的说明书，告诉 AI 这个工具能做什么、怎么用。
+
+这里有个推论值得注意：工具越新，AI 越依赖这种显式说明书。
+
+训练数据永远追不上工具发布速度，说明书只会越来越重要。
+
+![](https://pbs.twimg.com/media/HEoHEEjakAAXw36.jpg)
+
+## CLI 正在被重新发明
+
+
+过去的 CLI 和现在的 CLI，虽然都叫 CLI，已经是两种东西了。
+
+传统 CLI，比如 ffmpeg、jq、curl，是给程序员用的。
+
+输出是给人眼看的彩色文字。遇到需要选择的时候会弹交互式菜单，对人来说很自然，但 AI 遇到这种弹窗直接卡住。
+
+新一代 CLI 从设计之初就假设调用者可能是 AI：
+
+- 所有操作通过参数一次性传入，不弹菜单；
+- 输出 JSON 格式，AI 直接解析；自带 Skills 说明书；
+- 支持 --dry-run 预览，让 AI 执行前先看看会发生什么；
+- AI 还能问工具"你有哪些命令？需要什么参数？"不用读完整文档。
+
+拿飞书 CLI 举例：装完以后 200 多条命令，覆盖日历、消息、文档、任务、邮箱等 11 个领域。
+
+你说"帮我看看明天有什么安排"，AI 调用 lark-cli calendar +agenda；
+
+说"给张三发条消息说会议改到三点"，AI 调用对应的消息命令。整个过程不用打开飞书 app。
+
+Google Workspace CLI 更极端，一条命令启动一个 MCP 服务，让 AI 直接通过标准协议操作 Gmail、Google Drive、Google Calendar。
+
+> MCP（Model Context Protocol）：AI 与外部服务之间的标准通信协议，下节有完整解释。
+
+![](https://pbs.twimg.com/media/HEoHH6RagAA2joR.jpg)
+
+## CLI 正在变成 AI 的万能插件
+
+
+这里说一个我在做 CodePilot 过程中观察到的现象，目前还很少被讨论到。
+
+先用一句话解释三个概念：
+
+- MCP：AI 和外部服务之间的标准通信协议。你可以理解成 AI 世界的 USB 接口。
+- Skills：告诉 AI"这个工具怎么用"的说明书。
+- Plugin：把工具、协议、说明书打包在一起的可安装扩展。类似手机上的 App。
+
+AI 圈一直在讨论这三个东西哪个会成为主流。
+
+但你仔细看新一代 CLI 在做什么，会发现它们把这三样全打包了。
+
+Google Workspace CLI 就是典型：CLI 命令提供执行能力，内置 MCP 服务提供标准通信协议，自带 Skills 文件充当使用说明书。
+
+飞书 CLI、Stripe CLI、ElevenLabs CLI、网易云音乐 CLI，全是这个模式。
+
+换句话说，一个 CLI 工具就是一个事实上的 Plugin。
+
+但它比 Plugin 多了几个好处。
+
+Claude Code 的 Plugin 只能在 Claude Code 里用。
+
+飞书 CLI 装了以后，Claude Code、Cursor、Gemini CLI 都能用，不锁平台。
+
+这一点在国内尤其重要，因为众所周知的原因，用户可能今天接 Claude，明天换 DeepSeek，后天试 Qwen。
+
+CLI 不关心调用它的是哪个模型，它是模型无关的执行层。
+
+Plugin 商城有审核流程，CLI 工具往 npm 上 publish 就上线了，跟发网站一样自由。
+
+而且人也能用，不装 AI 也能在终端里直接敲命令，开发者有更大的动力去做和维护。
+
+> npm：开发者版本的 App Store，大量命令行工具通过它分发安装。运行 npm install -g 工具名 就能装上。
+
+CLI 还有一个 Plugin 做不到的事：
+
+组合。gws gmail +triage | jq '.messages[]'，两个工具用管道串起来，前一个的输出变成后一个的输入。
+
+Shell 管道这个几十年前的设计，在 AI 时代突然又变得值钱了。Plugin 之间是隔离的，没有标准的组合方式。
+
+大家在争 MCP、Skills、Plugin 哪个会赢，答案可能是 CLI 把它们全打包了，而且跨平台。
+
+![](https://pbs.twimg.com/media/HEoHLfraQAABxy0.jpg)
+
+## 但事情没那么美好
+
+
+说了这么多好处，该说问题了。
+
+CLI 最大的结构性缺陷是安全。
+
+Plugin 在平台沙箱里跑，有声明式权限控制。
+
+CLI 是直接执行 shell 命令，AI 一旦能跑 gws，就能用这个身份做任何事。
+
+没有"只读不写"的细粒度控制。目前靠 --dry-run 和弹窗确认来补救，但跟平台级权限框架比，差距很大。
+
+> 沙箱：一种隔离运行机制，类似手机 App 的权限弹窗——"是否允许访问相机？"。程序只能做它被允许做的事，出了问题也不影响系统其他部分。
+
+具体到实际使用，我在 CodePilot 里接入各种 CLI 工具的过程中也踩了不少坑。
+
+第一个：说明书太大，AI 脑子撑爆了。
+
+有些工具有非常大的 Skills 文件。AI 的上下文窗口有容量限制，这一个文件就占掉一大块，加载完推理质量明显下降。
+
+对比之下，Google Workspace CLI 的 Skills 文件平均 1.6KB，精准给 AI 需要的信息，不多不少。
+
+第二个：交互式提示卡死 AI。
+
+Stripe CLI 早期版本弹 ? Which environment? 选择菜单，人觉得挺自然，AI 直接卡住不动了。后来加了 --no-interactive 才解决。
+
+第三个：输出太长，淹没有用信息。
+
+一个查询返回几万字符 JSON，全灌进上下文，真正需要的信息反而找不到了。
+
+Google Workspace CLI 用 field masks 控制返回大小，这个设计目前很少有工具跟进。
+
+> field masks：调用 API 时指定只返回哪些字段，而不是把所有数据都倒回来。查邮件只要主题和发件人，不要正文，上下文省一大块。
+
+这几个问题有一个共同根源：
+
+"为 AI 设计"和"在 AI 中验证"是两件事。就像移动端适配，设计稿上看着响应式没问题，真机上按钮根本点不到。
+
+![](https://pbs.twimg.com/media/HEoHPVabIAEp-UP.jpg)
+
+## 我的实验：让 AI 管理自己的工具
+
+
+做 CodePilot 的 CLI 管理功能时，我经历了一次思路转变。
+
+一开始是传统软件思路：
+
+写代码嗅探用户系统装了什么、写 UI 让用户在界面上管理工具、写逻辑检测更新。标准做法。
+
+后来想明白了一个问题：我产品里已经有 AI 了，为什么要绕过它？
+
+安装工具，直接拉起对话让 AI 来。
+
+AI 读 --help，判断操作系统，处理权限错误，引导认证配置。
+
+安装报错了它能读错误信息自己判断，要不要 sudo？先装个依赖？
+
+注册工具也一样，给 AI 一个提示词模板，读完 --help 自动生成结构化描述，工具能做什么、怎么用、典型场景。
+
+> sudo：macOS/Linux 上临时获取系统管理员权限的命令。安装某些工具需要写入系统目录，普通权限不够，加 sudo 才行。
+
+想法很简单：别用软件帮用户管理 AI 的工具，让 AI 管理自己的工具。
+
+每个工具的情况都不一样，用代码写死安装逻辑是写不完的。
+
+但 AI 能处理这种开放式问题。把工具安装变成 AI 任务，比写一个覆盖所有边界情况的安装器靠谱得多。
+
+![](https://pbs.twimg.com/media/HEoHTAFa8AAuBtc.jpg)
+
+我还做了一个 5 维 Agent 兼容度评分，从是否为 AI 设计、是否支持结构化输出、是否支持自查、是否支持预览、是否注意上下文大小五个方面去打分。
+
+说实话这个评分更多是一个呼吁：希望工具开发者开始想"我的 CLI 对 AI 友好吗？"
+
+![](https://pbs.twimg.com/media/HEoHWEiagAAe9wu.jpg)
+
+## 还缺什么？
+
+
+CLI 正在成为 AI 能力扩展的基础设施，但有几个明显缺口。
+
+你怎么知道"有个飞书 CLI 能让 AI 操作飞书"？
+
+目前基本靠口口相传。npm 和 GitHub 最有条件做 AI 工具的 App Store，但它们没这个动力。发现机制是空白的。
+
+认证也是问题。
+
+飞书一套登录，Google 一套，Stripe 一套，装五个工具登录五次。对普通用户来说摩擦太大了。
+
+安装体验也不靠谱。
+
+npm、brew 是十几年前设计的，假设使用者是懂命令行的开发者。
+
+当操作者变成 AI，权限问题、依赖缺失、路径冲突这些"查 Stack Overflow 就能解决"的问题，变成了真正的障碍。
+
+> Homebrew（brew）：macOS 上最流行的包管理器，专门用来安装命令行工具。brew install ffmpeg 装 ffmpeg，brew install jq 装 jq，就这么简单。
+
+行业不缺工具，不缺协议，不缺说明书。
+
+缺的是让这三样东西被发现、被安装、被信任的那一层基础设施。
+
+谁做出来这个，谁就是 AI 时代的 npm。
+
+![](https://pbs.twimg.com/media/HEoHZ6Ja8AAobiO.jpg)
+
+## 所以，为什么大家都在做 CLI？
+
+
+大家意识到 CLI 可能是当下效率最高的 AI 能力分发方式。
+
+一个 CLI 工具同时包含执行能力、通信协议和使用说明，就是一个完整的 AI 插件。
+
+跨平台，免审核，人和 AI 都能用。
+
+每多装一个好用的 CLI 工具，你的 AI 就多一项技能。每少一分多余的上下文噪音，你的 AI 就聪明一点。
+
+我们正处在一个混乱的新旧交替时代。
+
+旧的格式、旧的数据壁垒、旧的包管理器，和新的 AI 原生工具链交织在一起。
+
+CLI 不是唯一的答案，但它是目前最务实的那一个。
+
+![](https://pbs.twimg.com/media/HEoHcd9aYAA2QJi.jpg)
+
+好了，以上就是今天的内容。如果觉得写得还不错的话，可以帮我点个赞，或者转发给你需要的朋友。
+
+这里尝试 Codepilot：https://github.com/op7418/CodePilot
+
+引用：
+
+[过了个年，AI 圈变天了？但没人告诉你为什么](https://mp.weixin.qq.com/s/z7zNi_DayzevcTe0EUTv5g)
+
+你需要为 AI 代理重写你的 CLI-You Need to Rewrite Your CLI for AI Agents：https://justin.poehnelt.com/posts/rewrite-your-cli-for-ai-agents/
+
+Stripe Projects CLI（公开预览）-Stripe Projects CLI：[https://docs.stripe.com/projects](https://docs.stripe.com/projects)
+
+Building CLIs for agents：https://x.com/ericzakariasson/status/2036762680401223946
+
+MenuGen-Vibe coding MenuGen：https://karpathy.bearblog.dev/vibe-coding-menugen/
+
+Google Workspace CLI：https://github.com/googleworkspace/cli
+
+飞书 CLI：https://github.com/larksuite/cli

@@ -56,3 +56,4 @@ tina/__generated__/.cache
 .claude
 .windsurf
 *.sql
+.gstack/

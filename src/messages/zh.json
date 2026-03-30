@@ -55,6 +55,7 @@
     "allTutorials": "所有教程",
     "page": "第",
     "of": "页，共",
+    "pageOf": "第 {current} 页，共 {total} 页",
     "stats": {
       "tutorials": "教程",
       "tools": "工具",

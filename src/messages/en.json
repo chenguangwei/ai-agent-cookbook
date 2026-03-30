@@ -55,6 +55,7 @@
     "allTutorials": "All Tutorials",
     "page": "Page",
     "of": "of",
+    "pageOf": "Page {current} of {total}",
     "stats": {
       "tutorials": "Tutorials",
       "tools": "Tools",
