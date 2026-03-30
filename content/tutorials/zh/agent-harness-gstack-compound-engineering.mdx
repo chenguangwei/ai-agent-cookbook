@@ -1,0 +1,160 @@
+---
+title: "一个从执行到记忆的完整 Agent Harness: gstack + Compound Engineering："
+slug: "agent-harness-gstack-compound-engineering"
+locale: "zh"
+description: "一个从执行到记忆的完整 Agent Harness: gstack + Compound Engineering："
+category: "Real-world Cases"
+tags: ["Claude", "Planning"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEi8z-sXEAEUeZ3.jpg"
+featured: false
+date: 2026-03-30
+---
+
+# 一个从执行到记忆的完整 Agent Harness: gstack + Compound Engineering：
+
+
+之前分享过两个大火的 Claude Code skills 以及我的用法：YC CEO @garrytan  的 gstack（一个人模拟整支团队：CEO review、架构 review、浏览器 QA、周报统计），和 Jesse Vincent 的 Superpowers（标准化的 brainstorm → plan → execute → review 流程，120k stars，几乎是 Claude Code 的标配）。
+
+但这周，我正在用 Compound Engineering（CE）替代 Superpowers。推荐你也试试。
+
+为什么我认为 CE 比 120k star 的 Superpowers 更好用？我们可以通过 Anthropic 官方博客中提出的 harness 架构来理解这个问题。理解了这个框架，后面的对比就一目了然。
+
+## Anthropic 的 Harness 架构
+
+
+Anthropic 去年 11 月和上周分别发了两篇工程博客，提出了一套让 agent 跨多个 context window 持续工作的 harness 架构。核心四个角色：
+
+1. Planner agent，把大任务拆成 feature list
+2. Coding agent，每次只做一个 feature，做完留结构化笔记
+3. Evaluator agent，独立审查（不让 builder 评价自己的工作）
+4. 跨 session 桥接，用 progress file 传递上下文
+
+上周的第二篇引入了 generator-evaluator 分离：agent 评价自己的工作会过度乐观，把做事的和评价的分成两个独立 agent，效果显著提升。Anthropic 用这套架构让 agent 自主开发了一个完整的 claude.ai 克隆，200 多个可验证的 feature。
+
+![](https://pbs.twimg.com/media/HEi8r2GaYAAX0jQ.jpg)
+
+用这个框架去审视 gstack、Superpowers 和 CE，差距就很明显了。
+
+## gstack：Planner + 浏览器 Evaluator
+
+
+gstack 做对了 harness 里两个关键角色。
+
+/plan-ceo-review 和 /plan-eng-review 对应 Planner agent，分别从产品和架构视角把关。/qa 打开浏览器跑 staging URL，像真实用户一样测，对应 Evaluator agent。Anthropic 论文里明确说，让 agent 像人类用户一样测试 "dramatically improved performance"。
+
+gstack 的哲学 "Boil the Lake"：AI 时代做完整的事边际成本趋近于零，永远做完整版。Planning + QA 上它依然是最好的。
+
+但 gstack 主要覆盖决策层和测试层，没有结构化的增量执行 workflow，也没有知识积累机制。这不是 gstack 的问题，而是它的定位：它不试图做全流程。
+
+## Superpowers：流程有了，深度不够
+
+
+Superpowers 120k stars 已经证明了它的质量。brainstorm → plan → execute → review 流程帮很多人从"跟 AI 瞎聊"升级到了"有流程地用 AI"。它的 subagent-driven-development 甚至实现了 generator-evaluator 分离：独立的 spec-reviewer + code-quality-reviewer。这比很多 skill 要好。
+
+但对比 CE，深度差距在三个地方。
+
+Plan：Superpowers 在当前 context 里直接写 plan。CE 的 /ce:plan 并行 spawn research agent 搜历史经验、扫 codebase pattern、读 git history，plan 基于项目历史知识，不只是当前 prompt。
+
+Review：Superpowers 2 个 reviewer（spec + quality）。CE spawn 6 到 15 个专项 reviewer 并行：correctness、security、performance、testing、maintainability、adversarial（50+ 行 diff 触发）、learnings-researcher、project-standards，每个独立出 P0-P3 报告。
+
+第三，最关键的：Superpowers 没有知识积累机制。做完就完了，下次 session 从零开始。
+
+这第三点才是我真正替换 Superpowers 的原因。
+
+## /ce:compound：Anthropic harness 博客都没解决的问题，CE 解决了
+
+
+Anthropic 的 harness 用 claude-progress.txt 做跨 session 桥接：session A 做完写笔记，session B 读笔记继续做。线性的，只服务相邻的两个 session。
+
+CE 做了一件不同的事。
+
+做完一个功能或修完一个 bug 后，跑 /ce:compound。它并行 spawn 三个 agent：
+
+Context Analyzer，回溯整个 session 对话，提取问题类型、涉及组件、症状。
+
+Solution Extractor，从 debug 过程提取：什么没用、什么管用、root cause、怎么预防。
+
+Related Docs Finder，搜已有的 docs/solutions/ 查重。高度重复就更新旧文档，不新建。
+
+三个 agent 跑完，orchestrator 汇总，写一个结构化文档到 docs/solutions/。文档结构大致是：Problem（一两句问题描述）、What Didn't Work（排查过程中试了什么没用的）、Solution（最终解法和代码）、Prevention（以后怎么避免）。每个文档带 YAML frontmatter，按 category 分目录存储，方便后续搜索。
+
+这个文档会被未来所有 /ce:plan 的 learnings-researcher 搜到。不是给"下一个 session"用，是给"所有未来 session"用。
+
+比如你修了一个 edge runtime 兼容性的 bug，compound 记录下来。三周后做另一个功能碰到类似的 runtime 问题，plan 阶段 agent 自动翻出那个 learning，直接标注之前踩过的坑和解法。
+
+Anthropic 的 progress file 是备忘录：上一班留给下一班的交接。
+
+CE 的 docs/solutions/ 是知识库：所有 session 都能查的项目记忆。
+
+备忘录解决连续性，知识库解决积累性。一个线性，一个指数。
+
+这就是 "compound" 的意思：每次工作的产出不只是代码，还有下次能复用的知识。用得越久，agent 越懂你的项目。
+
+这也是我们一直在讨论的"永续" agent 的关键。"永续" agent 的核心并不是 24/7 不停工作，而是通过持续不断的工作，同时做到持续不断的自我改进、自我优化，避免重复的错误和重复的浪费，做到真正的 self-improving。
+
+## 关于自动化：一个值得深入的问题
+
+
+翻了 CE 源码发现一个有趣的事：/lfg 全自动模式（plan 到 PR 一条龙）里没有 compound 步骤。你需要手动跑 /ce:compound。
+
+为什么作者选择不自动 compound？我认为这个设计是有道理的。不是每个 session 都值得 compound：改个 typo、调个 CSS、跑个 migration，这些不产生新知识。只有真正 debug 了一个坑、发现了一个 pattern、踩了一个雷的 session 才值得。自动 compound 每个 session 会产生噪音，docs/solutions/ 被低价值文档淹没，反而降低 learnings-researcher 的搜索质量。
+
+但人会忘记。这是一个真实的问题。
+
+我在搭建的一个方案是做一个 compound janitor：每天 end of day 自动扫当天所有 session 的 git diff 和 conversation，判断哪些值得 compound，挑选后批量跑。不是每个 session 都 compound，而是 janitor 筛选后只 compound 有价值的。类似记忆管理中的定期 review 和清理机制。这个可能值得做成 PR 贡献给 CE。
+
+## gstack + CE：完整的 harness
+
+
+对照 Anthropic 架构，gstack + CE 覆盖了所有角色：
+
+决策层：
+
+· gstack /plan-ceo-review，产品视角砍需求
+
+· gstack /plan-eng-review，锁架构方向
+
+规划层：
+
+· CE /ce:plan，spawn research agents，读历史 learnings，产出结构化 plan
+
+执行层：
+
+· CE /ce:work，按 plan 增量执行
+
+审查层：
+
+· CE /ce:review，6-15 个专项 reviewer 并行
+
+· gstack /qa，浏览器端到端实测
+
+知识层：
+
+· CE /ce:compound，写进可搜索的项目知识库
+
+![](https://pbs.twimg.com/media/HEi8HJuXYAADDUR.jpg)
+
+gstack 负责"做不做"和"真实测"，CE 负责"怎么做"、"做得好不好"和"记住"。没有重叠。
+
+Superpowers 的 brainstorm → plan → execute → review 被 CE 完全覆盖，每一步更深，加上 compound 这个独有维度。替换是自然的事。
+
+Superpowers 有一个优势：原生跨工具兼容，同一套 skill 装在 Claude Code、Cursor、Codex CLI 都能用。不过 CE 最近加了 CLI 转换工具，支持转成十几种格式。主力用 Claude Code 的话，这个差距不重要了。
+
+Superpowers 120k stars 证明了它的质量，它确实是很多人入门 AI agent 工作流的最佳选择。但实际深度使用下来，CE 拥有更好的架构深度，尤其是 compound 这个维度，是 Superpowers 完全没有的。
+
+你的 agent 每天帮你写代码、改 bug、跑测试。做完之后，学到的东西去哪了？
+
+如果答案是"散落在各个 session 里，下次再踩一遍"，/ce:compound 可能是你需要的那一行命令。
+
+链接：
+
+· CE：github.com/EveryInc/compound-engineering-plugin
+
+· gstack：github.com/garrytan/gstack
+
+· anthropic.com/engineering/effective-harnesses-for-long-running-agents
+
+· anthropic.com/engineering/harness-design-long-running-apps
