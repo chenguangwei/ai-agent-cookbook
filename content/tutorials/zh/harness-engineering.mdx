@@ -1,0 +1,128 @@
+---
+title: "两家大厂加九个博主解读Harness Engineering，它到底是什么"
+slug: "harness-engineering"
+locale: "zh"
+description: "两家大厂加九个博主解读Harness Engineering，它到底是什么"
+category: "Real-world Cases"
+tags: ["LangChain", "OpenAI", "Claude", "RAG", "Tool Use", "Prompt Engineering"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEoeb9CawAACGZi.jpg"
+featured: false
+date: 2026-03-30
+---
+
+# 两家大厂加九个博主解读Harness Engineering，它到底是什么
+
+
+Anthropic 和 OpenAI 几乎同一周发了各自关于 Harness Engineering 的文章。然后整个 AI 社区炸了。有人说这是 AI 工程的第三次范式转移，有人说这不过是给旧概念换了个新名字。九个博主的观点加上两家大厂的实践，拼出了一幅有趣的全景图
+
+![](https://pbs.twimg.com/media/HEodPPba0AA3LYA.jpg)
+
+## 为什么会出现 Harness Engineering
+
+
+从 Prompt Engineering 到 Context Engineering 再到 Harness Engineering，每一次范式转移的背后都是 AI 能力的一次跳跃
+
+2023到2024年大家研究的是怎么写好提示词。核心技能是措辞和结构化。那时候模型能力有限，一段好的提示词确实能带来明显的效果提升
+
+2025年 Context Engineering 成为主流。大家意识到单靠提示词不够，需要把整个上下文窗口当作工程对象来设计。RAG、长上下文、Memory 系统、Tool Use 都属于这个范畴
+
+2025年底到2026年初，Agent 能力跳跃式提升。Karpathy 说他12月之后就没手写过一行代码。工程师的角色从"写代码"变成了"设计 Agent 的运行环境"。这个运行环境就是 Harness
+
+![](https://pbs.twimg.com/media/HEodRFabwAAenk8.jpg)
+
+## Anthropic 的定义：生成器加评估器的循环
+
+
+Anthropic 工程博客的文章（https://www.anthropic.com/engineering/harness-design-long-running-apps）聚焦在多 Agent 协作架构上
+
+他们的核心发现是：让 Agent 自己评价自己的工作，结果几乎都是自我表扬。解决方案是把生成和评估拆成两个独立的 Agent
+
+具体架构是三个 Agent 协作：Planner 负责把简短的需求扩展成详细的产品规格，Generator 负责增量式地实现功能，Evaluator 通过 Playwright 做真实的交互测试
+
+实验结果很直观。同一个 prompt，单 Agent 花20分钟、$9，产出的游戏不能玩。完整 Harness 花6小时、$200，产出的游戏有精灵动画、AI 集成和导出功能
+
+Anthropic 官方推文原文（https://x.com/AnthropicAI/status/2036481033621623056）
+
+![](https://pbs.twimg.com/media/HEodSz1aYAALYMD.jpg)
+
+## OpenAI 的定义：百万行代码零手写
+
+
+OpenAI 的文章（https://openai.com/index/harness-engineering/）走的是完全不同的路线。他们用五个月时间做了一个实验：3个工程师用 Codex Agent 构建了一个包含大约一百万行代码的产品，没有一行是人手写的
+
+铁锤人 @lxfater 的评价很到位（https://x.com/lxfater/status/2035588532484677996）：里面的经验值得各位工程师看看，比你想象的自动化很多
+
+OpenAI 的 Harness 核心是严格的分层架构：Types → Config → Repo → Service → Runtime → UI。每一层的边界用 Linter 和 CI 强制执行。文档不是给人看的，是给 Agent 看的，组织在结构化的 docs 目录里作为 Agent 的唯一真相来源
+
+Sanbu @sanbuphy 的总结（https://x.com/sanbuphy/status/2038138801885990995）：调教 Agent 主要靠精细化 prompt、机制性约束（比如 lint、结构测试和 doc-gardening agent），让 AI 能自动生成代码、维护文档和持续自我纠错
+
+![](https://pbs.twimg.com/media/HEodUhIbgAAB1HA.jpg)
+
+## 博主们怎么看：从狂热到质疑
+
+
+最有意思的是社区的反应完全两极分化
+
+力挺派
+
+Dan McAteer @daniel_mac8（https://x.com/daniel_mac8/status/2037581249100087667）认为 Harness Engineering 和模型能力一样重要。AI Agent 有50%是 Harness 的故事。他提出了一个概念叫 Natural-Language Agent Harnesses，把 Harness 逻辑从代码搬到自然语言
+
+Nav Toor @heynavtoor（https://x.com/heynavtoor/status/2037200578842157462）也在推广这个概念
+
+结构派
+
+Leo @runes_leo 给了一个特别清晰的定义（https://x.com/runes_leo/status/2033828897562009681）：LangChain 的人说 Agent = Model + Harness。Harness 就是模型之外的一切，提示词、工具、沙盒、记忆系统、验证机制、长任务编排
+
+他提到一个反直觉的观点：文件系统是最基础的原语。不是向量数据库，不是 RAG，是最朴素的文件读写。因为只有文件能同时解决持久化、跨 session 协作、多 Agent 共享状态
+
+质疑派
+
+Chayenne Zhao @GenAI_is_real 写了一段很犀利的批评（https://x.com/GenAI_is_real/status/2036266930290696599）：我读了一篇几万字的 Harness Engineering 文章，第一反应不是"这个概念好强"，而是"这些人除了造新词还有别的想法吗"
+
+她的核心论点：从 Prompt Engineering 到 Context Engineering 到 Harness Engineering，每隔几个月就有人造一个新词，写一篇万字长文。这些概念本质上都是在说同一件事
+
+marv1nnnnn @marv1nnnnn1（https://x.com/marv1nnnnn1/status/2034262240422134053）也表达了类似的观点
+
+实践派
+
+George @odysseus0z（https://x.com/odysseus0z/status/2030416758138634583）更关注实际操作层面
+
+![](https://pbs.twimg.com/media/HEodWNTbAAAmHNA.jpg)
+
+## 两家公司的核心分
+
+
+虽然都叫 Harness Engineering，但 Anthropic 和 OpenAI 的切入点完全不同
+
+Anthropic 关注的是 Agent 之间的协作质量。他们的问题是：怎么让多个 Agent 协作产出高质量的结果？答案是生成器加评估器的循环，加上 Playwright 做真实测试
+
+OpenAI 关注的是人类工程师的角色转变。他们的问题是：当 Agent 写所有代码的时候，工程师应该做什么？答案是设计分层架构、写文档、维护 CI/CD 约束
+
+两种视角不矛盾，反而互补。Anthropic 在解决"Agent 怎么协作"，OpenAI 在解决"人怎么管理 Agent"
+
+Martin Fowler 的评价可能最中肯：Harness Engineering 是一个有价值的框架，它把 Context Engineering、架构约束和系统性治理统一到了一起
+
+## 质疑派说得对吗
+
+
+Chayenne 的批评有道理。如果你把 Harness Engineering 理解为"又一个新词"，那确实没什么新鲜的。好的提示词、合理的上下文管理、清晰的架构约束，这些实践一直都存在
+
+但如果你看 OpenAI 那个实验的数据：3个工程师、5个月、100万行代码、零手写。这个规模的变化已经不是量变了。当 Agent 真的在写所有代码的时候，"怎么设计 Agent 的运行环境"确实变成了一个独立的工程学科
+
+Leo 那个"Agent = Model + Harness"的公式可能是最好的总结。Model 是发动机，Harness 是整条赛道。同一个发动机跑不同的赛道，成绩天差地别
+
+## 未来会怎样
+
+
+几个可以观察的方向：
+
+Harness 本身会变成代码。现在大家的 Harness 还是散落在 AGENTS.md、CLAUDE.md、各种配置文件里的碎片。未来大概率会出现标准化的 Harness 定义语言和工具链
+
+Harness 会自我优化。Karpathy 说的 Auto Research 已经在做这件事了。Program.md 本身也是代码，代码就可以被优化。不同的 Program.md 会产生不同的研究进展，那就可以让模型来写更好的 Program.md
+
+人的角色继续上移。从写代码到写 Prompt 到设计 Context 到构建 Harness，每一次转移都是往更高的抽象层走。下一步可能是设计"Harness 的 Harness"，也就是管理 Harness 生态本身的系统
+
+不管你叫它什么名字，Agent 时代的工程实践确实在发生根本性的变化。名字不重要，实践重要
