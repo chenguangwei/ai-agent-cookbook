@@ -145,7 +145,12 @@
     "mediaTag": "Media",
     "noSummary": "No summary available",
     "itemCount": "articles",
-    "words": "words"
+    "words": "words",
+    "backToNews": "Back to News",
+    "readOriginal": "Read Original",
+    "recentDate": "Recently",
+    "estimatedRead": "Est. read: {time} min",
+    "overallScore": "Score: {score}"
   },
   "Explore": {
     "title": "All Tutorials",

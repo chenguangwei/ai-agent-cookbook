@@ -1,12 +1,11 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, Clock, Play, ChevronLeft } from 'lucide-react';
+import { ChevronRight, Clock, Play, ChevronLeft, Calendar } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { TableOfContents } from '@/components/features/TableOfContents';
-import { Button } from '@/components/ui/button';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllTutorials, getTutorialBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
@@ -85,8 +84,34 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
   const prevTutorial = currentIndex > 0 ? tutorials[currentIndex - 1] : null;
   const nextTutorial = currentIndex < tutorials.length - 1 ? tutorials[currentIndex + 1] : null;
 
+  const siteUrl = getSiteUrl();
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: tutorial.title,
+    description: tutorial.description,
+    ...(tutorial.thumbnail && { image: tutorial.thumbnail }),
+    ...(tutorial.date && { datePublished: tutorial.date }),
+    inLanguage: locale,
+    url: locale === 'en'
+      ? `${siteUrl}/tutorial/${slug}`
+      : `${siteUrl}/${locale}/tutorial/${slug}`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Agent Hub',
+      url: siteUrl,
+    },
+    keywords: [...(tutorial.tags || []), ...(tutorial.techStack || []), tutorial.category]
+      .filter((k): k is string => !!k)
+      .join(', '),
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
 
       <main className="flex-1">
@@ -108,7 +133,8 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
 
           <div className="flex gap-12">
             {/* Main Content */}
-            <article className="flex-1 min-w-0">
+            <article className="flex-1 min-w-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="px-8 lg:px-12 py-10">
               {/* Title Section */}
               <div className="mb-8">
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -129,6 +155,14 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
                   {tutorial.description}
                 </p>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                  {tutorial.date && (
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4" />
+                      <time dateTime={tutorial.date}>
+                        {new Date(tutorial.date).toLocaleDateString(locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </time>
+                    </div>
+                  )}
                   {tutorial.duration && (
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
@@ -165,10 +199,10 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
                 </div>
               )}
 
-              {/* MDX Content */}
+              {/* MDX Content — strip leading h1 to avoid repeating the page title */}
               <div className="mb-12">
                 {tutorial.body && (
-                  <MDXRenderer content={tutorial.body} />
+                  <MDXRenderer content={tutorial.body.replace(/^\s*#\s+.+\n?/, '')} />
                 )}
               </div>
 
@@ -201,25 +235,13 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
                   </Link>
                 )}
               </div>
+              </div>{/* end px-8 wrapper */}
             </article>
 
             {/* Right Sidebar - Table of Contents */}
             <aside className="w-64 flex-shrink-0 hidden xl:block">
               <div className="sticky top-24">
                 <TableOfContents />
-
-                {/* Practice Sandbox CTA */}
-                <div className="mt-8 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/50">
-                  <h4 className="text-sm font-bold text-primary-900 dark:text-primary-100 mb-2">
-                    {t('tryItYourself')}
-                  </h4>
-                  <p className="text-xs text-primary-700 dark:text-primary-300 mb-3">
-                    {t('tryItDescription')}
-                  </p>
-                  <Button size="sm" className="w-full bg-primary-600 hover:bg-primary-700">
-                    {t('openSandbox')}
-                  </Button>
-                </div>
               </div>
             </aside>
           </div>

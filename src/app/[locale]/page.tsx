@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ArrowUpRight, BookOpen, Wrench, Sparkles, Command, Newspaper } from 'lucide-react';
+import { Search, ArrowUpRight, BookOpen, Wrench, Sparkles, Command, Newspaper, ChevronDown, Quote } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
@@ -83,8 +83,28 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     // 忽略数据库错误
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Agent Hub',
+    url: getSiteUrl(),
+    description: t('seoDescription'),
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${getSiteUrl()}/tutorials?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
 
       <main className="flex-1">
@@ -129,20 +149,23 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           {/* Search Box */}
           <div className="max-w-2xl mx-auto mb-12">
             <div className="group relative">
-              <div className="flex w-full items-center rounded-2xl h-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg transition-shadow">
+              <Link
+                href="/tutorials"
+                className="flex w-full items-center rounded-2xl h-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-text"
+                aria-label={t('searchPlaceholder')}
+              >
                 <div className="pl-6 text-slate-400">
                   <Search className="w-6 h-6" />
                 </div>
-                <input
-                  className="flex-1 w-full bg-transparent border-none text-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none px-4"
-                  placeholder={t('searchPlaceholder')}
-                />
+                <span className="flex-1 text-lg text-slate-400 px-4">
+                  {t('searchPlaceholder')}
+                </span>
                 <div className="pr-6">
                   <kbd className="hidden md:inline-flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-400 font-bold font-mono">
                     <Command className="w-3 h-3" /> K
                   </kbd>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 
@@ -367,7 +390,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
             {repositorySegments.map((item) => (
               <Link
                 href={item.href}
@@ -386,6 +409,96 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </Link>
             ))}
           </div>
+
+          {/* Testimonials Section */}
+          <div className="mb-32">
+            <div className="flex items-center gap-4 mb-12">
+              <div className="h-6 w-1 bg-emerald-500 rounded-full"></div>
+              <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-widest uppercase font-display">
+                {t('testimonials')}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { nameKey: 'testimonial1Name', roleKey: 'testimonial1Role', textKey: 'testimonial1Text' },
+                { nameKey: 'testimonial2Name', roleKey: 'testimonial2Role', textKey: 'testimonial2Text' },
+                { nameKey: 'testimonial3Name', roleKey: 'testimonial3Role', textKey: 'testimonial3Text' },
+              ].map((item) => (
+                <div key={item.nameKey} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col gap-4">
+                  <Quote className="w-6 h-6 text-primary-400 dark:text-primary-600 flex-shrink-0" />
+                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed flex-1">
+                    {t(item.textKey as any)}
+                  </p>
+                  <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                      {t(item.nameKey as any).charAt(0)}
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">{t(item.nameKey as any)}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{t(item.roleKey as any)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mb-32">
+            <div className="flex items-center gap-4 mb-12">
+              <div className="h-6 w-1 bg-violet-500 rounded-full"></div>
+              <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-widest uppercase font-display">
+                {t('faq')}
+              </h2>
+            </div>
+            <div className="max-w-3xl mx-auto space-y-4">
+              {[
+                { qKey: 'faq1Q', aKey: 'faq1A' },
+                { qKey: 'faq2Q', aKey: 'faq2A' },
+                { qKey: 'faq3Q', aKey: 'faq3A' },
+                { qKey: 'faq4Q', aKey: 'faq4A' },
+              ].map((item, idx) => (
+                <details key={idx} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                  <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base pr-4">
+                      {t(item.qKey as any)}
+                    </h3>
+                    <ChevronDown className="w-5 h-5 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform duration-200" />
+                  </summary>
+                  <div className="px-6 pb-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                    {t(item.aKey as any)}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          {/* Newsletter Section — links to GitHub for now, no fake subscription */}
+          <div className="mb-16 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-3xl p-10 text-center">
+            <h2 className="text-white text-2xl font-bold mb-3 font-display">
+              {t('newsletter')}
+            </h2>
+            <p className="text-primary-100 mb-8 max-w-lg mx-auto">
+              {t('newsletterDesc')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="https://github.com/topics/ai-agents"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-700 font-bold text-sm rounded-xl hover:bg-primary-50 transition-colors"
+              >
+                GitHub AI Agents <ArrowUpRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/news"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-bold text-sm rounded-xl hover:bg-white/20 transition-colors"
+              >
+                {t('hotNews')} <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
         </div>
       </main>
 

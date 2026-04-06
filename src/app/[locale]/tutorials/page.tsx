@@ -21,14 +21,18 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const siteUrl = getSiteUrl();
   const resolvedLocale = locale || 'en';
+  const t = await getTranslations('Explore');
 
   const canonicalUrl = resolvedLocale === 'en'
     ? `${siteUrl}/tutorials`
     : `${siteUrl}/${resolvedLocale}/tutorials`;
 
+  const title = t('title');
+  const description = t('description');
+
   return {
-    title: 'Explore Tutorials',
-    description: 'Explore our comprehensive collection of AI agent tutorials covering LangChain, CrewAI, AutoGPT, and more.',
+    title,
+    description,
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -38,8 +42,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       },
     },
     openGraph: {
-      title: 'Explore AI Agent Tutorials | Agent Hub',
-      description: 'Explore our comprehensive collection of AI agent tutorials covering LangChain, CrewAI, AutoGPT, and more.',
+      title,
+      description,
     },
   };
 }

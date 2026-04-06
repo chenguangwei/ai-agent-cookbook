@@ -38,14 +38,15 @@ const schema = {
 } as const;
 
 let db: Orama<typeof schema> | null = null;
+// Track inserted ids per db instance to prevent duplicate insertion errors
+const insertedIds = new Set<string>();
 
 // Initialize the search database
 export async function initSearchDB(): Promise<Orama<typeof schema>> {
   if (db) return db;
 
-  db = await create({
-    schema,
-  });
+  db = await create({ schema });
+  insertedIds.clear();
 
   return db;
 }
@@ -54,33 +55,28 @@ export async function initSearchDB(): Promise<Orama<typeof schema>> {
 export async function indexDocuments(documents: SearchDocument[]): Promise<void> {
   const database = await initSearchDB();
 
-  // Get existing document IDs to avoid duplicates
-  const existingIds = new Set<string>();
-  try {
-    const existing = await search(database, { term: '*', limit: 10000 });
-    for (const hit of existing.hits) {
-      existingIds.add(hit.document.id as string);
-    }
-  } catch {
-    // Index might be empty, continue
-  }
-
   for (const doc of documents) {
-    // Skip if document with this ID already exists
-    if (existingIds.has(doc.id)) {
-      continue;
+    // Skip documents with empty ids
+    if (!doc.id) continue;
+    // Skip already-inserted documents
+    if (insertedIds.has(doc.id)) continue;
+
+    try {
+      await insert(database, {
+        id: doc.id,
+        title: doc.title,
+        description: doc.description,
+        content: doc.content,
+        url: doc.url,
+        type: doc.type,
+        category: doc.category || '',
+        tags: doc.tags || [],
+        locale: doc.locale,
+      });
+      insertedIds.add(doc.id);
+    } catch {
+      // Skip if insert fails (e.g. duplicate id from a previous db instance)
     }
-    await insert(database, {
-      id: doc.id,
-      title: doc.title,
-      description: doc.description,
-      content: doc.content,
-      url: doc.url,
-      type: doc.type,
-      category: doc.category || '',
-      tags: doc.tags || [],
-      locale: doc.locale,
-    });
   }
 }
 

@@ -145,7 +145,12 @@
     "mediaTag": "媒体资讯",
     "noSummary": "暂无摘要",
     "itemCount": "篇",
-    "words": "字"
+    "words": "字",
+    "backToNews": "返回资讯",
+    "readOriginal": "阅读原文",
+    "recentDate": "近日",
+    "estimatedRead": "预计阅读: {time} 分钟",
+    "overallScore": "综合评分: {score}"
   },
   "Explore": {
     "title": "全部教程",

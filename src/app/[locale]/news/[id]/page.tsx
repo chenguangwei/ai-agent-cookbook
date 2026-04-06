@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ArrowUpRight, Clock, Eye, Share2, BookmarkPlus } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -26,6 +27,7 @@ interface NewsDetail {
 export default function ArticleDetailPage({ params }: { params: Promise<{ locale: string, id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
+    const t = useTranslations('News');
 
     const [article, setArticle] = useState<NewsDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -80,12 +82,12 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ locale
             <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
                 <Header />
                 <main className="flex-1 flex flex-col items-center justify-center text-slate-500">
-                    <p className="mb-4">{error || 'Article not found'}</p>
+                    <p className="mb-4">{error || t('noArticles')}</p>
                     <button
                         onClick={() => router.back()}
                         className="text-primary-600 hover:underline"
                     >
-                        ← Back to News
+                        ← {t('backToNews')}
                     </button>
                 </main>
             </div>
@@ -104,7 +106,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ locale
                         onClick={() => router.back()}
                         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
-                        <ChevronLeft className="w-5 h-5" /> 返回资讯
+                        <ChevronLeft className="w-5 h-5" /> {t('backToNews')}
                     </button>
 
                     <div className="flex items-center gap-3">
@@ -120,7 +122,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ locale
                             rel="noopener noreferrer"
                             className="flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-full transition-colors"
                         >
-                            阅读原文 <ArrowUpRight className="w-4 h-4" />
+                            {t('readOriginal')} <ArrowUpRight className="w-4 h-4" />
                         </a>
                     </div>
                 </div>
@@ -129,7 +131,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ locale
                 <header className="mb-10 text-center">
                     <div className="inline-flex items-center justify-center gap-2 mb-6 text-sm font-medium">
                         <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">
-                            {article.source_name || '未知来源'}
+                            {article.source_name || t('sourceUnknown')}
                         </span>
                         {article.author && (
                             <>
@@ -146,19 +148,19 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ locale
                     <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
-                            <span>{article.published_at ? new Date(article.published_at).toLocaleDateString() : '近日'}</span>
+                            <span>{article.published_at ? new Date(article.published_at).toLocaleDateString() : t('recentDate')}</span>
                         </div>
 
                         {(article.read_time_minutes || article.word_count) && (
                             <div className="flex items-center gap-2">
                                 <Eye className="w-4 h-4" />
-                                <span>预计阅读: {article.read_time_minutes || Math.max(1, Math.floor((article.word_count || 1000) / 250))} 分钟</span>
+                                <span>{t('estimatedRead', { time: article.read_time_minutes || Math.max(1, Math.floor((article.word_count || 1000) / 250)) })}</span>
                             </div>
                         )}
 
                         {article.quality_score && (
                             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500 font-medium">
-                                <span>综合评分: {article.quality_score}</span>
+                                <span>{t('overallScore', { score: article.quality_score })}</span>
                             </div>
                         )}
                     </div>
