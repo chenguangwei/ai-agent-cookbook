@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
+import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 export async function POST(request: Request) {
   try {
@@ -32,8 +26,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const slug = slugify(title);
-
     const showcaseData = {
       title,
       locale,
@@ -50,13 +42,14 @@ export async function POST(request: Request) {
     const contentDir = path.join(process.cwd(), 'content', 'showcase', locale);
     await fs.mkdir(contentDir, { recursive: true });
 
-    const filePath = path.join(contentDir, `${slug}.json`);
+    const baseSlug = slugify(title);
+    const { slug, filePath, relativePath } = await resolveUniqueContentFile(contentDir, baseSlug, '.json');
     await fs.writeFile(filePath, JSON.stringify(showcaseData, null, 2), 'utf-8');
 
     return NextResponse.json({
       message: 'Showcase project created successfully',
       slug,
-      filePath: `content/showcase/${locale}/${slug}.json`,
+      filePath: relativePath,
       savedAt: new Date().toISOString(),
     });
   } catch (err) {

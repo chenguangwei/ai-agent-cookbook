@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 const LOCALE_MAP: Record<string, string> = {
   'English (US)': 'en',
   'Mandarin (ZH)': 'zh',
   'Japanese (JA)': 'ja',
 };
-
-function slugify(text: string, maxLength = 80): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  // Limit slug length to prevent ENAMETOOLONG error (max 80 chars)
-  return slug.length > maxLength ? slug.substring(0, maxLength) : slug;
-}
 
 /**
  * Fix common markdown formatting issues from web extraction
@@ -81,9 +73,13 @@ export async function POST(request: Request) {
     }
 
     const locale = rawLocale || LOCALE_MAP[language] || 'en';
-    const slug = slugify(title);
+    const baseSlug = slugify(title);
+    const contentDir = path.join(process.cwd(), 'content', 'news', locale);
+    await fs.mkdir(contentDir, { recursive: true });
 
-    // Format the content
+    const { slug, filePath, relativePath } = await resolveUniqueContentFile(contentDir, baseSlug, '.mdx');
+
+    // Format the content after the final slug is known for frontmatter.
     const formattedContent = formatMarkdownContent(content || '');
 
     const frontmatter = [
@@ -103,28 +99,27 @@ export async function POST(request: Request) {
     ].filter(Boolean).join('\n');
 
     const mdxContent = `${frontmatter}\n\n${formattedContent}`;
-
-    const contentDir = path.join(process.cwd(), 'content', 'news', locale);
-    await fs.mkdir(contentDir, { recursive: true });
-
-    const filePath = path.join(contentDir, `${slug}.mdx`);
     await fs.writeFile(filePath, mdxContent, 'utf-8');
 
     return NextResponse.json({
       message: 'News article created successfully',
       slug,
-      filePath: `content/news/${locale}/${slug}.mdx`,
+      filePath: relativePath,
       savedAt: new Date().toISOString(),
     });
-  } catch (err: any) {
-    console.error('Failed to create news:', err);
+  } catch (error: unknown) {
+    console.error('Failed to create news:', error);
 
     // Handle specific errors with user-friendly messages
     let errorMessage = 'Failed to create news article';
+    const err = error instanceof Error ? error : null;
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code)
+      : '';
 
-    if (err.code === 'ENAMETOOLONG') {
+    if (errorCode === 'ENAMETOOLONG') {
       errorMessage = 'Title is too long. Please shorten the title and try again.';
-    } else if (err.message) {
+    } else if (err?.message) {
       errorMessage = `Error: ${err.message}`;
     }
 

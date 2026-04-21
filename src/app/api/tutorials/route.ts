@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 const LOCALE_MAP: Record<string, string> = {
   'English (US)': 'en',
@@ -8,15 +9,6 @@ const LOCALE_MAP: Record<string, string> = {
   'Mandarin (ZH)': 'zh',
   'Japanese (JA)': 'ja',
 };
-
-function slugify(text: string, maxLength = 80): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  // Limit slug length to prevent ENAMETOOLONG error (max 80 chars)
-  return slug.length > maxLength ? slug.substring(0, maxLength) : slug;
-}
 
 /**
  * Fix common markdown formatting issues from web extraction
@@ -81,7 +73,7 @@ export async function POST(request: Request) {
     }
 
     const locale = LOCALE_MAP[language] || 'en';
-    const slug = slugify(title);
+    const baseSlug = slugify(title);
     const date = new Date().toISOString().split('T')[0];
 
     // Format the markdown content
@@ -91,7 +83,12 @@ export async function POST(request: Request) {
     const contentForDesc = formattedMarkdown.split('\n').find(line => line.trim().length > 0) || '';
     const description = truncateDescription(contentForDesc.replace(/^[#*_\s]+/, '').trim(), 200);
 
-    // Build MDX frontmatter
+    const contentDir = path.join(process.cwd(), 'content', 'tutorials', locale);
+    await fs.mkdir(contentDir, { recursive: true });
+
+    const { slug, filePath, relativePath } = await resolveUniqueContentFile(contentDir, baseSlug, '.mdx');
+
+    // Build MDX frontmatter after the final slug is known.
     const frontmatter = [
       '---',
       `title: "${title.replace(/"/g, '\\"')}"`,
@@ -111,12 +108,6 @@ export async function POST(request: Request) {
     ].filter(Boolean).join('\n');
 
     const mdxContent = `${frontmatter}\n\n${formattedMarkdown}`;
-
-    // Write MDX file to content/tutorials/{locale}/
-    const contentDir = path.join(process.cwd(), 'content', 'tutorials', locale);
-    await fs.mkdir(contentDir, { recursive: true });
-
-    const filePath = path.join(contentDir, `${slug}.mdx`);
     await fs.writeFile(filePath, mdxContent, 'utf-8');
 
     return NextResponse.json(
@@ -124,22 +115,26 @@ export async function POST(request: Request) {
         message: action === 'saveDraft' ? 'Draft saved successfully' : 'Tutorial published successfully',
         action,
         slug,
-        filePath: `content/tutorials/${locale}/${slug}.mdx`,
+        filePath: relativePath,
         savedAt: new Date().toISOString(),
       },
       { status: 200 }
     );
-  } catch (err: any) {
-    console.error('Failed to process tutorial:', err);
+  } catch (error: unknown) {
+    console.error('Failed to process tutorial:', error);
 
     // Handle specific errors with user-friendly messages
     let errorMessage = 'Failed to process tutorial';
+    const err = error instanceof Error ? error : null;
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code)
+      : '';
 
-    if (err.code === 'ENAMETOOLONG') {
+    if (errorCode === 'ENAMETOOLONG') {
       errorMessage = 'Title is too long. Please shorten the title and try again.';
-    } else if (err.code === 'EISDIR') {
+    } else if (errorCode === 'EISDIR') {
       errorMessage = 'Invalid file path. Please check the title format.';
-    } else if (err.message) {
+    } else if (err?.message) {
       errorMessage = `Error: ${err.message}`;
     }
 

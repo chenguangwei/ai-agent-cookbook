@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
+import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 export async function POST(request: Request) {
   try {
@@ -35,10 +29,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const slug = slugify(title);
+    const baseSlug = slugify(title);
     const date = new Date().toISOString().split('T')[0];
 
-    // Build MDX frontmatter
+    const contentDir = path.join(process.cwd(), 'content', 'tools', locale);
+    await fs.mkdir(contentDir, { recursive: true });
+
+    const { slug, filePath, relativePath } = await resolveUniqueContentFile(contentDir, baseSlug, '.mdx');
+
     const frontmatter = [
       '---',
       `title: "${title.replace(/"/g, '\\"')}"`,
@@ -60,17 +58,12 @@ export async function POST(request: Request) {
     ].filter(Boolean).join('\n');
 
     const mdxContent = `${frontmatter}\n\n${content || ''}`;
-
-    const contentDir = path.join(process.cwd(), 'content', 'tools', locale);
-    await fs.mkdir(contentDir, { recursive: true });
-
-    const filePath = path.join(contentDir, `${slug}.mdx`);
     await fs.writeFile(filePath, mdxContent, 'utf-8');
 
     return NextResponse.json({
       message: 'Tool created successfully',
       slug,
-      filePath: `content/tools/${locale}/${slug}.mdx`,
+      filePath: relativePath,
       savedAt: new Date().toISOString(),
     });
   } catch (err) {

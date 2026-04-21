@@ -21,6 +21,24 @@ export function slugify(text: string): string {
 }
 
 /**
+ * Add a timestamp + random suffix to avoid filename and slug collisions
+ * when generating files locally from the extension.
+ */
+export function createUniqueSlug(baseSlug: string, date = new Date()): string {
+  const timestamp = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getHours()).padStart(2, '0'),
+    String(date.getMinutes()).padStart(2, '0'),
+    String(date.getSeconds()).padStart(2, '0'),
+  ].join('');
+
+  const random = Math.random().toString(36).slice(2, 6);
+  return `${baseSlug.replace(/-+$/g, '')}-${timestamp}-${random}`;
+}
+
+/**
  * Format date as YYYY-MM-DD
  */
 export function formatDate(date?: Date): string {

@@ -1,0 +1,126 @@
+---
+title: "6 Architecture Patterns + 60% Quality Boost: This Open Source Project Turns Harness Engineering from Concept to Tool"
+slug: "6-60-harness-engineering"
+locale: "en"
+description: "6 Architecture Patterns + 60% Quality Boost: This Open Source Project Turns Harness Engineering from Concept to Tool"
+category: "Real-world Cases"
+tags: ["OpenAI", "Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEuM_3EbwAALxgQ.jpg"
+featured: false
+date: 2026-03-31
+---
+
+# 6 Architecture Patterns + 60% Quality Boost: This Open Source Project Turns Harness Engineering from Concept to Tool
+
+Last week we discussed the different interpretations of Harness Engineering by Anthropic and OpenAI, and also summarized the various stances from nine bloggers ranging from strong support to skepticism. The conceptual discussion was lively, but a key question remained unanswered: how to implement it concretely? Now someone has provided an answer.
+
+Developer revfactory created a Claude Code plugin called [Harness](https://github.com/revfactory/harness), directly turning the concept of Harness Engineering into an installable, runnable tool. You tell it what you want to do, and it automatically generates a complete Agent team architecture for you, including Agent definition files, Skill files, collaboration protocols, and test cases, all placed in the `.claude/agents/` and `.claude/skills/` directories.
+
+Let's break down what this project does.
+
+## Six Architecture Patterns, Covering the Vast Majority of Collaboration Scenarios
+
+![](https://pbs.twimg.com/media/HEuMpHCa0AAN1ka.jpg)
+
+Harness comes with six built-in Agent team collaboration patterns, each corresponding to a typical type of task.
+
+**Pipeline** is suitable for sequential tasks with strong dependencies. The output of one Agent is directly fed to the next. For example, writing a novel: the world-building must be done before designing characters, and characters must be set before plotting the story. The bottleneck is obvious; if any link gets stuck, the entire line stops.
+
+**Fan-out/Fan-in** is the most natural multi-Agent pattern. Multiple experts analyze the same input in parallel, and the results are aggregated at the end. It's particularly useful for industry research: one Agent checks official documentation, another checks media reports, another checks community discussions, another checks competitor background, and finally synthesizes a comprehensive report.
+
+**Expert Pool** dynamically assigns tasks to corresponding experts via a router based on input type. Code review is a typical scenario: security issues go to the security expert, performance issues go to the performance expert. Not everyone needs to be online simultaneously.
+
+**Producer-Reviewer** directly echoes the core finding from [Anthropic's article](https://www.anthropic.com/engineering/harness-design-long-running-apps). An Agent evaluating its own work is almost useless; it must be split into independent generators and reviewers. Harness productizes this pattern, with built-in retry limits (up to 2-3 rounds) to prevent infinite loops.
+
+**Supervisor** differs from Fan-out in dynamic allocation. Fan-out assigns tasks upfront, while Supervisor schedules dynamically at runtime based on the actual situation. Large-scale code migration is suitable for this pattern: the supervisor analyzes the file list and dynamically batches files by complexity to different migration Agents.
+
+**Hierarchical Delegation** handles particularly complex problems, recursively breaking down large tasks into smaller ones and delegating them downward. Limited to two levels; deeper than that leads to latency and context loss.
+
+These six patterns weren't chosen arbitrarily. In the second phase (Team Architecture Design), Harness automatically evaluates based on four dimensions: specialization level, parallelization potential, context scope, and reusability.
+
+## Five Real-World Team Configuration Examples
+
+![](https://pbs.twimg.com/media/HEuMq95bkAA2GHB.jpg)
+
+Pattern definitions alone aren't enough. Harness includes five complete team configuration templates.
+
+The **Research Team** uses the Fan-out/Fan-in pattern with 4 specialized researchers and 1 coordinator. The official documentation researcher, media researcher, community researcher, and background researcher work in parallel, using `SendMessage` for cross-validation when contradictory information is found.
+
+The **Sci-Fi Novel Team** mixes Pipeline and Fan-out, with 6 Agents across 4 phases. In Phase 1, the world-building designer, character designer, and plot architect work in parallel and communicate with each other. Phase 2: the writer drafts the text. Phase 3: the science consultant and continuity checker review in parallel. Phase 4: the writer revises the final draft. Most interestingly, the team for each phase is destroyed after use, and a new one is created for the next phase.
+
+The **Webtoon Production Team** uses the Producer-Reviewer pattern with only 2 Agents: the artist generates storyboards, and the reviewer gives one of three results: PASS, FIX, or REDO. A maximum of 2 retries is enforced before forcing a pass, preventing perfectionist infinite loops.
+
+The **Code Review Team** uses Fan-out/Fan-in plus a peer debate mechanism. The security reviewer, performance reviewer, and testing reviewer work in parallel. The key point is that reviewers can directly use `SendMessage` for cross-validation. For example, if the security reviewer finds an SQL injection risk, they directly notify the performance reviewer to check related queries.
+
+The **Code Migration Team** uses the Supervisor pattern, with 1 supervisor dynamically scheduling N migration executors. The supervisor batches files by complexity for assignment, executors claim tasks and report progress, and failed tasks are automatically reassigned.
+
+## A/B Test Data: 60% Quality Boost, 100% Win Rate
+
+![](https://pbs.twimg.com/media/HEuMsqcaAAAV9m3.jpg)
+
+The most convincing aspect of this project is the set of A/B test data it includes.
+
+Fifteen software engineering tasks were completed using two methods: with Harness and without Harness. Results: average quality score increased from 49.5 to 79.3, a 60% improvement. Harness won all 15 tasks, a 100% win rate. Output variance decreased by 32%, meaning results are more stable and predictable.
+
+Even more interesting is the breakdown by task complexity: basic tasks improved by 23.8%, intermediate tasks by 29.6%, and expert-level tasks by 36.2%. The more complex the task, the greater the value of Harness. This aligns highly with the conclusion of Anthropic's experiment: a single Agent can handle simple things, but complex tasks are basically impossible without a harness.
+
+## Progressive Disclosure: Solving Skill Context Explosion
+
+![](https://pbs.twimg.com/media/HEuMubrbwAAGe13.jpg)
+
+Harness uses a design called Progressive Disclosure for Skill generation, solving a very practical problem: Skill files written too long consume a huge amount of context window.
+
+The approach is three-tiered: the metadata layer is always loaded (name, description, trigger words), the main `skill.md` body is kept under 500 lines, and detailed reference materials are placed in the `references/` directory for on-demand loading. This way, the Agent normally consumes very few tokens, and only loads the corresponding reference documents when it needs to delve deep into a specific domain.
+
+This idea is valuable for anyone writing Claude Code Skills. Our own publishing Skill has already exceeded 600 lines; perhaps we should also consider moving troubleshooting and template details into `references`.
+
+## From Concept to Tool: Three Shifts
+
+![](https://pbs.twimg.com/media/HEuMwG0aUAEWen4.jpg)
+
+Looking back at the panorama we previously outlined, this project advances Harness Engineering from conceptual discussion to the tooling stage.
+
+**First shift:** From "You need to design a harness" to "Helping you automatically generate a harness."
+
+Anthropic and [OpenAI](https://openai.com/index/harness-engineering/) articles essentially say "Harness is important, you should design it well." But how to design? What patterns? How do Agents communicate? These questions were left for readers to figure out themselves. The Harness project automates both selection and generation: you describe the requirement, it outputs the complete architecture.
+
+**Second shift:** From single patterns to a pattern library.
+
+In previous discussions, Anthropic focused on Producer-Reviewer (generator + evaluator), and OpenAI focused on Pipeline (layered architecture). But real-world scenarios are far richer than these two. The systematic coverage of six patterns addresses most collaboration needs from simple to complex.
+
+**Third shift:** From "I think it's good" to "Let the data speak."
+
+Skeptic Chayenne Zhao was right; it's hard to judge whether Harness Engineering is actually useful based on conceptual articles alone. This project provides quantitative evidence with A/B tests on 15 tasks. A 60% quality boost and 100% win rate are not concepts; they are numbers.
+
+## Design Details Worth Noting
+
+![](https://pbs.twimg.com/media/HEuMxz1aMAAa_bL.jpg)
+
+A few easily overlooked design choices:
+
+All Agent calls are forced to specify `model: "opus"`. In Agent team scenarios, reasoning quality directly determines collaboration quality; using a weaker model saves tokens but collaboration easily breaks down.
+
+**File system as collaboration infrastructure.** Intermediate products between Agents are uniformly stored in the `_workspace/` directory, with naming convention `{phase}_{Agent}_{product}.{extension}`. This aligns completely with the point Leo mentioned in community discussions: the file system is the most fundamental primitive, because only files can simultaneously solve persistence, cross-session collaboration, and multi-Agent shared state.
+
+**The validation framework is not just a formality.** Each Skill requires writing 8-10 queries that should trigger it and 8-10 queries that should not, with special emphasis on near-miss test cases. This level of rigor is rare in most Agent tools.
+
+**Hard limits on team size.** 2 to 7 members, each with 3 to 6 tasks. Hierarchical delegation is limited to two levels. These constraints come from lessons learned in practice: too many Agents cause coordination costs to grow exponentially, and too many levels cause severe context loss.
+
+## Limitations and Points to Observe
+
+![](https://pbs.twimg.com/media/HEuMzhYb0AAKeOv.jpg)
+
+A few limitations should also be clarified.
+
+The Agent Teams feature requires manually enabling the environment variable `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, indicating this capability is still experimental within Claude Code. Stability and performance need more real-world usage to verify.
+
+The A/B test's 15 tasks are all software engineering scenarios; effectiveness in other domains (writing, research, design) lacks data support.
+
+The selection advice between the six patterns is still relatively coarse-grained. In practice, mixed usage is likely needed. The sci-fi novel example already uses both Pipeline and Fan-out, but best practices for such hybrid patterns are still being explored.
+
+However, as the first project to turn Harness Engineering from a concept into an installable tool, the direction is correct. At the very least, we can stop debating "Is Harness Engineering useful?" and start researching "How to use it better."
+
+via [revfactory/harness GitHub](https://github.com/revfactory/harness) / [Anthropic Engineering Blog](https://www.anthropic.com/engineering/harness-design-long-running-apps) / [OpenAI Blog](https://openai.com/index/harness-engineering/)

@@ -1,0 +1,141 @@
+---
+title: "A Complete Agent Harness from Execution to Memory: gstack + Compound Engineering"
+slug: "agent-harness-gstack-compound-engineering"
+locale: "en"
+description: "A complete agent harness covering planning, execution, review, and knowledge compounding, combining gstack and Compound Engineering."
+category: "Real-world Cases"
+tags: ["Claude", "Planning"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEi8z-sXEAEUeZ3.jpg"
+featured: false
+date: 2026-03-30
+---
+
+# A Complete Agent Harness from Execution to Memory: gstack + Compound Engineering
+
+I've previously shared two popular Claude Code skills and how I use them: YC CEO @garrytan's gstack (simulating an entire team: CEO review, architecture review, browser QA, weekly report stats), and Jesse Vincent's Superpowers (standardized brainstorm → plan → execute → review workflow, 120k stars, almost the default for Claude Code).
+
+But this week, I've been using Compound Engineering (CE) to replace Superpowers. I recommend you try it too.
+
+Why do I think CE is better than the 120k-star Superpowers? We can understand this by looking at the harness architecture proposed in Anthropic's official blog. Once you understand this framework, the comparison becomes clear.
+
+## Anthropic's Harness Architecture
+
+Anthropic published two engineering blog posts last November and last week, proposing a harness architecture for agents to work continuously across multiple context windows. The core consists of four roles:
+
+1.  **Planner agent**: Breaks down large tasks into feature lists.
+2.  **Coding agent**: Works on one feature at a time, leaving structured notes.
+3.  **Evaluator agent**: Independently reviews (doesn't let the builder evaluate its own work).
+4.  **Cross-session bridging**: Uses a progress file to pass context.
+
+Last week's second post introduced generator-evaluator separation: an agent evaluating its own work tends to be overly optimistic. Separating the doer and the evaluator into two independent agents significantly improved performance. Anthropic used this architecture to have an agent autonomously develop a complete claude.ai clone with over 200 verifiable features.
+
+![](https://pbs.twimg.com/media/HEi8r2GaYAAX0jQ.jpg)
+
+Using this framework to examine gstack, Superpowers, and CE reveals clear differences.
+
+## gstack: Planner + Browser Evaluator
+
+gstack gets two key roles in the harness right.
+
+`/plan-ceo-review` and `/plan-eng-review` correspond to the Planner agent, providing oversight from product and architecture perspectives. `/qa` opens a browser to run the staging URL, testing like a real user, corresponding to the Evaluator agent. Anthropic's paper explicitly states that having agents test "like a human user" "dramatically improved performance".
+
+gstack's philosophy is "Boil the Lake": In the AI era, the marginal cost of doing the complete version approaches zero, so always do the full version. For Planning + QA, it's still the best.
+
+However, gstack primarily covers the decision and testing layers. It lacks a structured incremental execution workflow and a knowledge accumulation mechanism. This isn't a flaw in gstack, but its positioning: it doesn't aim to handle the entire process.
+
+## Superpowers: Process is there, Depth is lacking
+
+Superpowers' 120k stars already prove its quality. The brainstorm → plan → execute → review workflow has helped many people upgrade from "chatting randomly with AI" to "using AI with a process". Its subagent-driven-development even implements generator-evaluator separation: independent spec-reviewer + code-quality-reviewer. This is better than many skills.
+
+But compared to CE, the depth gap lies in three areas.
+
+**Plan**: Superpowers writes the plan directly in the current context. CE's `/ce:plan` parallel spawns a research agent to search historical experience, scan codebase patterns, and read git history. The plan is based on project historical knowledge, not just the current prompt.
+
+**Review**: Superpowers has 2 reviewers (spec + quality). CE spawns 6 to 15 specialized reviewers in parallel: correctness, security, performance, testing, maintainability, adversarial (triggered by 50+ line diffs), learnings-researcher, project-standards, each producing independent P0-P3 reports.
+
+Third, and most critical: **Superpowers has no knowledge accumulation mechanism**. When it's done, it's done. The next session starts from scratch.
+
+This third point is the real reason I replaced Superpowers.
+
+## `/ce:compound`: A problem not solved even in Anthropic's harness blog, CE solves it
+
+Anthropic's harness uses `claude-progress.txt` for cross-session bridging: session A writes notes after finishing, session B reads the notes and continues. It's linear, serving only two adjacent sessions.
+
+CE does something different.
+
+After completing a feature or fixing a bug, run `/ce:compound`. It parallel spawns three agents:
+
+*   **Context Analyzer**: Reviews the entire session conversation, extracting problem type, involved components, symptoms.
+*   **Solution Extractor**: Extracts from the debug process: what didn't work, what worked, root cause, how to prevent.
+*   **Related Docs Finder**: Searches existing `docs/solutions/` for duplicates. If highly similar, updates the old document instead of creating a new one.
+
+After the three agents run, the orchestrator summarizes and writes a structured document to `docs/solutions/`. The document structure is roughly: Problem (one or two sentences describing the issue), What Didn't Work (what was tried during troubleshooting that didn't work), Solution (final fix and code), Prevention (how to avoid it in the future). Each document includes YAML frontmatter, stored in directories by category for easy future searching.
+
+This document will be searched by the learnings-researcher in all future `/ce:plan` calls. It's not for the "next session", but for "all future sessions".
+
+For example, if you fix an edge runtime compatibility bug, compound records it. Three weeks later, when working on another feature encountering a similar runtime issue, the planning stage agent automatically pulls up that learning, directly noting previously encountered pitfalls and solutions.
+
+Anthropic's progress file is a **memo**: a handover from the previous shift to the next.
+
+CE's `docs/solutions/` is a **knowledge base**: project memory accessible to all sessions.
+
+A memo solves continuity, a knowledge base solves accumulation. One is linear, the other exponential.
+
+This is the meaning of "compound": the output of each work is not just code, but also knowledge reusable next time. The more you use it, the more the agent understands your project.
+
+This is also key to the "perpetual" agent we've been discussing. The core of a "perpetual" agent isn't working 24/7 non-stop, but through continuous work, achieving continuous self-improvement and self-optimization, avoiding repeated mistakes and waste, achieving true self-improving.
+
+## About Automation: A Question Worth Exploring
+
+Looking through the CE source code, I found something interesting: the `/lfg` full-auto mode (plan to PR in one go) doesn't include the compound step. You need to run `/ce:compound` manually.
+
+Why did the author choose not to automate compound? I think this design is reasonable. Not every session is worth compounding: fixing a typo, adjusting CSS, running a migration—these don't generate new knowledge. Only sessions that truly debug a pitfall, discover a pattern, or step on a landmine are worth it. Automatically compounding every session would create noise, flooding `docs/solutions/` with low-value documents, reducing the search quality for the learnings-researcher.
+
+But people forget. This is a real problem.
+
+A solution I'm building is a compound janitor: at the end of each day, it automatically scans all sessions' git diffs and conversations, determines which are worth compounding, selects them, and runs batches. It doesn't compound every session, but only valuable ones after janitor screening. Similar to the regular review and cleanup mechanism in memory management. This might be worth contributing as a PR to CE.
+
+## gstack + CE: The Complete Harness
+
+Mapping to Anthropic's architecture, gstack + CE covers all roles:
+
+**Decision Layer:**
+*   gstack `/plan-ceo-review`, product perspective to cut requirements
+*   gstack `/plan-eng-review`, locks architectural direction
+
+**Planning Layer:**
+*   CE `/ce:plan`, spawns research agents, reads historical learnings, produces structured plan
+
+**Execution Layer:**
+*   CE `/ce:work`, incremental execution according to plan
+
+**Review Layer:**
+*   CE `/ce:review`, 6-15 specialized reviewers in parallel
+*   gstack `/qa`, browser end-to-end real testing
+
+**Knowledge Layer:**
+*   CE `/ce:compound`, writes into searchable project knowledge base
+
+![](https://pbs.twimg.com/media/HEi8HJuXYAADDUR.jpg)
+
+gstack is responsible for "whether to do it" and "real testing", CE is responsible for "how to do it", "how well it's done", and "remembering". No overlap.
+
+Superpowers' brainstorm → plan → execute → review is fully covered by CE, each step deeper, plus the unique dimension of compound. Replacing it is natural.
+
+Superpowers has one advantage: native cross-tool compatibility, the same skill works in Claude Code, Cursor, Codex CLI. However, CE recently added a CLI conversion tool, supporting conversion to over a dozen formats. If you primarily use Claude Code, this gap isn't significant.
+
+Superpowers' 120k stars prove its quality; it's indeed the best entry point for many into AI agent workflows. But in practical deep usage, CE has better architectural depth, especially the compound dimension, which Superpowers completely lacks.
+
+Your agent helps you write code, fix bugs, run tests every day. After it's done, where does what it learned go?
+
+If the answer is "scattered across various sessions, to be stepped on again next time", `/ce:compound` might be the command you need.
+
+**Links:**
+
+*   CE: github.com/EveryInc/compound-engineering-plugin
+*   gstack: github.com/garrytan/gstack
+*   anthropic.com/engineering/effective-harnesses-for-long-running-agents
+*   anthropic.com/engineering/harness-design-long-running-apps
