@@ -55,5 +55,7 @@ tina/__generated__/.cache
 .agent
 .claude
 .windsurf
+/skills
+skills-lock.json
 *.sql
 .gstack/

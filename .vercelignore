@@ -1,0 +1,12 @@
+.agent
+.agents
+.claude
+.trae
+.windsurf
+.gstack
+.next
+.velite
+node_modules
+skills
+skills-lock.json
+browser-extension/node_modules
