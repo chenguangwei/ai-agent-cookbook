@@ -1,15 +1,10 @@
 import { Metadata } from 'next';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import { getNewsItemById } from '@/lib/db/news';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }): Promise<Metadata> {
   const { locale, id } = await params;
-  const siteUrl = getSiteUrl();
-
-  // Build canonical URL based on locale
-  const canonicalUrl = locale === 'en'
-    ? `${siteUrl}/news/${id}`
-    : `${siteUrl}/${locale}/news/${id}`;
+  const canonicalUrl = getCanonicalUrl(locale, `news/${id}`);
 
   // Fetch article for rich metadata
   let article = null;
@@ -29,11 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     description,
     alternates: {
       canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/news/${id}`,
-        'zh': `${siteUrl}/zh/news/${id}`,
-        'ja': `${siteUrl}/ja/news/${id}`,
-      },
+      languages: buildLocaleAlternates(`news/${id}`),
     },
     openGraph: {
       title,

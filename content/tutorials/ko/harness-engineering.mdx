@@ -1,0 +1,120 @@
+---
+title: "두 대기업과 아홉 블로거가 해석한 Harness Engineering, 그 정체는?"
+slug: "harness-engineering"
+locale: "ko"
+description: "두 대기업과 아홉 블로거가 해석한 Harness Engineering, 그 정체는?"
+category: "실제 사례"
+tags: ["LangChain", "OpenAI", "Claude", "RAG", "Tool Use", "Prompt Engineering"]
+techStack: []
+difficulty: "초급"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HEoeb9CawAACGZi.jpg"
+featured: false
+date: 2026-03-30
+---
+
+# 두 대기업과 아홉 블로거가 해석한 Harness Engineering, 그 정체는?
+
+Anthropic과 OpenAI가 거의 같은 주에 각각 Harness Engineering에 관한 글을 발표했습니다. 그러자 AI 커뮤니티가 발칵 뒤집혔습니다. 어떤 이는 이것이 AI 엔지니어링의 세 번째 패러다임 전환이라고 말하고, 어떤 이는 단지 기존 개념에 새 이름을 붙인 것에 불과하다고 말합니다. 아홉 블로거의 의견과 두 대기업의 실제 사례가 합쳐져 흥미로운 전체 그림이 완성되었습니다.
+
+![](https://pbs.twimg.com/media/HEodPPba0AA3LYA.jpg)
+
+## Harness Engineering은 왜 등장했나
+
+Prompt Engineering에서 Context Engineering을 거쳐 Harness Engineering까지, 모든 패러다임 전환 뒤에는 AI 능력의 도약이 있었습니다.
+
+2023년부터 2024년까지 사람들은 프롬프트를 잘 작성하는 방법을 연구했습니다. 핵심 기술은 표현과 구조화였습니다. 당시 모델의 능력은 제한적이었고, 좋은 프롬프트 하나면 확실한 성능 향상을 가져올 수 있었습니다.
+
+2025년에는 Context Engineering이 주류가 되었습니다. 사람들은 프롬프트만으로는 부족하다는 것을 깨달았고, 전체 컨텍스트 창을 엔지니어링 대상으로 설계해야 했습니다. RAG, 긴 컨텍스트, 메모리 시스템, Tool Use 등이 모두 이 범주에 속합니다.
+
+2025년 말부터 2026년 초까지 에이전트 능력이 비약적으로 향상되었습니다. Karpathy는 12월 이후로 직접 코드를 한 줄도 쓰지 않았다고 말했습니다. 엔지니어의 역할은 "코드 작성"에서 "에이전트 실행 환경 설계"로 바뀌었습니다. 이 실행 환경이 바로 Harness입니다.
+
+![](https://pbs.twimg.com/media/HEodRFabwAAenk8.jpg)
+
+## Anthropic의 정의: 생성기와 평가기의 순환
+
+Anthropic 엔지니어링 블로그의 글(https://www.anthropic.com/engineering/harness-design-long-running-apps)은 다중 에이전트 협업 아키텍처에 초점을 맞추고 있습니다.
+
+그들의 핵심 발견은 에이전트가 자신의 작업을 평가하도록 하면 결과가 거의 항상 자기 칭찬에 그친다는 것입니다. 해결책은 생성과 평가를 두 개의 독립적인 에이전트로 분리하는 것입니다.
+
+구체적인 아키텍처는 세 에이전트가 협업하는 것입니다. Planner는 간단한 요구사항을 상세한 제품 사양으로 확장하고, Generator는 증분 방식으로 기능을 구현하며, Evaluator는 Playwright를 통해 실제 상호작용 테스트를 수행합니다.
+
+실험 결과는 매우 직관적이었습니다. 동일한 프롬프트로 단일 에이전트는 20분, $9를 소비했지만, 생성된 게임은 플레이할 수 없었습니다. 완전한 Harness는 6시간, $200를 소비했지만, 생성된 게임에는 스프라이트 애니메이션, AI 통합 및 내보내기 기능이 있었습니다.
+
+Anthropic 공식 트윗 원문(https://x.com/AnthropicAI/status/2036481033621623056)
+
+![](https://pbs.twimg.com/media/HEodSz1aYAALYMD.jpg)
+
+## OpenAI의 정의: 백만 줄 코드, 손글씨는 0줄
+
+OpenAI의 글(https://openai.com/index/harness-engineering/)은 완전히 다른 접근 방식을 취했습니다. 그들은 5개월 동안 실험을 진행했습니다. 3명의 엔지니어가 Codex Agent를 사용하여 약 백만 줄의 코드로 구성된 제품을 구축했으며, 사람이 직접 작성한 코드는 단 한 줄도 없었습니다.
+
+철퇴남 @lxfater의 평가(https://x.com/lxfater/status/2035588532484677996)가 적절했습니다. "안에 담긴 경험들은 엔지니어들이 꼭 봐야 합니다. 생각보다 훨씬 자동화되어 있습니다."
+
+OpenAI Harness의 핵심은 엄격한 계층 구조입니다: Types → Config → Repo → Service → Runtime → UI. 각 계층의 경계는 Linter와 CI로 강제됩니다. 문서는 사람이 읽기 위한 것이 아니라 에이전트가 읽기 위한 것이며, 구조화된 `docs` 디렉토리에 에이전트의 유일한 진실 공급원(ground truth)으로 구성됩니다.
+
+Sanbu @sanbuphy의 요약(https://x.com/sanbuphy/status/2038138801885990995): "에이전트를 길들이는 주요 방법은 정교한 프롬프트, 메커니즘적 제약(예: lint, 구조 테스트, doc-gardening agent)을 통해 AI가 자동으로 코드를 생성하고, 문서를 유지하며, 지속적으로 자가 수정하도록 하는 것입니다."
+
+![](https://pbs.twimg.com/media/HEodUhIbgAAB1HA.jpg)
+
+## 블로거들의 시각: 열광에서 회의까지
+
+가장 흥미로운 점은 커뮤니티의 반응이 완전히 양극화되었다는 것입니다.
+
+**지지파**
+
+Dan McAteer @daniel_mac8(https://x.com/daniel_mac8/status/2037581249100087667)는 Harness Engineering이 모델 능력만큼 중요하다고 생각합니다. AI 에이전트의 50%는 Harness에 관한 이야기입니다. 그는 Natural-Language Agent Harnesses라는 개념을 제시하며, Harness 로직을 코드에서 자연어로 옮겼습니다.
+
+Nav Toor @heynavtoor(https://x.com/heynavtoor/status/2037200578842157462)도 이 개념을 홍보하고 있습니다.
+
+**구조파**
+
+Leo @runes_leo는 매우 명확한 정의를 제시했습니다(https://x.com/runes_leo/status/2033828897562009681): "LangChain 사람들은 Agent = Model + Harness라고 말합니다. Harness는 모델 외의 모든 것, 즉 프롬프트, 도구, 샌드박스, 메모리 시스템, 검증 메커니즘, 장기 작업 오케스트레이션입니다."
+
+그는 직관에 반하는 한 가지 관점을 언급했습니다. "파일 시스템이 가장 기본적인 프리미티브입니다. 벡터 데이터베이스도, RAG도 아닌, 가장 단순한 파일 읽기/쓰기입니다. 파일만이 지속성, 세션 간 협업, 다중 에이전트 상태 공유를 동시에 해결할 수 있기 때문입니다."
+
+**회의파**
+
+Chayenne Zhao @GenAI_is_real은 날카로운 비판을 썼습니다(https://x.com/GenAI_is_real/status/2036266930290696599): "몇 만 자 분량의 Harness Engineering 글을 읽었는데, 첫 반응은 '이 개념이 대단하다'가 아니라 '이 사람들은 새 용어를 만드는 것 외에 다른 생각은 없나'였습니다."
+
+그녀의 핵심 주장: "Prompt Engineering에서 Context Engineering, Harness Engineering까지, 몇 달마다 누군가 새 용어를 만들고 만자 분량의 글을 씁니다. 이러한 개념들은 본질적으로 모두 같은 것을 말하고 있습니다."
+
+marv1nnnnn @marv1nnnnn1(https://x.com/marv1nnnnn1/status/2034262240422134053)도 비슷한 의견을 표명했습니다.
+
+**실천파**
+
+George @odysseus0z(https://x.com/odysseus0z/status/2030416758138634583)는 실제 운영 측면에 더 주목했습니다.
+
+![](https://pbs.twimg.com/media/HEodWNTbAAAmHNA.jpg)
+
+## 두 회사의 핵심 차이점
+
+둘 다 Harness Engineering이라고 부르지만, Anthropic과 OpenAI의 접근 방식은 완전히 다릅니다.
+
+Anthropic은 에이전트 간 협업 품질에 중점을 둡니다. 그들의 질문은 "여러 에이전트가 협력하여 고품질 결과를 생성하려면 어떻게 해야 하는가?"입니다. 답은 생성기와 평가기의 순환, 그리고 Playwright를 사용한 실제 테스트입니다.
+
+OpenAI는 인간 엔지니어의 역할 변화에 중점을 둡니다. 그들의 질문은 "에이전트가 모든 코드를 작성할 때 엔지니어는 무엇을 해야 하는가?"입니다. 답은 계층 구조 설계, 문서 작성, CI/CD 제약 조건 유지 관리입니다.
+
+두 관점은 모순되지 않으며 오히려 상호 보완적입니다. Anthropic은 "에이전트가 어떻게 협업하는가"를 해결하고, OpenAI는 "사람이 에이전트를 어떻게 관리하는가"를 해결합니다.
+
+Martin Fowler의 평가가 가장 적절할 수 있습니다. "Harness Engineering은 Context Engineering, 아키텍처 제약, 체계적인 거버넌스를 하나로 통합하는 가치 있는 프레임워크입니다."
+
+## 회의파의 주장이 옳은가
+
+Chayenne의 비판은 일리가 있습니다. Harness Engineering을 "또 다른 신조어"로 이해한다면, 실제로 새로운 것은 없습니다. 좋은 프롬프트, 합리적인 컨텍스트 관리, 명확한 아키텍처 제약은 항상 존재해 온 관행입니다.
+
+하지만 OpenAI 실험의 데이터를 보면 어떨까요? 엔지니어 3명, 5개월, 100만 줄 코드, 손글씨 0줄. 이 규모의 변화는 더 이상 양적 변화가 아닙니다. 에이전트가 실제로 모든 코드를 작성할 때, "에이전트 실행 환경을 설계하는 방법"은 확실히 독립적인 엔지니어링 분야가 되었습니다.
+
+Leo의 "Agent = Model + Harness" 공식이 가장 좋은 요약일 수 있습니다. Model은 엔진이고, Harness는 전체 트랙입니다. 동일한 엔진이 다른 트랙을 달리면 결과는 천지 차이입니다.
+
+## 미래는 어떻게 될까
+
+몇 가지 관찰 가능한 방향이 있습니다.
+
+**Harness 자체가 코드가 될 것입니다.** 현재 Harness는 AGENTS.md, CLAUDE.md, 각종 설정 파일에 흩어져 있는 조각들입니다. 미래에는 표준화된 Harness 정의 언어와 도구 체인이 등장할 가능성이 높습니다.
+
+**Harness는 스스로 최적화될 것입니다.** Karpathy가 말한 Auto Research가 이미 이 작업을 수행하고 있습니다. Program.md 자체도 코드이며, 코드는 최적화될 수 있습니다. 다른 Program.md는 다른 연구 진행 상황을 생성하므로, 모델이 더 나은 Program.md를 작성하도록 할 수 있습니다.
+
+**사람의 역할은 계속 상위로 이동할 것입니다.** 코드 작성에서 프롬프트 작성, Context 설계, Harness 구축으로의 모든 전환은 더 높은 추상화 계층으로의 이동입니다. 다음 단계는 "Harness의 Harness", 즉 Harness 생태계 자체를 관리하는 시스템을 설계하는 것일 수 있습니다.
+
+이름이 무엇이든, 에이전트 시대의 엔지니어링 관행은 확실히 근본적인 변화를 겪고 있습니다. 이름이 중요한 것이 아니라 실천이 중요합니다.

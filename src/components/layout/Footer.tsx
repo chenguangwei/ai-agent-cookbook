@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Zap, Globe, Layout } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { SITE_NAME } from '@/lib/utils';
 
 export function Footer() {
   const t = useTranslations('Footer');
@@ -12,7 +13,7 @@ export function Footer() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2 text-primary-600 font-bold">
             <Zap className="w-6 h-6" />
-            <span className="font-display">Agent Hub - Agent 教程 | 实战 | 工具 | 资讯</span>
+            <span className="font-display">{SITE_NAME} - Agent 教程 | 实战 | 工具 | 资讯</span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed uppercase tracking-wider">
             {t('repoDescription')}

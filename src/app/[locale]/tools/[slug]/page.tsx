@@ -9,27 +9,20 @@ import { Button } from '@/components/ui/button';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getAllTools } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const siteUrl = getSiteUrl();
   const tools = getAllTools(locale);
   const tool = tools.find(t => t?.slug === slug);
-  const path = `tools/${slug}`;
-  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 
   return {
     title: tool?.title,
     description: tool?.description,
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/${path}`,
-        'zh': `${siteUrl}/zh/${path}`,
-        'ja': `${siteUrl}/ja/${path}`,
-      },
+      canonical: getCanonicalUrl(locale, `tools/${slug}`),
+      languages: buildLocaleAlternates(`tools/${slug}`),
     },
   };
 }

@@ -1,0 +1,343 @@
+---
+title: "자기 반성 에이전트 구축하기"
+slug: "self-reflecting-agent"
+locale: "ko"
+description: "비평 및 개선 루프를 구현하여 에이전트 신뢰성 향상"
+category: "에이전트 워크플로우"
+tags: ["반성", "신뢰성"]
+techStack: ["LangGraph"]
+difficulty: "중급"
+duration: "30분"
+thumbnail: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800"
+featured: false
+date: 2024-04-28
+---
+
+# 자기 반성 에이전트 구축하기
+
+자기 반성(self-reflection)을 통해 에이전트가 자신의 출력을 비판하고 반복적으로 개선할 수 있습니다. 이 패턴은 신뢰성과 출력 품질을 획기적으로 향상시킵니다.
+
+## 자기 반성이 필요한 이유?
+
+일반적인 에이전트 출력에는 다음과 같은 문제가 자주 포함됩니다:
+- 불완전한 추론
+- 사실적 오류
+- 누락된 예외 사례
+- 최적이 아닌 솔루션
+
+자기 반성은 에이전트가 다음을 수행하여 이러한 문제를 해결합니다:
+1. 초기 응답 생성
+2. 해당 응답 비판
+3. 비판을 바탕으로 개선
+4. 만족할 때까지 반복
+
+## 반성 패턴
+
+```text
+초기 응답 → 비판 → 개선 → 비판 → ... → 최종 출력
+```
+
+## 기본 구현
+
+### 반성 프롬프트
+
+```python
+CRITIQUE_PROMPT = """다음 응답을 검토하고 문제점을 식별하세요:
+
+원래 질문: {question}
+응답: {response}
+
+고려 사항:
+1. 사실적 정확성 - 모든 진술이 올바른가?
+2. 완전성 - 질문에 완전히 답변했는가?
+3. 논리 - 추론이 타당한가?
+4. 명확성 - 설명이 잘 되어 있는가?
+
+개선을 위한 구체적이고 실행 가능한 피드백을 제공하세요.
+응답이 만족스러우면 "APPROVED"로 응답하세요.
+
+비판:"""
+
+REFINE_PROMPT = """비판을 바탕으로 다음 응답을 개선하세요:
+
+원래 질문: {question}
+현재 응답: {response}
+비판: {critique}
+
+모든 피드백을 반영한 개선된 응답을 제공하세요.
+
+개선된 응답:"""
+```
+
+### 간단한 반성 루프
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+def generate(prompt: str) -> str:
+    """모델로부터 응답을 생성합니다."""
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content
+
+def reflect_and_refine(question: str, max_iterations: int = 3) -> str:
+    """자기 반성을 통해 응답을 생성합니다."""
+
+    # 초기 생성
+    response = generate(f"이 질문에 답변하세요: {question}")
+
+    for i in range(max_iterations):
+        # 응답 비판
+        critique = generate(CRITIQUE_PROMPT.format(
+            question=question,
+            response=response
+        ))
+
+        # 승인 여부 확인
+        if "APPROVED" in critique.upper():
+            print(f"{i+1}회 반복 후 승인됨")
+            return response
+
+        # 비판을 바탕으로 개선
+        response = generate(REFINE_PROMPT.format(
+            question=question,
+            response=response,
+            critique=critique
+        ))
+
+    return response
+```
+
+## LangGraph 구현
+
+LangGraph를 사용한 더 정교한 구현:
+
+```python
+from typing import TypedDict, Annotated, Literal
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+
+class ReflectionState(TypedDict):
+    question: str
+    response: str
+    critique: str
+    iteration: int
+    approved: bool
+
+llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+critic_llm = ChatOpenAI(model="gpt-4", temperature=0)  # 비판에는 낮은 온도 사용
+
+def generate_node(state: ReflectionState) -> ReflectionState:
+    """응답을 생성하거나 개선합니다."""
+    if state["iteration"] == 0:
+        # 초기 생성
+        response = llm.invoke(f"답변: {state['question']}")
+    else:
+        # 개선
+        prompt = REFINE_PROMPT.format(
+            question=state["question"],
+            response=state["response"],
+            critique=state["critique"]
+        )
+        response = llm.invoke(prompt)
+
+    return {
+        **state,
+        "response": response.content,
+        "iteration": state["iteration"] + 1
+    }
+
+def critique_node(state: ReflectionState) -> ReflectionState:
+    """현재 응답을 비판합니다."""
+    critique = critic_llm.invoke(CRITIQUE_PROMPT.format(
+        question=state["question"],
+        response=state["response"]
+    ))
+
+    approved = "APPROVED" in critique.content.upper()
+
+    return {
+        **state,
+        "critique": critique.content,
+        "approved": approved
+    }
+
+def should_continue(state: ReflectionState) -> Literal["generate", "end"]:
+    """개선을 계속할지 결정합니다."""
+    if state["approved"] or state["iteration"] >= 3:
+        return "end"
+    return "generate"
+
+# 그래프 구축
+workflow = StateGraph(ReflectionState)
+
+workflow.add_node("generate", generate_node)
+workflow.add_node("critique", critique_node)
+
+workflow.set_entry_point("generate")
+workflow.add_edge("generate", "critique")
+workflow.add_conditional_edges(
+    "critique",
+    should_continue,
+    {"generate": "generate", "end": END}
+)
+
+app = workflow.compile()
+```
+
+## 고급 패턴
+
+### 다중 측면 비판
+
+각 측면을 별도로 평가:
+
+```python
+ASPECTS = {
+    "accuracy": "모든 사실적 주장이 정확하고 검증 가능한가?",
+    "completeness": "응답이 질문의 모든 부분을 완전히 다루는가?",
+    "clarity": "응답이 잘 구성되어 있고 이해하기 쉬운가?",
+    "relevance": "응답이 질문에 집중되어 있는가?",
+}
+
+def multi_aspect_critique(question: str, response: str) -> dict:
+    """여러 측면에서 응답을 비판합니다."""
+    critiques = {}
+
+    for aspect, prompt in ASPECTS.items():
+        critique = generate(f"""
+        질문: {question}
+        응답: {response}
+
+        평가: {prompt}
+        점수 (1-5) 및 설명:
+        """)
+        critiques[aspect] = critique
+
+    return critiques
+```
+
+### 앙상블 반성
+
+여러 비판자 사용:
+
+```python
+def ensemble_critique(question: str, response: str, num_critics: int = 3) -> str:
+    """여러 관점에서 비판을 수집하고 종합합니다."""
+    critiques = []
+
+    personas = [
+        "도메인 전문가",
+        "회의적인 검토자",
+        "명확성 중심 편집자"
+    ]
+
+    for persona in personas[:num_critics]:
+        critique = generate(f"""
+        {persona}로서 이 응답을 비판하세요:
+
+        질문: {question}
+        응답: {response}
+
+        비판:
+        """)
+        critiques.append(critique)
+
+    # 비판 종합
+    synthesis = generate(f"""
+    다음 비판들을 실행 가능한 피드백으로 결합하세요:
+
+    {chr(10).join(f'비판 {i+1}: {c}' for i, c in enumerate(critiques))}
+
+    종합된 피드백:
+    """)
+
+    return synthesis
+```
+
+### 헌법적 AI 스타일 반성
+
+윤리 및 안전 검사 적용:
+
+```python
+CONSTITUTIONAL_PRINCIPLES = [
+    "응답에 유해하거나 위험한 정보가 포함되어서는 안 됩니다",
+    "응답은 진실해야 하며 오해를 유발해서는 안 됩니다",
+    "응답은 개인정보를 존중하고 공개해서는 안 됩니다",
+    "응답은 공정하고 편향되지 않아야 합니다",
+]
+
+def constitutional_check(response: str) -> tuple[bool, str]:
+    """헌법적 원칙에 따라 응답을 검사합니다."""
+    violations = []
+
+    for principle in CONSTITUTIONAL_PRINCIPLES:
+        check = generate(f"""
+        원칙: {principle}
+        응답: {response}
+
+        이 응답이 원칙을 위반합니까? (YES/NO)
+        YES인 경우, 어떻게 위반하는지 설명하세요:
+        """)
+
+        if "YES" in check.upper():
+            violations.append(check)
+
+    if violations:
+        return False, "\n".join(violations)
+    return True, "모든 원칙 충족"
+```
+
+## 시각화
+
+반성 과정을 추적합니다:
+
+```python
+class ReflectionTracer:
+    def __init__(self):
+        self.history = []
+
+    def log(self, iteration: int, response: str, critique: str, approved: bool):
+        self.history.append({
+            "iteration": iteration,
+            "response": response,
+            "critique": critique,
+            "approved": approved
+        })
+
+    def visualize(self):
+        for entry in self.history:
+            print(f"\n=== 반복 {entry['iteration']} ===")
+            print(f"응답: {entry['response'][:200]}...")
+            print(f"비평: {entry['critique'][:200]}...")
+            print(f"상태: {'✓ 승인됨' if entry['approved'] else '→ 개선 중'}")
+```
+
+
+
+## 모범 사례
+
+1. **생성과 비평에 다른 모델 사용**: 비평에는 더 분석적인 모델을 사용하세요
+2. **온도 설정**: 비평에는 낮은 온도, 창의적 생성에는 높은 온도를 사용하세요
+3. **반복 제한**: 무한 루프를 방지하기 위해 항상 최대값을 설정하세요
+4. **명확한 기준**: 구체적이고 측정 가능한 비평 기준을 정의하세요
+5. **추적 로깅**: 디버깅 및 분석을 위해 전체 추적을 유지하세요
+
+
+
+## 자기 반성을 사용해야 하는 경우
+
+**적합한 경우:**
+- 중요도가 높은 출력(법률, 의료, 금융)
+- 복잡한 추론 작업
+- 정확성이 요구되는 콘텐츠
+- 사용자 대상 텍스트 생성
+
+**과도할 수 있는 경우:**
+- 단순한 사실 질의
+- 시간에 민감한 애플리케이션
+- 중요도가 낮은 내부 작업

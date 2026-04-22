@@ -3,7 +3,7 @@ import { getAllRssSources, addRssSource, updateRssSource, deleteRssSource, getRs
 import { randomUUID } from 'crypto';
 
 // Detect language from source name or URL
-function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
+function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' | 'ko' {
   const lowerName = name.toLowerCase();
   const lowerUrl = url.toLowerCase();
 
@@ -17,6 +17,10 @@ function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
   // Check if name contains Japanese characters
   const japaneseRegex = /[\u3040-\u309f\u30a0-\u30ff]/;
   if (japaneseRegex.test(name)) return 'ja';
+
+  // Check if name contains Korean characters
+  const koreanRegex = /[\uac00-\ud7af]/;
+  if (koreanRegex.test(name) || koreanRegex.test(url)) return 'ko';
 
   // Check for common Chinese source name patterns
   const chineseNames = [
@@ -98,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate language
-    const validLanguages = ['en', 'zh', 'ja'];
+    const validLanguages = ['en', 'zh', 'ja', 'ko'];
     if (!validLanguages.includes(language)) {
       return NextResponse.json(
         { error: `Language must be one of: ${validLanguages.join(', ')}` },

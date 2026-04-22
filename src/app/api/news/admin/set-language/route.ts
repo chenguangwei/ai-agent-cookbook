@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!language || !['en', 'zh', 'ja'].includes(language)) {
+    if (!language || !['en', 'zh', 'ja', 'ko'].includes(language)) {
       return NextResponse.json(
-        { error: 'Valid language is required (en, zh, or ja)' },
+        { error: 'Valid language is required (en, zh, ja, or ko)' },
         { status: 400 }
       );
     }

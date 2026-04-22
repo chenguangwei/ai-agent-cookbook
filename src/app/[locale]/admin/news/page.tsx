@@ -32,7 +32,7 @@ interface NewsItem {
   published_at?: string;
   status: 'pending' | 'approved' | 'rejected';
   is_featured: boolean;
-  language?: 'en' | 'zh' | 'ja';
+  language?: 'en' | 'zh' | 'ja' | 'ko';
   approved_at?: string;
   created_at: string;
 }
@@ -42,7 +42,7 @@ interface Source {
   name: string;
   url: string;
   category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
-  language: 'en' | 'zh' | 'ja';
+  language: 'en' | 'zh' | 'ja' | 'ko';
   enabled: boolean;
   created_at: string;
 }
@@ -50,7 +50,7 @@ interface Source {
 type TabType = 'pending' | 'approved' | 'sources';
 
 const CATEGORIES = ['all', 'Articles', 'Podcasts', 'Twitters', 'Videos'] as const;
-const LANGUAGES = ['all', 'en', 'zh', 'ja'] as const;
+const LANGUAGES = ['all', 'en', 'zh', 'ja', 'ko'] as const;
 
 export default function AdminNewsPage() {
   const t = useTranslations('NewsAdmin');
@@ -201,7 +201,7 @@ export default function AdminNewsPage() {
   };
 
   // Handle set language
-  const handleSetLanguage = async (ids: string[], language: 'en' | 'zh' | 'ja') => {
+  const handleSetLanguage = async (ids: string[], language: 'en' | 'zh' | 'ja' | 'ko') => {
     try {
       const res = await fetch('/api/news/admin/set-language', {
         method: 'POST',
@@ -381,7 +381,7 @@ export default function AdminNewsPage() {
   };
 
   // Handle update source language
-  const handleUpdateSourceLanguage = async (id: string, language: 'en' | 'zh' | 'ja') => {
+  const handleUpdateSourceLanguage = async (id: string, language: 'en' | 'zh' | 'ja' | 'ko') => {
     try {
       const res = await fetch('/api/news/admin/sources', {
         method: 'PUT',
@@ -649,15 +649,17 @@ export default function AdminNewsPage() {
                         <td className="px-4 py-3">
                           <select
                             value={source.language}
-                            onChange={e => handleUpdateSourceLanguage(source.id, e.target.value as 'en' | 'zh' | 'ja')}
+                            onChange={e => handleUpdateSourceLanguage(source.id, e.target.value as 'en' | 'zh' | 'ja' | 'ko')}
                             className={`text-xs font-medium rounded-full px-2 py-1 cursor-pointer border-0 ${source.language === 'en' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                 source.language === 'zh' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                                  'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                                  source.language === 'ja' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' :
+                                    'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
                               }`}
                           >
                             <option value="en">EN</option>
                             <option value="zh">中文</option>
                             <option value="ja">JA</option>
+                            <option value="ko">KO</option>
                           </select>
                         </td>
                         <td className="px-4 py-3">
@@ -829,6 +831,14 @@ export default function AdminNewsPage() {
                   className="gap-1"
                 >
                   日本語
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleSetLanguage(selected, 'ko')}
+                  className="gap-1"
+                >
+                  한국어
                 </Button>
               </div>
             )}

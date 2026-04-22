@@ -93,6 +93,8 @@
     "allLanguages": "すべての言語",
     "chinese": "中国語",
     "english": "英語",
+    "japanese": "日本語",
+    "korean": "韓国語",
     "allCategories": "全カテゴリ",
     "clearFilters": "フィルタをクリア",
     "noArticles": "該当するニュースが見つかりません",
@@ -119,6 +121,7 @@
     "english": "英語",
     "chinese": "中国語",
     "japanese": "日本語",
+    "korean": "韓国語",
     "allLevels": "すべてのレベル",
     "beginner": "初級",
     "intermediate": "中級",
@@ -234,7 +237,7 @@
     "all": "すべて"
   },
   "Footer": {
-    "copyright": "Agent Hub. 無断複写・転載を禁じます。",
+    "copyright": "Agent Cookbook. 無断複写・転載を禁じます。",
     "platform": "プラットフォーム",
     "resources": "リソース",
     "company": "会社",

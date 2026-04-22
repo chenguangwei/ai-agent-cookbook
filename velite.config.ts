@@ -1,5 +1,7 @@
 import { defineConfig, s } from 'velite'
 
+const locales = ['en', 'zh', 'ja', 'ko'] as const
+
 export default defineConfig({
   root: 'content',
   output: {
@@ -15,7 +17,7 @@ export default defineConfig({
       schema: s.object({
         title: s.string(),
         slug: s.string(),
-        locale: s.enum(['en', 'zh', 'ja']),
+        locale: s.enum(locales),
         description: s.string().optional(),
         category: s.string().optional(),
         tags: s.array(s.string()).default([]),
@@ -35,7 +37,7 @@ export default defineConfig({
       schema: s.object({
         title: s.string(),
         slug: s.string(),
-        locale: s.enum(['en', 'zh', 'ja']),
+        locale: s.enum(locales),
         category: s.string().optional(),
         order: s.number().default(0),
         lastUpdated: s.isodate().optional(),
@@ -48,7 +50,7 @@ export default defineConfig({
       schema: s.object({
         title: s.string(),
         slug: s.string(),
-        locale: s.enum(['en', 'zh', 'ja']),
+        locale: s.enum(locales),
         summary: s.string().optional(),
         source: s.string().optional(),
         sourceUrl: s.string().optional(),
@@ -62,10 +64,10 @@ export default defineConfig({
     },
     labs: {
       name: 'PracticeLab',
-      pattern: 'labs/{en,zh,ja}/*.json',
+      pattern: 'labs/{en,zh,ja,ko}/*.json',
       schema: s.object({
         title: s.string(),
-        locale: s.enum(['en', 'zh', 'ja']),
+        locale: s.enum(locales),
         description: s.string().optional(),
         environment: s.string().optional(),
         difficulty: s.string().optional(),
@@ -84,7 +86,7 @@ export default defineConfig({
       schema: s.object({
         title: s.string(),
         slug: s.string(),
-        locale: s.enum(['en', 'zh', 'ja']),
+        locale: s.enum(locales),
         contentType: s.string().optional(),
         author: s.object({
           name: s.string().optional(),
@@ -108,7 +110,7 @@ export default defineConfig({
       schema: s.object({
         title: s.string(),
         slug: s.string(),
-        locale: s.enum(['en', 'zh', 'ja']),
+        locale: s.enum(locales),
         description: s.string().optional(),
         category: s.string().optional(),
         tags: s.array(s.string()).default([]),

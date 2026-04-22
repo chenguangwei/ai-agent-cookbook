@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAllRssSources, updateRssSource } from '@/lib/db/news';
 
 // Detect language from source name or URL
-function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
+function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' | 'ko' {
   const lowerName = name.toLowerCase();
   const lowerUrl = url.toLowerCase();
 
@@ -16,6 +16,10 @@ function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
   // Check if name contains Japanese characters
   const japaneseRegex = /[\u3040-\u309f\u30a0-\u30ff]/;
   if (japaneseRegex.test(name)) return 'ja';
+
+  // Check if name contains Korean characters
+  const koreanRegex = /[\uac00-\ud7af]/;
+  if (koreanRegex.test(name) || koreanRegex.test(url)) return 'ko';
 
   // Check for common Chinese source name patterns
   const chineseNames = [

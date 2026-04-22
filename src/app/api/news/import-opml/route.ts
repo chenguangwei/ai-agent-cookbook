@@ -9,7 +9,7 @@ const DEFAULT_SOURCES: Array<{
   name: string;
   url: string;
   category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
-  language: 'en' | 'zh' | 'ja';
+  language: 'en' | 'zh' | 'ja' | 'ko';
 }> = [
   // Articles from BestBlogs_RSS_Articles.opml (170 sources)
   { name: '人人都是产品经理', url: 'https://wechat2rss.bestblogs.dev/feed/2d790e38f8af54c5af77fa5fed687a7c66d34c22.xml', category: 'Articles', language: 'zh' },
@@ -418,7 +418,7 @@ const DEFAULT_SOURCES: Array<{
 ];
 
 // Detect language from source name or URL
-function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
+function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' | 'ko' {
   const lowerName = name.toLowerCase();
   const lowerUrl = url.toLowerCase();
 
@@ -432,6 +432,10 @@ function detectLanguage(name: string, url: string): 'en' | 'zh' | 'ja' {
   // Check if name contains Japanese characters
   const japaneseRegex = /[\u3040-\u309f\u30a0-\u30ff]/;
   if (japaneseRegex.test(name)) return 'ja';
+
+  // Check if name contains Korean characters
+  const koreanRegex = /[\uac00-\ud7af]/;
+  if (koreanRegex.test(name) || koreanRegex.test(url)) return 'ko';
 
   // Check for common Chinese source name patterns
   const chineseNames = [

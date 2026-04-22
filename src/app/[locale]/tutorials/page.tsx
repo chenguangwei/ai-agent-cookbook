@@ -10,7 +10,7 @@ import { FilterSelect } from '@/components/features/FilterSelect';
 import { getAllTutorials } from '@/lib/content';
 import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 const ITEMS_PER_PAGE = 50;
@@ -19,13 +19,8 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const siteUrl = getSiteUrl();
   const resolvedLocale = locale || 'en';
   const t = await getTranslations('Explore');
-
-  const canonicalUrl = resolvedLocale === 'en'
-    ? `${siteUrl}/tutorials`
-    : `${siteUrl}/${resolvedLocale}/tutorials`;
 
   const title = t('title');
   const description = t('description');
@@ -34,12 +29,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title,
     description,
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/tutorials`,
-        'zh': `${siteUrl}/zh/tutorials`,
-        'ja': `${siteUrl}/ja/tutorials`,
-      },
+      canonical: getCanonicalUrl(resolvedLocale, 'tutorials'),
+      languages: buildLocaleAlternates('tutorials'),
     },
     openGraph: {
       title,
@@ -186,6 +177,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                     { value: 'en', label: t('english') },
                     { value: 'zh', label: t('chinese') },
                     { value: 'ja', label: t('japanese') },
+                    { value: 'ko', label: t('korean') },
                   ]}
                 />
                 <FilterSelect

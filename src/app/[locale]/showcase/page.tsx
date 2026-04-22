@@ -8,26 +8,19 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Showcase');
-  const siteUrl = getSiteUrl();
-  const path = 'showcase';
-  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 
   return {
     title: t('title'),
     description: t('description'),
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/${path}`,
-        'zh': `${siteUrl}/zh/${path}`,
-        'ja': `${siteUrl}/ja/${path}`,
-      },
+      canonical: getCanonicalUrl(locale, 'showcase'),
+      languages: buildLocaleAlternates('showcase'),
     },
   };
 }

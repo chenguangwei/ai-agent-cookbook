@@ -8,26 +8,19 @@ import { getAllTools } from '@/lib/content';
 import { TOOL_CATEGORIES, toolCategoryIdToValue, toolCategoryValueToId } from '@/lib/tool-categories';
 import { getTranslations } from 'next-intl/server';
 import { ToolCard } from './ToolCard';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Tools');
-  const siteUrl = getSiteUrl();
-  const path = 'tools';
-  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 
   return {
     title: t('title'),
     description: t('description'),
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/${path}`,
-        'zh': `${siteUrl}/zh/${path}`,
-        'ja': `${siteUrl}/ja/${path}`,
-      },
+      canonical: getCanonicalUrl(locale, 'tools'),
+      languages: buildLocaleAlternates('tools'),
     },
   };
 }

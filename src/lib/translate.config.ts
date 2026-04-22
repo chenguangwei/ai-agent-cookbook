@@ -22,11 +22,12 @@ export function getTranslateConfig(): TranslateConfig {
     apiKey: process.env.TRANSLATE_API_KEY || '',
     baseUrl: process.env.TRANSLATE_BASE_URL || 'https://api.openai.com/v1',
     model: process.env.TRANSLATE_MODEL || 'gpt-4o',
-    supportedLocales: ['en', 'zh', 'ja'],
+    supportedLocales: ['en', 'zh', 'ja', 'ko'],
     localeNames: {
       en: 'English',
       zh: 'Chinese (Simplified)',
       ja: 'Japanese',
+      ko: 'Korean',
     },
   };
 }

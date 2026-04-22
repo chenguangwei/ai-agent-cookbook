@@ -6,7 +6,7 @@ export type RssSource = {
   name: string;
   url: string;
   category: 'Articles' | 'Podcasts' | 'Twitters' | 'Videos';
-  language: 'en' | 'zh' | 'ja';
+  language: 'en' | 'zh' | 'ja' | 'ko';
   enabled: boolean;
   created_at: string;
 };
@@ -24,7 +24,7 @@ export type NewsItem = {
   published_at?: string;
   status: 'pending' | 'approved' | 'rejected';
   is_featured: boolean;
-  language?: 'en' | 'zh' | 'ja';
+  language?: 'en' | 'zh' | 'ja' | 'ko';
   word_count?: number;
   read_time_minutes?: number;
   quality_score?: number;
@@ -322,7 +322,7 @@ export async function deleteNewsItem(id: string): Promise<boolean> {
 
 export async function updateNewsLanguage(
   id: string,
-  language: 'en' | 'zh' | 'ja'
+  language: 'en' | 'zh' | 'ja' | 'ko'
 ): Promise<NewsItem | null> {
   const { data, error } = await supabase
     .from('news_items')

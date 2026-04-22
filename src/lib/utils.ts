@@ -1,5 +1,15 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { defaultLocale, locales } from "@/i18n/config";
+
+export const SITE_NAME = 'Agent Cookbook';
+
+const LOCALE_DATE_FORMATS: Record<string, string> = {
+  en: 'en-US',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+};
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -19,4 +29,32 @@ export function getSiteUrl(): string {
   } catch {
     return 'https://agent-cookbook.com';
   }
+}
+
+export function getLocalizedPath(locale: string, path = ''): string {
+  const normalizedPath = path
+    ? `/${path.replace(/^\/+/, '').replace(/\/+$/, '')}`
+    : '';
+
+  if (!normalizedPath) {
+    return locale === defaultLocale ? '' : `/${locale}`;
+  }
+
+  return locale === defaultLocale ? normalizedPath : `/${locale}${normalizedPath}`;
+}
+
+export function getCanonicalUrl(locale: string, path = ''): string {
+  return `${getSiteUrl()}${getLocalizedPath(locale, path)}`;
+}
+
+export function buildLocaleAlternates(path = ''): Record<string, string> {
+  const siteUrl = getSiteUrl();
+
+  return Object.fromEntries(
+    locales.map((locale) => [locale, `${siteUrl}${getLocalizedPath(locale, path)}`])
+  );
+}
+
+export function getLocaleDateFormat(locale: string): string {
+  return LOCALE_DATE_FORMATS[locale] || LOCALE_DATE_FORMATS.en;
 }

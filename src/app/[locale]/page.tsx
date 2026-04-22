@@ -7,29 +7,20 @@ import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
 import { getFeaturedNewsByCategory } from '@/lib/db/news';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getSiteUrl, SITE_NAME } from '@/lib/utils';
 import type { Metadata } from 'next';
+import { locales } from '@/i18n/config';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Home');
-  const siteUrl = getSiteUrl();
-
-  // Build canonical URL based on locale
-  const canonicalUrl = locale === 'en'
-    ? siteUrl
-    : `${siteUrl}/${locale}`;
 
   return {
     title: t('seoTitle') || t('title'),
     description: t('seoDescription') || t('subtitle'),
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': siteUrl,
-        'zh': `${siteUrl}/zh`,
-        'ja': `${siteUrl}/ja`,
-      },
+      canonical: getCanonicalUrl(locale),
+      languages: buildLocaleAlternates(),
     },
   };
 }
@@ -86,7 +77,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Agent Hub',
+    name: SITE_NAME,
     url: getSiteUrl(),
     description: t('seoDescription'),
     potentialAction: {
@@ -175,7 +166,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               { value: tutorialCount, label: tStat('tutorials') },
               { value: toolCount, label: tStat('tools') },
               { value: showcaseCount, label: tStat('showcases') },
-              { value: 3, label: tStat('languages') },
+              { value: locales.length, label: tStat('languages') },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center gap-1">
                 <span className="text-3xl font-bold text-slate-900 dark:text-white font-display">

@@ -9,7 +9,7 @@ import { TableOfContents } from '@/components/features/TableOfContents';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllTutorials, getTutorialBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat, getSiteUrl, SITE_NAME } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 interface TutorialPageProps {
@@ -35,22 +35,13 @@ export async function generateMetadata({ params }: TutorialPageProps): Promise<M
     };
   }
 
-  // Build canonical URL based on locale
-  const canonicalUrl = locale === 'en'
-    ? `${siteUrl}/tutorial/${slug}`
-    : `${siteUrl}/${locale}/tutorial/${slug}`;
-
   return {
     title: tutorial.title,
     description: tutorial.description,
     keywords: [...(tutorial.tags || []), ...(tutorial.techStack || []), tutorial.category].filter((k): k is string => k !== null && k !== undefined),
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/tutorial/${slug}`,
-        'zh': `${siteUrl}/zh/tutorial/${slug}`,
-        'ja': `${siteUrl}/ja/tutorial/${slug}`,
-      },
+      canonical: getCanonicalUrl(locale, `tutorial/${slug}`),
+      languages: buildLocaleAlternates(`tutorial/${slug}`),
     },
     openGraph: {
       title: tutorial.title,
@@ -93,12 +84,10 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
     ...(tutorial.thumbnail && { image: tutorial.thumbnail }),
     ...(tutorial.date && { datePublished: tutorial.date }),
     inLanguage: locale,
-    url: locale === 'en'
-      ? `${siteUrl}/tutorial/${slug}`
-      : `${siteUrl}/${locale}/tutorial/${slug}`,
+    url: getCanonicalUrl(locale, `tutorial/${slug}`),
     publisher: {
       '@type': 'Organization',
-      name: 'Agent Hub',
+      name: SITE_NAME,
       url: siteUrl,
     },
     keywords: [...(tutorial.tags || []), ...(tutorial.techStack || []), tutorial.category]
@@ -159,7 +148,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-4 h-4" />
                       <time dateTime={tutorial.date}>
-                        {new Date(tutorial.date).toLocaleDateString(locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        {new Date(tutorial.date).toLocaleDateString(getLocaleDateFormat(locale), { year: 'numeric', month: 'long', day: 'numeric' })}
                       </time>
                     </div>
                   )}

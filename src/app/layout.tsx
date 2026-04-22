@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
-import { getSiteUrl } from "@/lib/utils";
+import { getSiteUrl, SITE_NAME } from "@/lib/utils";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,12 +17,13 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  applicationName: SITE_NAME,
   title: {
-    default: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
-    template: "%s | Agent Cookbook",
+    default: `${SITE_NAME} - AI Agent 教程、实战、工具与资讯平台`,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Agent Cookbook 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯，包含 OpenCLAW、LangChain、LangGraph 等框架的详细教程。",
+    `${SITE_NAME} 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯，包含 OpenCLAW、LangChain、LangGraph 等框架的详细教程。`,
   keywords: [
     "AI Agent",
     "Agent 教程",
@@ -42,21 +43,21 @@ export const metadata: Metadata = {
     "AI 智能体",
     "AI 开发教程",
   ],
-  authors: [{ name: "Agent Cookbook Team" }],
+  authors: [{ name: `${SITE_NAME} Team` }],
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://agent-cookbook.com",
-    siteName: "Agent Cookbook",
-    title: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
+    url: getSiteUrl(),
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} - AI Agent 教程、实战、工具与资讯平台`,
     description:
-      "Agent Cookbook 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。",
+      `${SITE_NAME} 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。`,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agent Cookbook - AI Agent 教程、实战、工具与资讯平台",
+    title: `${SITE_NAME} - AI Agent 教程、实战、工具与资讯平台`,
     description:
-      "Agent Cookbook 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。",
+      `${SITE_NAME} 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。`,
   },
   robots: {
     index: true,

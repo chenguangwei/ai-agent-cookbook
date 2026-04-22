@@ -8,6 +8,7 @@ import { ArrowUpRight, Rss, Star, Calendar, ChevronLeft, ChevronRight } from 'lu
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
+import { getLocaleDateFormat, getLocalizedPath } from '@/lib/utils';
 
 // Types
 interface NewsItem {
@@ -76,6 +77,13 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PAGE_SIZE = 20;
+  const newsPath = getLocalizedPath(locale, 'news');
+  const languageLabels: Record<string, string> = {
+    en: t('english'),
+    zh: t('chinese'),
+    ja: t('japanese'),
+    ko: t('korean'),
+  };
 
   // Build URL with params
   const buildUrl = (updates: Record<string, string | null>) => {
@@ -87,7 +95,8 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
         params.set(key, value);
       }
     });
-    return `/news?${params.toString()}`;
+    const query = params.toString();
+    return query ? `${newsPath}?${query}` : newsPath;
   };
 
   // Fetch articles
@@ -188,7 +197,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
     setPage(1);
-    router.push(`/news?tab=${tab}`);
+    router.push(buildUrl({ tab, page: null }));
   };
 
   const handleCategoryChange = (cat: string) => {
@@ -238,13 +247,11 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
   // Format date for display
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const loc = locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US';
-    return date.toLocaleDateString(loc, { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(getLocaleDateFormat(locale), { month: 'short', day: 'numeric' });
   };
 
   const formatFullDate = (dateStr: string) => {
-    const loc = locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US';
-    return new Date(dateStr).toLocaleDateString(loc, {
+    return new Date(dateStr).toLocaleDateString(getLocaleDateFormat(locale), {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -344,10 +351,10 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
               onChange={(e) => handleLanguageFilterChange(e.target.value)}
             >
               <option value="all">{t('allLanguages')}</option>
-              {/* @ts-ignore */}
               <option value="zh">{t('chinese')}</option>
-              {/* @ts-ignore */}
               <option value="en">{t('english')}</option>
+              <option value="ja">{t('japanese')}</option>
+              <option value="ko">{t('korean')}</option>
             </select>
 
             <button
@@ -404,7 +411,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
 
                       {/* Image - Left Side */}
                       <div className="flex-shrink-0 relative group">
-                        <a href={`/${locale}/news/${article.id}`} className="block overflow-hidden rounded-lg">
+                        <a href={getLocalizedPath(locale, `news/${article.id}`)} className="block overflow-hidden rounded-lg">
                           {renderImage(article, 'small')}
                         </a>
                         {article.is_featured && (
@@ -416,7 +423,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
 
                       {/* Content - Right Side */}
                       <div className="flex flex-col flex-1 min-w-0">
-                        <a href={`/${locale}/news/${article.id}`} className="group">
+                        <a href={getLocalizedPath(locale, `news/${article.id}`)} className="group">
                           <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {article.title}
                           </h2>
@@ -468,7 +475,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
                           {/* Language Tag */}
                           {article.language && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
-                              ⚑ {article.language === 'zh' ? t('chinese') : t('english')}
+                              ⚑ {languageLabels[article.language] || article.language.toUpperCase()}
                             </span>
                           )}
 
@@ -562,7 +569,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
                       <div className="flex items-center gap-2 pl-8 opacity-60 group-hover:opacity-100 transition-opacity">
                         {source.language && (
                           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50">
-                            ⚑ {source.language === 'zh' ? t('chinese') : t('english')}
+                            ⚑ {languageLabels[source.language] || source.language.toUpperCase()}
                           </span>
                         )}
                         <span className="text-[10px] text-slate-500">

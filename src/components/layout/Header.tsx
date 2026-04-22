@@ -9,6 +9,8 @@ import { LanguageSwitcher } from '@/components/features/LanguageSwitcher';
 import { useSearch } from '@/components/features/SearchProvider';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { locales } from '@/i18n/config';
+import { SITE_NAME } from '@/lib/utils';
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -18,8 +20,8 @@ export function Header() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    // Strip locale prefix for comparison
-    const cleanPath = pathname.replace(/^\/(en|zh|ja)/, '') || '/';
+    const localePattern = new RegExp(`^/(${locales.join('|')})(?=/|$)`);
+    const cleanPath = pathname.replace(localePattern, '') || '/';
     if (href === '/') return cleanPath === '/';
     return cleanPath.startsWith(href);
   };
@@ -41,7 +43,7 @@ export function Header() {
             <Zap className="w-full h-full" />
           </div>
           <h2 className="text-lg font-bold leading-tight tracking-tight text-slate-900 dark:text-white font-display uppercase">
-            Agent Hub
+            {SITE_NAME}
           </h2>
         </Link>
 

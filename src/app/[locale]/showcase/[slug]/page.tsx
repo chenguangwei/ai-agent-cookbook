@@ -8,27 +8,20 @@ import { Button } from '@/components/ui/button';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const siteUrl = getSiteUrl();
   const projects = getAllShowcaseProjects(locale);
   const project = projects.find(p => p?.slug === slug);
-  const path = `showcase/${slug}`;
-  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 
   return {
     title: project?.title,
     description: project?.description,
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/${path}`,
-        'zh': `${siteUrl}/zh/${path}`,
-        'ja': `${siteUrl}/ja/${path}`,
-      },
+      canonical: getCanonicalUrl(locale, `showcase/${slug}`),
+      languages: buildLocaleAlternates(`showcase/${slug}`),
     },
   };
 }

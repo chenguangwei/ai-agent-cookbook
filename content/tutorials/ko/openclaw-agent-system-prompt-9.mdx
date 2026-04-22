@@ -1,0 +1,528 @@
+---
+title: "사랑의 노동, 여러분에게 바치는 선물: OpenClaw Agent 시스템 프롬프트 아키텍처 설명 (9개 레이어)"
+slug: "openclaw-agent-system-prompt-9"
+locale: "ko"
+description: "사랑의 노동, 여러분에게 바치는 선물: OpenClaw Agent의 전체 시스템 프롬프트 구조에 대한 상세 분석입니다."
+category: "에이전트 워크플로우"
+tags: ["Claude"]
+techStack: []
+difficulty: "초급"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCowlT1awAAinZD.jpg"
+featured: false
+date: 2026-03-06
+---
+
+# 사랑의 노동, 여러분에게 바치는 선물: OpenClaw Agent 시스템 프롬프트 아키텍처 설명 (9개 레이어)
+
+> 이 문서는 OpenClaw Agent가 LLM에 전송하는 전체 시스템 프롬프트에 대한 상세 분석을 제공합니다. 버전: v2.1
+> 마지막 업데이트: 2026-03-05
+
+## 전체 아키텍처 다이어그램
+
+![](https://pbs.twimg.com/media/HCooLsLboAA09HL.png)
+
+## 빠른 탐색 (TL;DR)
+
+**초보자 필독:**
+
+1.  레이어 7 (작업 공간 파일) - 직접 편집할 수 있는 설정 파일입니다.
+2.  레이어 8 (부트스트랩 훅) - 콘텐츠를 동적으로 주입하는 스크립트를 작성할 수 있는 곳입니다.
+3.  다른 모든 레이어는 프레임워크에 의해 자동 생성되므로 이해만 하면 됩니다.
+
+**일반적인 요구 사항:**
+
+-   에이전트의 정체성을 정의하려면? → 레이어 7의 `IDENTITY.md`를 편집하세요.
+-   프로젝트 문서를 추가하려면? → 레이어 8의 `bootstrap-extra-files` 훅을 사용하세요.
+-   실시간 컨텍스트를 주입하려면? → 레이어 8의 `before_prompt_build` 훅을 사용하세요.
+-   파일 크기를 제어하려면? → `bootstrapMaxChars` 설정을 조정하세요.
+
+## 레이어 1: OpenClaw 프레임워크 코어 (프레임워크 코어 레이어)
+
+**비유**
+
+> 마치 사용 설명서의 "사용 방법" 섹션과 같습니다. LLM에게 당신이 누구인지, 무엇을 할 수 있는지, 어떻게 응답해야 하는지 알려줍니다.
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCooDLkawAEl6ID.png)
+
+**실제 예시**
+
+현재 「크리에이티브 파트너」, AI 콘텐츠 제작 전문가 Agent로 실행 중입니다.
+
+현재 시간: 2026-03-05 14:37:00 CST
+런타임 환경: agent=creative | host=황종닝의 MacBook Air
+
+=== 도구 호출 규격 ===
+- XML 스타일 도구 호출 형식을 사용합니다.
+- 각 도구 호출에는 고유한 `tool_call_id`가 포함되어야 합니다.
+- 도구 결과는 `<tool_result>` 태그를 통해 반환됩니다.
+- 도구 실행 시 취소를 지원하기 위해 AbortSignal을 고려하세요.
+
+=== 보안 경계 ===
+- 파괴적인 작업(`rm -rf`, 포맷 등)을 엄격히 금지합니다.
+- 사용자 민감 정보는 반드시 암호화하여 저장해야 합니다.
+- 승인되지 않은 채널로 메시지를 보내는 것을 금지합니다.
+
+**설계 트레이드오프**
+
+*왜 이렇게 설계했을까요?*
+
+-   **트레이드오프:** 유연성 vs. 일관성
+-   **결정:** 프레임워크 레이어에서 통합 생성하여 모든 Agent의 기본 동작을 일관되게 유지합니다.
+-   **장점:**
+    -   사용자는 각 Agent마다 기본 규칙을 반복해서 설정할 필요가 없습니다.
+    -   프레임워크가 업그레이드되면 모든 Agent가 자동으로 새로운 기능을 얻습니다.
+    -   설정 오류 위험을 줄입니다.
+-   **비용:** 사용자는 이러한 핵심 규칙을 수정할 수 없습니다.
+    -   특별한 동작이 필요하면 레이어 7/8을 통해 간접적으로만 구현할 수 있습니다.
+
+## 레이어 2: 도구 정의 (도구 정의 레이어)
+
+**비유**
+
+> 스위스 군용 칼의 도구 목록과 같습니다. LLM에게 어떤 도구가 있는지, 각 도구가 무엇을 하는지, 어떻게 사용하는지 알려줍니다.
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCooX0ZawAMKTnZ.png)
+
+**도구 정의 예시**
+
+```json
+{
+  "name": "read",
+  "description": "파일 내용을 읽습니다. 텍스트 파일과 이미지(jpg/png/gif/webp)를 지원합니다. 이미지는 첨부 파일로 전송됩니다. 텍스트 파일 출력은 2000줄 또는 50KB로 제한됩니다.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "파일 경로 (상대 경로 또는 절대 경로)"
+      },
+      "offset": {
+        "type": "number",
+        "description": "시작 줄 번호 (1부터 시작)"
+      },
+      "limit": {
+        "type": "number",
+        "description": "읽을 최대 줄 수"
+      }
+    },
+    "required": ["path"]
+  }
+}
+```
+
+**설계 트레이드오프**
+
+*왜 JSON Schema를 사용할까요?*
+
+-   **트레이드오프:** 유연성 vs. 타입 안전성
+-   **결정:** 엄격한 JSON Schema를 사용하여 도구 매개변수를 정의합니다.
+-   **장점:**
+    -   LLM이 도구 사용법을 더 정확하게 이해할 수 있습니다.
+    -   프레임워크가 호출 전에 매개변수를 검증할 수 있습니다.
+    -   문서와 타입 정의를 자동으로 생성합니다.
+-   **비용:** 새 도구를 추가하려면 완전한 Schema를 작성해야 합니다.
+    -   완전히 동적인 매개변수 구조를 지원할 수 없습니다.
+
+## 레이어 3: 스킬 레지스트리 (스킬 등록 레이어)
+
+**비유**
+
+> 레스토랑의 "특선 메뉴"와 같습니다. LLM에게 어떤 전문 "레시피"(스킬)를 호출할 수 있는지 알려줍니다.
+
+**설계 트레이드오프**
+
+*왜 수동 등록 대신 디렉토리 스캔을 사용할까요?*
+
+-   **트레이드오프:** 유연성 vs. 유지보수 비용
+-   **결정:** `~/development/openclaw/skills/` 디렉토리를 자동으로 스캔합니다.
+-   **장점:**
+    -   새 스킬을 추가하려면 디렉토리에 넣기만 하면 되며, 설정을 변경할 필요가 없습니다.
+    -   모든 Agent가 자동으로 새 스킬을 얻습니다.
+    -   설정 오류 위험을 줄입니다.
+-   **비용:** 각 Agent가 사용할 수 있는 스킬을 정밀하게 제어할 수 없습니다.
+    -   모든 스킬이 시스템 프롬프트에 주입됩니다 (토큰 소비 증가).
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCooutMaQAAJ0Jp.png)
+
+## 레이어 4: 모델 별칭 (모델 별칭 레이어)
+
+**비유**
+
+> "바로 가기"와 같습니다. 복잡한 모델 경로에 짧고 편리한 별칭을 부여하여 쉽게 호출할 수 있습니다.
+
+**설계 트레이드오프**
+
+*왜 모델 별칭이 필요할까요?*
+
+-   **트레이드오프:** 유연성 vs. 가독성
+-   **결정:** 사용자가 자주 사용하는 모델에 짧은 별칭을 정의할 수 있도록 합니다.
+-   **장점:**
+    -   모델 호출을 단순화합니다 (`zhipu/glm-5` 대신 `glm-5`).
+    -   여러 Provider 간 전환을 지원합니다 (동일한 별칭이 다른 Provider에 매핑될 수 있음).
+    -   A/B 테스트 및 모델 마이그레이션을 용이하게 합니다.
+-   **비용:** 별칭 설정 파일을 유지 관리해야 합니다.
+    -   혼란을 야기할 수 있습니다 (다른 Agent의 동일한 별칭이 다른 모델을 가리킬 수 있음).
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCoozNCbwAAyGi0.png)
+
+**실제 예시**
+
+시스템 프롬프트에서 모델 별칭은 다음과 같이 표시됩니다:
+
+## 모델 별칭
+
+- GLM-5: zhipu/glm-5
+- Opus 4.6: xiaowang886/claude-opus-4-6-thinking
+- Sonnet 4.5: xiaowang886/claude-sonnet-4-5
+
+LLM은 별칭을 사용하여 모델을 전환할 수 있습니다: `/model glm-5`
+
+## 레이어 5: 프로토콜 규격 (프로토콜 규격 레이어)
+
+**비유**
+
+> "교통 규칙"과 같습니다. Agent-시스템 상호 작용을 위한 표준 프로토콜을 정의합니다.
+
+**설계 트레이드오프**
+
+*왜 프로토콜 규격이 필요할까요?*
+
+-   **트레이드오프:** 자유도 vs. 일관성
+-   **결정:** 표준화된 상호 작용 프로토콜(무음 응답, 하트비트, 응답 태그 등)을 정의합니다.
+-   **장점:**
+    -   모든 Agent에서 일관된 동작을 보장합니다.
+    -   자동 모니터링 및 상태 확인을 지원합니다.
+    -   다중 Agent 협업을 단순화합니다.
+-   **비용:** Agent의 표현 자유도를 제한합니다.
+    -   LLM이 프로토콜을 엄격히 준수해야 합니다 (무시할 가능성 있음).
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCoo5q5awAAtcZA.png)
+
+**실제 예시**
+
+무음 응답 예시:
+
+사용자: 수신됨
+Agent: NO_REPLY
+
+하트비트 예시:
+
+시스템: [Heartbeat Poll]
+Agent: HEARTBEAT_OK
+
+응답 태그 예시:
+
+Agent: [[reply_to_current]] 작업 완료 ✓
+
+## 레이어 6: 런타임 정보 (Runtime Information Layer)
+
+**비유**
+
+> "대시보드"와 같습니다. LLM에게 현재 런타임 환경의 실시간 상태를 알려줍니다.
+
+**설계 트레이드오프**
+
+*매 요청마다 런타임 정보를 주입하는 이유는 무엇일까요?*
+
+-   **트레이드오프:** 토큰 소비 vs. 컨텍스트 정확성
+-   **결정:** 모든 요청과 함께 최신 런타임 상태를 주입합니다.
+-   **장점:**
+    -   LLM이 현재 시간을 알게 됩니다 (시간적 혼란 방지).
+    -   LLM이 현재 모델을 알게 됩니다 (기능 오판 방지).
+    -   LLM이 현재 환경을 알게 됩니다 (경로 오류 방지).
+-   **비용:** 요청당 약 2KB의 토큰을 소비합니다.
+    -   정보에 중복이 포함될 수 있습니다.
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCopA9sawAQjtdA.png)
+
+**실제 예시**
+
+
+
+## Runtime
+
+Runtime: agent=thinktank | host=황종녕의 MacBook Air |
+repo=/Users/huangzongning/.openclaw/workspace-thinktank |
+os=Darwin 25.2.0 (arm64) | node=v25.5.0 |
+model=xiaowang886/claude-opus-4-6-thinking |
+default_model=xiaowang886/claude-opus-4-6-thinking |
+shell=zsh | channel=discord | capabilities=none | thinking=off
+
+
+
+## 레이어 7: 워크스페이스 파일 (Workspace Files Layer) ★ 사용자 제어 가능
+
+**비유**
+
+> "작업 노트"와 같습니다. 사용자가 직접 편집할 수 있는 정적 설정 파일입니다.
+
+**설계 트레이드오프**
+
+*왜 이 레이어만 정적으로 편집 가능할까요?*
+
+-   **트레이드오프:** 프레임워크 안정성 vs. 사용자 자유도
+-   **결정:** "변하는 것"과 "변하지 않는 것"을 분리합니다. 프레임워크 레이어는 일관성을 보장하고, 사용자 레이어는 개인화를 허용합니다.
+-   **장점:**
+    -   사용자가 에이전트 정체성, 작업 명세, 메모리를 정의할 수 있습니다.
+    -   프레임워크 업그레이드가 사용자 설정을 망가뜨리지 않습니다.
+    -   설정 파일을 버전 관리, 백업, 공유할 수 있습니다.
+-   **비용:** 사용자는 프레임워크의 핵심 동작을 수정할 수 없습니다.
+    -   TELOS 프레임워크와 파일 구조를 학습해야 합니다.
+
+**핵심 파일**
+
+![](https://pbs.twimg.com/media/HCopI0aasAAaNZ2.png)
+
+
+
+## 레이어 8: 부트스트랩 훅 시스템 (Bootstrap Hook System) ★ 사용자 제어 가능
+
+**비유**
+
+> "프로그래밍 가능한 주사기"와 같습니다. 스크립트를 작성하여 런타임에 System Prompt에 동적으로 콘텐츠를 주입할 수 있습니다.
+
+**설계 트레이드오프**
+
+*왜 Hook 시스템이 필요할까요?*
+
+-   **트레이드오프:** 정적 설정의 단순함 vs. 동적 주입의 유연성
+-   **결정:** 정적 워크스페이스 파일 외에 동적 Hook 메커니즘을 제공합니다.
+-   **장점:**
+    -   컨텍스트(채널, 발신자, 시간)에 따라 주입되는 콘텐츠를 동적으로 조정할 수 있습니다.
+    -   셸 명령을 실행하고 그 출력(예: 현재 날씨, Git 상태)을 주입할 수 있습니다.
+    -   외부 파일(예: 프로젝트 문서, API 문서)을 읽어 주입할 수 있습니다.
+    -   조건부 로직(if/else)을 지원합니다.
+-   **비용:** Hook 시스템의 구문과 트리거 메커니즘을 학습해야 합니다.
+    -   Hook 스크립트 오류는 System Prompt 이상을 유발할 수 있습니다.
+    -   시스템 복잡성이 증가합니다.
+
+**네 가지 Hook 메커니즘**
+
+1.  **agent:bootstrap Hook (내부 Hook 시스템)**
+
+    **트리거 위치:** `bootstrap-hooks.ts`의 `applyBootstrapHookOverrides()`
+
+    **기능:**
+    -   `bootstrapFiles` 배열을 완전히 제어할 수 있습니다.
+    -   파일을 추가, 삭제 또는 수정할 수 있습니다.
+    -   파일 순서를 변경할 수 있습니다.
+    -   파일 내용을 수정할 수 있습니다.
+
+    **등록 가능 대상:**
+    -   OpenClaw 플러그인.
+    -   워크스페이스 Hook (`~/.openclaw/workspace-*/hooks/` 디렉토리).
+    -   내부 모듈.
+
+    **코드 예시:**
+
+    ```typescript
+    registerInternalHook("agent:bootstrap", (event) => {
+      const context = event.context as AgentBootstrapHookContext;
+      // bootstrapFiles 배열을 완전히 제어
+      context.bootstrapFiles = [
+        { path: "CUSTOM.md", content: "사용자 정의 콘텐츠" }
+      ];
+    });
+    ```
+
+2.  **bootstrap-extra-files Hook (번들 Hook)**
+
+    **트리거 위치:** `hooks/bundled/bootstrap-extra-files/handler.ts`
+
+    **기능:**
+    -   파일만 추가하며, 기존 파일을 수정하지 않습니다.
+    -   설정을 통해 추가 파일을 지정합니다.
+
+    **설정 예시:**
+
+    ```json
+    {
+      "hooks": {
+        "bootstrap-extra-files": {
+          "enabled": true,
+          "paths": ["extra/*.md", "docs/CONTEXT.md"]
+        }
+      }
+    }
+    ```
+
+    **사용 사례:**
+    -   프로젝트별 컨텍스트 파일을 주입해야 하는 경우.
+    -   기본 8개 Bootstrap 파일을 수정하고 싶지 않은 경우.
+    -   추가 문서를 동적으로 로드해야 하는 경우.
+
+3.  **before_prompt_build Hook (플러그인 Hook)**
+
+    **트리거 위치:** `attempt.ts`의 `runBeforePromptBuild()`
+
+    **기능:**
+    -   최종 프롬프트를 수정합니다 (시스템 프롬프트가 빌드된 후, LLM으로 전송되기 전).
+    -   컨텍스트를 앞에 추가할 수 있습니다 (프롬프트 앞에 콘텐츠 추가).
+    -   `systemPrompt`을 재정의할 수 있습니다.
+
+    **이벤트 데이터:**
+
+    ```typescript
+    {
+      prompt: string;           // 사용자 입력
+      messages: unknown[];      // 세션 메시지 기록
+    }
+    ```
+
+    **반환 값:**
+
+    ```typescript
+    {
+      prependContext?: string;  // 프롬프트 앞에 추가할 콘텐츠
+      systemPrompt?: string;    // 시스템 프롬프트 재정의
+    }
+    ```
+
+    **사용 사례:**
+    -   세션 기록에 따라 프롬프트를 동적으로 조정해야 하는 경우.
+    -   실시간 컨텍스트(예: 현재 시간, 날씨)를 주입해야 하는 경우.
+    -   시스템 프롬프트를 완전히 교체해야 하는 경우.
+
+4.  **bootstrapMaxChars / bootstrapTotalMaxChars (설정 항목)**
+
+    **유형:** 설정 항목 (Hook 아님).
+
+    **기능:**
+    -   문자 예산을 제어합니다.
+    -   단일 파일 기본값: 20K.
+    -   전체 기본값: 150K.
+    -   초과분은 잘립니다: 처음 70% + 마지막 20%.
+
+    **설정 위치:**
+
+    ```json
+    {
+      "agents": {
+        "defaults": {
+          "bootstrapMaxChars": 20000,
+          "bootstrapTotalMaxChars": 150000
+        }
+      }
+    }
+    ```
+
+**실용적인 권장 사항**
+
+**시나리오 1: 프로젝트 문서를 추가하고 싶습니다.**
+
+*권장 솔루션: `bootstrap-extra-files`*
+
+```json
+{
+  "hooks": {
+    "bootstrap-extra-files": {
+      "enabled": true,
+      "paths": ["docs/API.md", "docs/ARCHITECTURE.md"]
+    }
+  }
+}
+```
+
+**시나리오 2: 작업 유형에 따라 파일을 동적으로 로드하고 싶습니다.**
+
+*권장 솔루션: 사용자 정의 `agent:bootstrap` Hook*
+
+```typescript
+registerInternalHook("agent:bootstrap", (event) => {
+  const context = event.context as AgentBootstrapHookContext;
+  const sessionKey = context.sessionKey;
+
+  // 세션 유형에 따라 다른 파일 로드
+  if (sessionKey.includes("coding")) {
+    context.bootstrapFiles.push({
+      path: "CODING_GUIDELINES.md",
+      content: fs.readFileSync("...").toString()
+    });
+  }
+});
+```
+
+**시나리오 3: 실시간 컨텍스트(예: 현재 시간)를 주입하고 싶습니다.**
+
+*권장 솔루션: `before_prompt_build` Hook*
+
+```typescript
+on("before_prompt_build", (event, ctx) => {
+  return {
+    prependContext: `현재 시간: ${new Date().toISOString()}`
+  };
+});
+```
+
+
+
+## 레이어 9: 인바운드 컨텍스트 (Inbound Context Layer)
+
+**비유**
+
+> "실시간 교통 정보"와 같습니다. 매 요청마다 현재 대화에 대한 컨텍스트 정보를 동적으로 주입합니다.
+
+**설계 트레이드오프**
+
+*왜 매번 컨텍스트를 주입할까요?*
+
+-   **트레이드오프:** 토큰 소비 vs. 대화 일관성
+-   **결정:** 모든 요청과 함께 최신 메시지 메타데이터, 발신자 정보 및 대화 기록을 주입합니다.
+-   **장점:**
+    -   LLM이 현재 누가 말하고 있는지 알게 됩니다 (발신자 혼란 방지).
+    -   LLM이 대화 기록을 알게 됩니다 (컨텍스트 일관성 유지).
+    -   LLM이 자신이 @멘션되었는지 알게 됩니다 (응답 여부 결정).
+-   **비용:** 요청당 약 3KB의 토큰을 소비합니다.
+    -   대화 기록에 노이즈가 포함될 수 있습니다.
+
+**구성**
+
+![](https://pbs.twimg.com/media/HCopRSBagAAHjUJ.png)
+
+## 완전한 시스템 프롬프트 조립 프로세스
+
+![](https://pbs.twimg.com/media/HCop3KcawAkWOuO.png)
+![](https://pbs.twimg.com/media/HCop8nHbwAAo1cQ.png)
+![](https://pbs.twimg.com/media/HCoqEeuawAMYh2e.png)
+
+**사용자 제어 가능 레이어 요약**
+
+OpenClaw는 3가지 사용자 제어 메커니즘을 제공합니다:
+
+1.  **레이어 7 (작업 공간 파일)** - 정적 구성 파일
+    *사용 사례:* 에이전트 정체성, 작업 사양, 메모리 정의.
+    *장점:* 간단하고 직관적이며 버전 관리가 용이함.
+    *단점:* 동적으로 조정할 수 없음.
+
+2.  **레이어 8 (부트스트랩 훅 시스템)** - 동적 주입 스크립트
+    *사용 사례:* 컨텍스트에 따라 콘텐츠를 동적으로 주입하고, 명령을 실행하며, 외부 파일을 읽음.
+    *장점:* 유연하고 강력하며 조건부 로직 및 명령 실행을 지원함.
+    *단점:* 훅 시스템을 학습해야 하며, 스크립트 오류로 인해 이상이 발생할 수 있음.
+
+3.  **레이어 9 (인바운드 컨텍스트) 간접 제어** - 메시지 전송을 통해 컨텍스트에 영향
+    *사용 사례:* 대화 기록, 참조된 메시지를 통해 LLM 동작에 영향.
+    *장점:* 구성이 필요 없으며 자연스러운 상호 작용이 가능함.
+    *단점:* 정밀하게 제어할 수 없음.
+
+## 크기 비교표
+
+> ⚠️ **참고:** 다음 데이터는 추정치입니다. 실제 크기는 구성 및 런타임 컨텍스트에 따라 다를 수 있습니다. 프레임워크 레이어(레이어 1-6 + 9)는 이론적으로 동일해야 하지만, 도구 정의, 로드된 스킬, 런타임 정보 등의 차이로 인해 약간 다를 수 있습니다.
+
+![](https://pbs.twimg.com/media/HCoq4AUaEAAsLE1.png)
+
+**설명:**
+
+-   레이어

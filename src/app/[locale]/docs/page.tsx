@@ -5,25 +5,18 @@ import { Footer } from '@/components/layout/Footer';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllDocs } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { getSiteUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations('Docs');
-  const siteUrl = getSiteUrl();
-  const path = 'docs';
-  const canonicalUrl = locale === 'en' ? `${siteUrl}/${path}` : `${siteUrl}/${locale}/${path}`;
 
   return {
     title: t('title'),
     alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        'en': `${siteUrl}/${path}`,
-        'zh': `${siteUrl}/zh/${path}`,
-        'ja': `${siteUrl}/ja/${path}`,
-      },
+      canonical: getCanonicalUrl(locale, 'docs'),
+      languages: buildLocaleAlternates('docs'),
     },
   };
 }
@@ -118,7 +111,7 @@ export default async function DocsPage({ params, searchParams }: DocsPageProps) 
                       <div className="text-xs text-slate-500 dark:text-slate-400">
                         {t('lastUpdated', {
                           date: activeDoc.lastUpdated
-                            ? new Date(activeDoc.lastUpdated).toLocaleDateString()
+                            ? new Date(activeDoc.lastUpdated).toLocaleDateString(getLocaleDateFormat(locale))
                             : 'N/A',
                         })}
                       </div>
