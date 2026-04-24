@@ -7,9 +7,9 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { getAllTools } from '@/lib/content';
+import { getAllTools, getToolLocalesBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
@@ -17,12 +17,24 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const tools = getAllTools(locale);
   const tool = tools.find(t => t?.slug === slug);
 
+  if (!tool) {
+    return {
+      title: 'Tool not found',
+      robots: {
+        index: false,
+        follow: true,
+      },
+    };
+  }
+
+  const availableLocales = getToolLocalesBySlug(slug);
+
   return {
-    title: tool?.title,
-    description: tool?.description,
+    title: tool.title,
+    description: tool.description,
     alternates: {
       canonical: getCanonicalUrl(locale, `tools/${slug}`),
-      languages: buildLocaleAlternates(`tools/${slug}`),
+      languages: buildLocaleAlternates(`tools/${slug}`, availableLocales),
     },
   };
 }
@@ -105,7 +117,7 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
         <div className="max-w-4xl mx-auto px-6 py-8 lg:py-12">
           {/* Back Button */}
           <Link
-            href={`/${locale}/tools`}
+            href={getLocalizedPath(locale, 'tools')}
             className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

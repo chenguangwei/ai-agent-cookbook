@@ -47,12 +47,31 @@ export function getCanonicalUrl(locale: string, path = ''): string {
   return `${getSiteUrl()}${getLocalizedPath(locale, path)}`;
 }
 
-export function buildLocaleAlternates(path = ''): Record<string, string> {
+export function buildLocaleAlternates(
+  path = '',
+  availableLocales: readonly string[] = locales
+): Record<string, string> {
   const siteUrl = getSiteUrl();
-
-  return Object.fromEntries(
-    locales.map((locale) => [locale, `${siteUrl}${getLocalizedPath(locale, path)}`])
+  const normalizedLocales = Array.from(
+    new Set(availableLocales.filter((locale) => locales.includes(locale as typeof locales[number])))
   );
+
+  const entries = normalizedLocales.map((locale) => [
+    locale,
+    `${siteUrl}${getLocalizedPath(locale, path)}`,
+  ]);
+  const defaultAlternateLocale = normalizedLocales.includes(defaultLocale)
+    ? defaultLocale
+    : normalizedLocales[0];
+
+  if (defaultAlternateLocale) {
+    entries.push([
+      'x-default',
+      `${siteUrl}${getLocalizedPath(defaultAlternateLocale, path)}`,
+    ]);
+  }
+
+  return Object.fromEntries(entries);
 }
 
 export function getLocaleDateFormat(locale: string): string {

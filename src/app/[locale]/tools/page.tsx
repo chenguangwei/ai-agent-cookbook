@@ -8,7 +8,7 @@ import { getAllTools } from '@/lib/content';
 import { TOOL_CATEGORIES, toolCategoryIdToValue, toolCategoryValueToId } from '@/lib/tool-categories';
 import { getTranslations } from 'next-intl/server';
 import { ToolCard } from './ToolCard';
-import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -79,7 +79,7 @@ export default async function ToolsPage({ params, searchParams }: ToolsPageProps
       if (val) params.set(key, val);
     }
     const qs = params.toString();
-    return `/${locale}/tools${qs ? `?${qs}` : ''}`;
+    return `${getLocalizedPath(locale, 'tools')}${qs ? `?${qs}` : ''}`;
   };
 
   return (

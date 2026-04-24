@@ -10,7 +10,7 @@ import { FilterSelect } from '@/components/features/FilterSelect';
 import { getAllTutorials } from '@/lib/content';
 import { TUTORIAL_CATEGORIES, categoryIdToValue } from '@/lib/categories';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 const ITEMS_PER_PAGE = 50;
@@ -200,7 +200,7 @@ export default async function ExplorePage({ params, searchParams }: ExplorePageP
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {paginatedTutorials.map((tutorial) => (
                     <Link
-                      href={`/${locale}/tutorial/${tutorial?.slug}`}
+                      href={getLocalizedPath(locale, `tutorial/${tutorial?.slug}`)}
                       key={tutorial?.slug}
                       className="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
                     >

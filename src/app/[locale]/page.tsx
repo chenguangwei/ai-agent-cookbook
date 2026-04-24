@@ -7,7 +7,7 @@ import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
 import { getFeaturedNewsByCategory } from '@/lib/db/news';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl, getSiteUrl, SITE_NAME } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath, getSiteUrl, SITE_NAME } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { locales } from '@/i18n/config';
 
@@ -123,13 +123,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             </p>
             <div className="flex items-center gap-4 mb-8">
               <Link
-                href="/tutorials"
+                href={getLocalizedPath(locale, 'tutorials')}
                 className="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold transition-colors"
               >
                 {t('ctaExplore')}
               </Link>
               <Link
-                href="/tools"
+                href={getLocalizedPath(locale, 'tools')}
                 className="px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-primary-400 dark:hover:border-primary-600 text-sm font-bold transition-colors bg-white dark:bg-slate-900"
               >
                 {t('ctaTools')}
@@ -141,7 +141,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="max-w-2xl mx-auto mb-12">
             <div className="group relative">
               <Link
-                href="/tutorials"
+                href={getLocalizedPath(locale, 'tutorials')}
                 className="flex w-full items-center rounded-2xl h-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-text"
                 aria-label={t('searchPlaceholder')}
               >
@@ -188,7 +188,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </h2>
             </div>
             <Link
-              href="/tutorials"
+              href={getLocalizedPath(locale, 'tutorials')}
               className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
             >
               {t('viewAll')} <ArrowUpRight className="w-4 h-4" />
@@ -199,7 +199,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
             {featuredTutorials.map((tutorial) => (
               <Link
-                href={`/${locale}/tutorial/${tutorial?.slug}`}
+                href={getLocalizedPath(locale, `tutorial/${tutorial?.slug}`)}
                 key={tutorial?.slug}
                 className="group flex flex-col gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
               >
@@ -238,7 +238,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </h2>
             </div>
             <Link
-              href="/tutorials"
+              href={getLocalizedPath(locale, 'tutorials')}
               className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
             >
               {t('viewAll')} <ArrowUpRight className="w-4 h-4" />
@@ -248,7 +248,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
             {recentTutorials.map((tutorial) => (
               <Link
-                href={`/${locale}/tutorial/${tutorial.slug}`}
+                href={getLocalizedPath(locale, `tutorial/${tutorial.slug}`)}
                 key={tutorial.slug}
                 className="group flex flex-col gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:shadow-xl hover:shadow-primary-500/5 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
               >
@@ -284,7 +284,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   </h2>
                 </div>
                 <Link
-                  href="/news"
+                  href={getLocalizedPath(locale, 'news')}
                   className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-widest hover:underline transition-all flex items-center gap-2"
                 >
                   {t('viewAll')} <ArrowUpRight className="w-4 h-4" />
@@ -384,7 +384,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
             {repositorySegments.map((item) => (
               <Link
-                href={item.href}
+                href={getLocalizedPath(locale, item.href)}
                 key={item.titleKey}
                 className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl hover:border-primary-600 dark:hover:border-primary-600 hover:shadow-lg transition-all cursor-pointer"
               >

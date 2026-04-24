@@ -13,6 +13,10 @@ export function getAllTutorials(locale?: string): Tutorial[] {
   return [...all].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
+export function getTutorialLocalesBySlug(slug: string): string[] {
+  return Array.from(new Set(tutorials.filter(t => t.slug === slug).map(t => t.locale)))
+}
+
 export function getTutorialBySlug(slug: string, locale?: string): Tutorial | null {
   const results = tutorials.filter(t => t.slug === slug)
   if (locale && results.length > 0) {
@@ -62,6 +66,10 @@ export function getAllShowcaseProjects(locale?: string): Showcase[] {
   })
 }
 
+export function getShowcaseLocalesBySlug(slug: string): string[] {
+  return Array.from(new Set(showcase.filter(s => s.slug === slug).map(s => s.locale)))
+}
+
 export function getAllTools(locale?: string): Tool[] {
   const all = locale ? tools.filter(t => t.locale === locale) : tools
   return [...all].sort((a, b) => {
@@ -69,6 +77,10 @@ export function getAllTools(locale?: string): Tool[] {
     const dateB = b.date ? new Date(b.date).getTime() : 0
     return dateB - dateA
   })
+}
+
+export function getToolLocalesBySlug(slug: string): string[] {
+  return Array.from(new Set(tools.filter(t => t.slug === slug).map(t => t.locale)))
 }
 
 export function getToolBySlug(slug: string): Tool | null {

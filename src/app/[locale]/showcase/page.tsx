@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { getAllShowcaseProjects } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -82,7 +82,7 @@ export default async function ShowcasePage({ params, searchParams }: ShowcasePag
                   const repoUrl = isValidUrl(project?.repoUrl) ? project.repoUrl : null;
                   const CardWrapper = hasDetailPage
                     ? ({ children }: { children: React.ReactNode }) => (
-                        <Link href={`/${locale}/showcase/${project?.slug}`}>
+                        <Link href={getLocalizedPath(locale, `showcase/${project?.slug}`)}>
                           {children}
                         </Link>
                       )

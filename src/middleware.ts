@@ -9,8 +9,28 @@ const intlMiddleware = createMiddleware({
   localePrefix: 'as-needed', // Only show locale prefix for non-default locale
 });
 
+function getCleanDuplicateHostPath(pathname: string): string | null {
+  const duplicateHost = 'agent-cookbook.com';
+  const segments = pathname.split('/').filter(Boolean);
+  const duplicateHostIndex = segments.indexOf(duplicateHost);
+
+  if (duplicateHostIndex === -1) {
+    return null;
+  }
+
+  const cleanSegments = segments.slice(duplicateHostIndex + 1);
+  return cleanSegments.length > 0 ? `/${cleanSegments.join('/')}` : '/';
+}
+
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const cleanPath = getCleanDuplicateHostPath(pathname);
+
+  if (cleanPath && cleanPath !== pathname) {
+    const url = request.nextUrl.clone();
+    url.pathname = cleanPath;
+    return NextResponse.redirect(url, 308);
+  }
 
   // --- Admin route protection ---
   if (isAdminRoute(pathname, locales)) {
@@ -42,5 +62,5 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   // Match all pathnames except internal Next.js and static files
-  matcher: ['/((?!_next|_vercel|.*\\..*).*)'],
+  matcher: ['/((?!_next|_vercel).*)'],
 };

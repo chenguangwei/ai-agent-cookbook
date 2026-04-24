@@ -6,9 +6,9 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { MDXRenderer } from '@/components/markdown';
-import { getAllShowcaseProjects } from '@/lib/content';
+import { getAllShowcaseProjects, getShowcaseLocalesBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
@@ -16,12 +16,24 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const projects = getAllShowcaseProjects(locale);
   const project = projects.find(p => p?.slug === slug);
 
+  if (!project) {
+    return {
+      title: 'Showcase not found',
+      robots: {
+        index: false,
+        follow: true,
+      },
+    };
+  }
+
+  const availableLocales = getShowcaseLocalesBySlug(slug);
+
   return {
-    title: project?.title,
-    description: project?.description,
+    title: project.title,
+    description: project.description,
     alternates: {
       canonical: getCanonicalUrl(locale, `showcase/${slug}`),
-      languages: buildLocaleAlternates(`showcase/${slug}`),
+      languages: buildLocaleAlternates(`showcase/${slug}`, availableLocales),
     },
   };
 }
@@ -61,7 +73,7 @@ export default async function ShowcaseDetailPage({ params }: ShowcaseDetailPageP
         <div className="max-w-4xl mx-auto px-6 py-8 lg:py-12">
           {/* Back Button */}
           <Link
-            href={`/${locale}/showcase`}
+            href={getLocalizedPath(locale, 'showcase')}
             className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

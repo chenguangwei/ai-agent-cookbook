@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, ExternalLink, BookOpen, Github } from 'lucide-react';
+import { getLocalizedPath } from '@/lib/utils';
 
 interface ToolCardProps {
   tool: {
@@ -63,7 +64,7 @@ export function ToolCard({
       <div className="flex flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-slate-900 dark:text-white font-bold text-lg leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-            <Link href={`/${locale}/tools/${tool.slug}`}>
+            <Link href={getLocalizedPath(locale, `tools/${tool.slug}`)}>
               {tool.title}
             </Link>
           </h3>

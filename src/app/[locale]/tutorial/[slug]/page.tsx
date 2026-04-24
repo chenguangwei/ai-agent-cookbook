@@ -7,9 +7,9 @@ import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { TableOfContents } from '@/components/features/TableOfContents';
 import { MDXRenderer } from '@/components/markdown';
-import { getAllTutorials, getTutorialBySlug } from '@/lib/content';
+import { getAllTutorials, getTutorialLocalesBySlug } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat, getSiteUrl, SITE_NAME } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat, getLocalizedPath, getSiteUrl, SITE_NAME } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 interface TutorialPageProps {
@@ -25,15 +25,20 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: TutorialPageProps): Promise<Metadata> {
   const { slug, locale } = await params;
-  const siteUrl = getSiteUrl();
-  const tutorial = await getTutorialBySlug(slug, locale);
+  const tutorial = (await getAllTutorials(locale)).find((t) => t?.slug === slug);
   const t = await getTranslations('Tutorial');
 
   if (!tutorial) {
     return {
       title: t('notFound'),
+      robots: {
+        index: false,
+        follow: true,
+      },
     };
   }
+
+  const availableLocales = getTutorialLocalesBySlug(slug);
 
   return {
     title: tutorial.title,
@@ -41,7 +46,7 @@ export async function generateMetadata({ params }: TutorialPageProps): Promise<M
     keywords: [...(tutorial.tags || []), ...(tutorial.techStack || []), tutorial.category].filter((k): k is string => k !== null && k !== undefined),
     alternates: {
       canonical: getCanonicalUrl(locale, `tutorial/${slug}`),
-      languages: buildLocaleAlternates(`tutorial/${slug}`),
+      languages: buildLocaleAlternates(`tutorial/${slug}`, availableLocales),
     },
     openGraph: {
       title: tutorial.title,
@@ -107,11 +112,11 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
         <div className="max-w-[1400px] mx-auto px-6 py-8 lg:py-12">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-8">
-            <Link href="/" className="hover:text-primary-600 dark:hover:text-primary-400">
+            <Link href={getLocalizedPath(locale)} className="hover:text-primary-600 dark:hover:text-primary-400">
               {t('home')}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href="/tutorials" className="hover:text-primary-600 dark:hover:text-primary-400">
+            <Link href={getLocalizedPath(locale, 'tutorials')} className="hover:text-primary-600 dark:hover:text-primary-400">
               {t('tutorials')}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -199,7 +204,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
               <div className="flex items-center justify-between pt-8 border-t border-slate-200 dark:border-slate-800">
                 {prevTutorial ? (
                   <Link
-                    href={`/${locale}/tutorial/${prevTutorial.slug}`}
+                    href={getLocalizedPath(locale, `tutorial/${prevTutorial.slug}`)}
                     className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -213,7 +218,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
                 )}
                 {nextTutorial && (
                   <Link
-                    href={`/${locale}/tutorial/${nextTutorial.slug}`}
+                    href={getLocalizedPath(locale, `tutorial/${nextTutorial.slug}`)}
                     className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-right"
                   >
                     <div>

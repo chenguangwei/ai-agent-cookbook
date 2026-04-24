@@ -18,13 +18,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const description = article?.summary
     ? article.summary.replace(/<[^>]*>/g, '').slice(0, 160)
     : 'Stay up to date with the latest developments in AI agents, LLMs, and autonomous systems.';
+  const availableLocales = article?.language ? [article.language] : [locale];
 
   return {
     title,
     description,
     alternates: {
       canonical: canonicalUrl,
-      languages: buildLocaleAlternates(`news/${id}`),
+      languages: buildLocaleAlternates(`news/${id}`, availableLocales),
     },
     openGraph: {
       title,

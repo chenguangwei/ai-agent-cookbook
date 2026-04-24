@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllTutorials } from '@/lib/content';
+import { getAllTools, getAllTutorials } from '@/lib/content';
 import { locales } from '@/i18n/config';
 import { getCanonicalUrl } from '@/lib/utils';
 
@@ -35,5 +35,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...tutorialPages];
+  // Tool pages
+  const tools = getAllTools();
+  const toolPages: MetadataRoute.Sitemap = tools.map((tool) => ({
+    url: getCanonicalUrl(tool?.locale || 'en', `tools/${tool?.slug}`),
+    lastModified: tool?.date ? new Date(tool.date) : now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.65,
+  }));
+
+  return [...staticPages, ...tutorialPages, ...toolPages];
 }
