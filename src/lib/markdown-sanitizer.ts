@@ -45,11 +45,18 @@ export function sanitizeMarkdownContent(content: string): string {
     return `%%CODE_BLOCK_${codeBlocks.length - 1}%%`
   })
 
-  // 7. Escape ALL angle brackets that are not inside code blocks
-  // This prevents MDX from interpreting them as JSX/HTML
-  // Replace < with &lt; and > with &gt;
-  result = result.replace(/</g, '&lt;')
-  result = result.replace(/>/g, '&gt;')
+  // 7. Escape angle brackets that are not inside code blocks.
+  // Keep Markdown blockquote markers intact; otherwise valid quote syntax
+  // (`> quote`) is rendered as literal text after sanitization.
+  result = result
+    .split('\n')
+    .map((line) => {
+      const blockquotePrefix = line.match(/^(\s*(?:>\s*)+)/)?.[1] ?? ''
+      const body = blockquotePrefix ? line.slice(blockquotePrefix.length) : line
+
+      return `${blockquotePrefix}${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}`
+    })
+    .join('\n')
 
   // Restore code blocks (they should not be sanitized)
   codeBlocks.forEach((block, index) => {
