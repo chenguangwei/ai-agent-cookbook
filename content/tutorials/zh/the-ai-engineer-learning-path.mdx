@@ -1,0 +1,257 @@
+---
+title: "AI工程师学习路径"
+slug: "the-ai-engineer-learning-path"
+locale: "zh"
+description: "AI工程师学习路径"
+category: "RAG"
+tags: ["LangChain", "OpenAI", "RAG", "Vector DB", "Embeddings", "Multi-Agent", "ReAct", "Python"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HGvvS0lbYAAN8UX.jpg"
+featured: false
+date: 2026-04-27
+---
+
+# AI工程师学习路径
+
+一份实用的路线图，基于约2000个职位描述中的实际需求，告诉你该学什么、按什么顺序学。
+
+如果你想进入AI工程领域（不仅仅是机器学习理论），这条路径能真实反映生产系统中系统的构建方式。
+
+## 核心：20%的技能驱动80%的工作
+
+这是大多数人搞错的部分。
+
+AI工程不是从头训练模型，而是围绕LLM构建系统。
+
+1. LLM基础
+
+从这里开始。一切都建立在此之上。
+
+![](https://pbs.twimg.com/media/HGwQLpUaUAAw73G.jpg)
+
+- LLM的工作原理（高层次理解）
+- 它们的优势与局限
+- 使用OpenAI和Anthropic等API
+- 结构化输出（JSON、模式、工具响应）
+- 跨不同任务的提示工程
+
+目标：从“与模型聊天”转变为可预测地控制它们
+
+2. RAG（检索增强生成）
+
+这是大多数真实世界AI系统的支柱。
+
+![](https://pbs.twimg.com/media/HGwQmQcbcAAt5kx.jpg)
+
+- 向LLM注入自定义数据
+- 向量搜索 + 语义检索
+- 使用Elasticsearch、Qdrant等工具
+- 分块策略（这比人们想象的重要）
+- 处理真实数据：PDF、网页、转录文本
+
+👉 实践项目：
+
+- 常见问题解答助手
+- 文档问答系统
+- 内部知识搜索
+
+3. AI代理
+
+这是事情变得有趣且混乱的地方。
+
+![](https://pbs.twimg.com/media/HGwRC39a4AAjWXP.jpg)
+
+- 工具调用（LLM不仅能响应，还能行动）
+- 代理循环：思考 → 行动 → 观察 → 重复
+- 框架：LangChain、PydanticAI、OpenAI Agents SDK、Google ADK
+- 模型上下文协议（MCP）
+- 多代理系统（路由、协调、流水线）
+
+👉 实践项目：
+
+- 网络研究代理
+- 数据提取流水线
+- 多代理工作流
+
+4. 测试AI系统
+
+被低估，但至关重要。
+
+- 测试工具使用和输出
+- 评估一致性
+- 使用LLM作为评判者（是的，有点元，但很有用）
+
+👉 目标：让AI系统可靠，而不仅仅是令人印象深刻
+
+5. 监控与可观测性
+
+如果你看不到系统在做什么，就无法修复它。
+
+![](https://pbs.twimg.com/media/HGwRf6ra0AAxdsC.jpg)
+
+- 追踪代理工作流
+- 记录交互
+- 成本追踪
+- 反馈循环
+- 仪表板（Grafana、OpenTelemetry）
+
+👉 实际影响：这是区分演示与生产系统的关键
+
+6. 评估
+
+大多数工程师跳过这一步——结果显而易见。
+
+![](https://pbs.twimg.com/media/HGwR-KXasAAyMHC.jpg)
+
+- 离线评估数据集
+- 衡量检索质量
+- 合成数据生成
+- 基于结果的提示优化
+
+👉 目标：从“感觉不错”转变为可衡量
+
+7. 生产系统
+
+这是AI工程师变得有价值的地方。
+
+![](https://pbs.twimg.com/media/HGwTAKfbkAAfLGY.jpg)
+
+- 将笔记本转化为真实服务
+- 部署（Streamlit用于快速原型）
+- 云平台：AWS / GCP / Azure
+- 防护栏和安全层
+- 并行处理以实现扩展
+
+## 辅助技能（职位描述实际要求的）
+
+这些不是可选的——它们无处不在。
+
+Python与工程基础
+
+- Python（约80%以上的角色使用）
+- 测试、CI/CD、代码质量
+- Git工作流
+
+Web开发（针对真实产品）
+
+- FastAPI（AI应用的后端标准）
+- React / Next.js（前端层）
+- API：REST / GraphQL
+
+云与基础设施
+
+- 至少一个：AWS、GCP或Azure
+- Docker（不可协商）
+- Kubernetes（用于扩展）
+- Terraform（基础设施即代码）
+
+数据库
+
+- PostgreSQL（默认选择）
+- 向量数据库：Pinecone、Weaviate、Qdrant、pgvector
+- Redis（缓存、会话）
+
+机器学习基础（足够即可）
+
+你不需要成为研究员——但需要了解背景。
+
+- PyTorch基础
+- 嵌入（非常重要）
+- 微调（当API不够用时）
+- 模型评估基础
+
+数据工程
+
+- ETL流水线
+- Airflow、Spark、Kafka
+- 使用Databricks、Snowflake等工具
+
+Python之外的语言
+
+- TypeScript（对全栈AI非常重要）
+- SQL（处理真实数据的必备技能）
+- Java / Go（用于后端密集型角色）
+
+## 典型的AI工程栈
+
+一个现代AI系统通常如下所示：
+
+- 前端：React / Next.js
+- 后端：FastAPI
+- AI编排：LangChain、LangGraph、PydanticAI
+- LLM：OpenAI、Anthropic、Groq、本地模型
+- 向量数据库：Pinecone / Weaviate / Qdrant
+- 基础设施：Docker + Kubernetes + 云
+- 监控：OpenTelemetry、Grafana
+- 评估：LLM评判者、Evidently等工具
+
+## 技能优先级（如果时间有限）
+
+必备技能
+
+- Python
+- 提示工程
+- RAG系统
+- 一个云平台
+- Docker
+
+高价值技能
+
+- LangChain或PydanticAI
+- FastAPI
+- TypeScript
+- CI/CD
+- Kubernetes
+- PyTorch基础
+
+差异化技能（能让你更快被录用）
+
+- 代理框架（LangGraph、CrewAI）
+- 模型微调
+- 评估系统
+- 向量数据库
+- 多代理架构
+
+## 最终总结
+
+AI工程不是追逐炒作工具。
+
+而是构建可靠的系统，其中LLM只是其中一个组件。
+
+如果你专注于：
+
+- RAG
+- 代理
+- 评估
+- 生产系统
+
+你将已经领先于大多数候选人。
+
+## 致谢
+
+本路线图深受Alexey Grigorev原创工作的启发：
+
+👉[ https://github.com/alexeygrigorev/ai-engineering-field-guide](https://github.com/alexeygrigorev/ai-engineering-field-guide)
+
+## 帖子
+
+### 1
+
+https://x.com/ParasVerma7454/status/2048692381038543108
+
+https://t.co/VXWvjhi22E
+
+> 作者：Luffytaro (@ParasVerma7454)
+> 网址：https://x.com/ParasVerma7454/status/2047952507029311621
+>
+> 我是Paras。我构建系统、发布它们，然后开始下一个。
+>
+> 全栈与AI工程师——开放实习或全职岗位。
+>
+> 我构建端到端产品：干净的后端、真实的AI集成、已发布并上线。目前是SDE实习生，大部分时间用于构建和改进真实系统。
+>
+> 如果你正在招聘或认识招聘的人，欢迎私信或回复。推荐信不胜感激。
+>
+> 作品集在评论区。

@@ -1,0 +1,558 @@
+---
+title: "月成本不到 100 元，如何实现 Token 自由（喂饭教程）"
+slug: "100-token"
+locale: "zh"
+description: "月成本不到 100 元，如何实现 Token 自由（喂饭教程）"
+category: "LLM Models"
+tags: ["OpenAI", "Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HC9PBuzaAAAhd46.jpg"
+featured: false
+date: 2026-04-28
+---
+
+# 月成本不到 100 元，如何实现 Token 自由（喂饭教程）
+
+
+在并行任务、Agent 批量执行或长时间交互式编程场景下，单账号会频繁触发限流。
+
+解决思路很简单，是把多个 Plus 账号做成号池：
+通过 sub2api 对外暴露单一 API 接口，内部根据实时额度状态进行账号调度和负载分配。
+
+更重要的是，这套方案的成本非常可控。下面这张图是我昨天的实际用量：2 亿 Token。
+
+接下来，让我们开始下面的保姆级教程，如果对你有帮助，麻烦动动小手点点赞🥰，十分感谢。
+
+![](https://pbs.twimg.com/media/HArIeDsa8AAyBUy.jpg)
+
+> 长文预警，建议先收藏
+
+## 方案概览：sub2api + 多账号池架构
+
+
+sub2api 是一个开源的 AI API 网关平台，专门用于管理和分发 AI 订阅服务的配额。它的核心功能包括：
+
+- 统一接口：将多个 Claude/Codex Plus 账号整合成单一 API 端点
+- 智能调度：根据账号实时额度自动选择可用账号，避免限流
+- 负载均衡：支持账号分组和权重配置，合理分配请求
+- 拼车共享：可以生成多个 API Key，与朋友共享用量
+- 使用监控： Web 面板实时查看各账号用量和请求统计
+
+架构简图：
+
+```text
+你的应用/工具
+    ↓ (使用 API Key)
+sub2api 网关 (Docker 部署)
+    ↓ (智能调度)
+账号池: Plus账号1, Plus账号2, Plus账号3...
+    ↓
+Claude/Codex 官方 API
+```
+
+整个系统通过 Docker Compose 一键部署，包含后端服务、PostgreSQL 数据库和 Redis 缓存。
+
+## 成本与准备条件
+
+
+这套方案不是“零成本”，但整体投入非常可控：
+
+1. 一台海外 VPS 
+推荐新加坡节点，延迟低，国内访问稳定。
+阿里云/腾讯云轻量服务器约 30 元/月即可满足需求。
+2. Codex Plus 账号若干
+数量取决于你的使用强度，建议先购买 2 个测试，不够用再追加。
+⚠️ 重要说明：这里不是购买账号本身，而是购买“拉入 Business 团队”的服务。你需要自己提供已注册 OpenAI 的邮箱账号，卖家会将你的账号拉入到他们的 Business 团队中，从而获得 Codex 5.3 的使用权限。
+闲鱼价格通常在 10 元左右/账号（按月计费）。
+3. 域名（推荐）
+⚠️ 重要提示：直接通过 IP 访问可能会导致前端 JS 文件加载失败，强烈建议绑定域名使用。
+域名可以在阿里云、腾讯云等平台购买，买个几块钱的能用就行。
+
+## 部署步骤
+
+
+前置准备
+
+1. 安装 Docker 和 Docker Compose
+
+确保服务器已安装 Docker 和 Docker Compose V2。
+
+2. 安装 1Panel（推荐）
+
+1Panel 是一个开源的 Linux 服务器运维管理面板，可以方便地管理 Docker 容器、配置反向代理、绑定域名等。强烈推荐安装，特别是需要配置域名访问的场景。
+
+安装命令：
+
+```shell
+bash -c "$(curl -sSL https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh)"
+```
+
+安装步骤：
+
+1. 选择语言（中文/English）
+2. 一路回车，全部使用默认配置
+3. 重要：记住安装完成后显示的：
+安全入口
+面板用户名
+面板密码
+外部访问地址（如 http://YOUR_SERVER_IP:24045/安全入口）
+
+![](https://pbs.twimg.com/media/HArJUEBbAAAJJCO.jpg)
+
+1. 在浏览器访问外部地址，输入用户名和密码登录
+
+![](https://pbs.twimg.com/media/HArJWcKawAAvS3M.jpg)
+
+如果无法访问面板：
+
+大概率是服务器防火墙没有放行端口。1Panel 默认使用 24045 端口，需要在云服务器安全组中添加入站规则，开放该端口。
+
+![](https://pbs.twimg.com/media/HArJZgzbsAEbvPM.jpg)
+
+1Panel 的作用：
+
+- 可视化管理 Docker 容器
+- 配置 Nginx 反向代理，绑定域名
+- 自动申请和续期 SSL 证书（Let‘s Encrypt）
+- 监控服务器资源使用情况
+
+安装完成后，可以继续进行 sub2api 的部署。
+
+部署 sub2api
+
+sub2api 提供了两种 docker-compose 配置文件：
+
+- docker-compose.local.yml: 数据存储在本地目录，备份和迁移更方便（推荐）
+- docker-compose.yml: 数据存储在 Docker 命名卷中，适合简单场景
+
+本教程使用 docker-compose.local.yml 进行部署。
+
+Docker Compose 部署步骤
+
+步骤 1: 创建项目目录
+
+```shell
+mkdir -p ~/sub2api && cd ~/sub2api
+```
+
+步骤 2: 下载 docker-compose 配置文件
+
+```shell
+wget https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-compose.local.yml
+```
+
+或使用 curl：
+
+```shell
+curl -o docker-compose.local.yml https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-compose.local.yml
+```
+
+步骤 3: 创建 .env 配置文件
+
+```plaintext
+cat > .env << 'EOF'
+
+# 数据库配置
+
+POSTGRES_USER=sub2api
+POSTGRES_PASSWORD=your_secure_db_password_here
+POSTGRES_DB=sub2api
+
+# Redis 配置
+
+REDIS_PASSWORD=your_secure_redis_password_here
+
+# 应用配置
+
+JWT_SECRET=your_jwt_secret_here_min_32_chars
+ADMIN_PASSWORD=your_admin_password_here
+
+# 服务端口（可选，默认 8080）
+
+APP_PORT=8080
+EOF
+```
+
+步骤 4: 生成安全的随机密钥
+
+⚠️ 重要：必须使用强密码！可以使用以下命令生成：
+
+```shell
+
+# 生成 JWT_SECRET（至少 32 字符）
+
+openssl rand -base64 32
+
+# 生成 ADMIN_PASSWORD
+
+openssl rand -base64 16
+```
+
+将生成的密钥填入 .env 文件中对应的位置，或者使用以下命令自动追加（注意会覆盖之前的值）：
+
+```text
+sed -i "s|your_jwt_secret_here_min_32_chars|$(openssl rand -hex 32)|" .env
+sed -i "s|your_admin_password_here|$(openssl rand -hex 16)|" .env
+sed -i "s|your_secure_db_password_here|$(openssl rand -hex 16)|" .env
+sed -i "s|your_secure_redis_password_here|$(openssl rand -hex 16)|" .env
+```
+
+步骤 5: 启动服务
+
+```text
+docker compose -f docker-compose.local.yml up -d
+```
+
+![](https://pbs.twimg.com/media/HArJdiiaIAAbf5D.jpg)
+
+步骤 6: 查看服务状态
+
+```shell
+docker compose -f docker-compose.local.yml ps
+```
+
+你应该看到三个容器都处于 Up 状态：
+
+- sub2api（主服务）
+- postgres（数据库）
+- redis（缓存）
+
+![](https://pbs.twimg.com/media/HArJ2oBbAAAVUU-.jpg)
+
+步骤 7: 查看管理员密码
+
+查看 .env 文件中的管理员密码：
+
+```text
+cat .env | grep ADMIN_PASSWORD
+
+```
+
+或查看完整配置：
+
+```text
+cat .env
+```
+
+![](https://pbs.twimg.com/media/HArJ9bQagAA13H4.jpg)
+
+配置域名访问（推荐）
+
+⚠️ 重要提示：直接通过 IP 访问可能会导致前端 JS 文件加载失败，强烈建议配置域名访问。
+
+步骤 1: 同步 1Panel 应用商店
+
+首次安装和使用 1Panel 的用户，需要远程同步应用商店。
+
+![](https://pbs.twimg.com/media/HArKIdsbgAARii3.jpg)
+
+步骤 2: 安装 OpenResty
+
+在应用商店中搜索并安装 OpenResty（Nginx 的增强版），点击安装，使用默认配置直接确定即可。
+
+步骤 3: 创建反向代理网站
+
+1. 在 1Panel 中进入“网站” → “创建网站” → 选择“反向代理”
+2. 填写配置信息：
+主域名：填写你的域名（如 sub2api.yourdomain.com）
+代理地址： 127.0.0.1:8080
+其他选项保持默认
+3. 点击确认创建
+
+![](https://pbs.twimg.com/media/HArKLJ4bgAEKQ8W.jpg)
+
+步骤 3: 配置域名解析
+
+在你的域名服务商（如阿里云、腾讯云、Cloudflare 等）控制台中，添加 A 记录：
+
+- 记录类型： A
+- 主机记录： sub2api（或你想要的子域名）
+- 记录值：你的服务器公网 IP
+- TTL: 默认值（通常是 600 秒）
+
+![](https://pbs.twimg.com/media/HArKNrBaIAA56Kt.jpg)
+
+步骤 4: 验证访问
+
+等待 DNS 解析生效（通常 1-10 分钟），然后在浏览器访问你的域名（如 http://sub2api.yourdomain.com），查看页面是否正常显示。
+
+![](https://pbs.twimg.com/media/HArKPp8bwAA8_LM.jpg)
+
+首次登录
+
+在浏览器访问你的域名（如 https://sub2api.yourdomain.com）或 http://YOUR_SERVER_IP:8080（如果未配置域名）
+
+![](https://pbs.twimg.com/media/HArKRqMaYAEhpt0.jpg)
+
+使用管理员账号登录：
+
+- 邮箱： admin@sub2api.local
+- 密码：在 .env 文件中设置的 `ADMIN_PASSWORD`
+
+如果忘记密码，可以查看 .env 文件：
+
+```text
+cat ~/sub2api/.env | grep ADMIN_PASSWORD
+```
+
+配置账号池
+
+1. 创建账号分组
+
+在添加账号之前，建议先创建分组，这样可以更好地管理和调度不同来源的账号。
+
+进入管理面板后，点击 “Groups” → “Create New Group”
+
+![](https://pbs.twimg.com/media/HArKehabAAAGclj.jpg)
+
+填写分组信息：
+
+- Group Name: 分组名称（如 “Codex 账号池”）
+- Platform: 选择平台类型
+如果是 Codex Plus 账号，选择 OpenAI
+如果是 Claude 官方账号，选择 Claude
+如果是 Antigravity 服务，选择 Antigravity
+- Description: 分组描述（可选）
+
+![](https://pbs.twimg.com/media/HArKgrnasAAhBFo.jpg)
+
+2. 添加 Codex Plus 账号
+
+创建好分组后，点击 “Accounts” → “Add Account”
+
+![](https://pbs.twimg.com/media/HArKij_akAEddnl.jpg)
+
+填写账号信息：
+
+- Account Type: 根据账号类型选择
+Codex Plus 账号：选择 OpenAI
+Claude 官方账号：选择 Claude
+Antigravity 服务：选择 Antigravity
+- Session Key: 填入账号的 Session Token
+- Account Name: 给账号起个名字，方便识别（如 “Codex Plus 账号 1”）
+- Group: 选择刚才创建的分组（如 “Codex 账号池”）
+- Weight: 权重，数字越大被调度的概率越高（默认 1 即可）
+
+如何获取 Session Token:
+
+1. 复制授权链接，粘贴到新 tab 打开
+2. 登录平台然后会跳转到授权页面
+3. 点击授权后，会重定向到一个 localhost 地址
+4. 复制完整的 localhost 链接，粘贴回去
+
+![](https://pbs.twimg.com/media/HArKlzFaAAASx9K.jpg)
+
+重复上述步骤，添加所有 Plus 账号。
+
+![](https://pbs.twimg.com/media/HArKnmqbcAAhH0c.jpg)
+
+2. 创建 API Key
+
+点击 “API Keys” → “Create New Key”
+
+配置选项：
+
+- Key Name: API Key 的名称 （如 “我的开发环境”）
+- Rate Limit: 速率限制 （可选）
+- Quota: 配额限制 （可选）
+- Account Groups: 选择使用刚才创建的分组
+
+创建后会生成一个 API Key
+
+![](https://pbs.twimg.com/media/HArKq-Ta4AANu36.jpg)
+
+3. 为账户充值（使用兑换码）
+
+创建 API Key 后，需要为其充值才能正常调用 API。sub2api 使用兑换码系统进行充值管理。
+
+![](https://pbs.twimg.com/media/HArKtjKbUAEd22u.jpg)
+![](https://pbs.twimg.com/media/HArKwH8aIAAbMDD.jpg)
+
+步骤 1: 生成兑换码
+
+1. 在管理面板点击 “兑换码”
+2. 填写兑换码信息：
+Amount: 充值金额（虚拟额度，用于内部计费）
+Expiry Date: 兑换码有效期（可选）
+Max Uses: 最大使用次数（默认 1 次）
+3. 点击创建，系统会生成一个兑换码
+
+步骤 2: 使用兑换码充值
+
+1. 在管理面板点击右上角的用户菜单 → “兑换”
+2. 输入刚才生成的兑换码
+3. 点击“兑换”确认充值
+4. 充值成功后，你的账户余额会相应增加，API Key 即可正常使用
+
+说明：
+
+- 兑换码系统主要用于多人拼车场景，管理员可以生成兑换码分发给其他用户
+- 如果只是自用，可以生成一个大额度的兑换码，一次性充值到账户中
+- 充值额度是虚拟的，不涉及真实货币交易，主要用于内部配额管理
+
+在 Coding Agent 中使用 API
+
+配置完成后，你可以在各类 AI 编程工具中使用 sub2api 提供的 API。
+
+方式一：使用 cc-switch 快速配置（推荐）
+
+cc-switch 是一个开源的配置管理工具，可以快速切换不同 AI 服务商的配置，无需手动修改各个 Coding Agent 的配置文件。
+
+项目地址：[https://github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)
+
+重要提示：
+
+- API Key 与账号分组绑定，不同平台需要创建对应的 API Key
+- 例如：Codex、Claude、Gemini 需要分别创建三个 API Key（分别关联对应的账号分组）
+- 如果想统一管理，可以在创建 API Key 时自定义名称，使用相同的 Key 值（但需确保该 Key 关联了所有平台的账号分组）
+
+配置示例：
+
+1. Claude 配置
+
+![](https://pbs.twimg.com/media/HArK0d0aoAEJ1YR.jpg)
+
+2. Codex 配置
+
+![](https://pbs.twimg.com/media/HArK2RobIAAcyY7.jpg)
+
+按照图中的配置格式填写你的域名和 API Key 即可。
+
+方式二：手动修改配置文件
+
+如果你使用的工具不支持 cc-switch，可以手动修改配置文件。
+
+OpenCode 配置
+
+OpenCode 需要配置三个平台的 baseURL 和 API Key:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "anthropic": {
+      "options": {
+        "baseURL": "https://sub2api.yourdomain.com/v1",
+        "apiKey": "your_claude_api_key"
+      }
+    },
+    "google": {
+      "options": {
+        "baseURL": "https://sub2api.yourdomain.com/v1beta",
+        "apiKey": "your_gemini_api_key"
+      }
+    },
+    "openai": {
+      "name": "OpenAI",
+      "options": {
+        "baseURL": "https://sub2api.yourdomain.com/v1",
+        "apiKey": "your_codex_api_key"
+      }
+    }
+  }
+}
+```
+
+配置说明：
+
+- 将 sub2api.yourdomain.com 替换为你的实际域名
+- 将 your_api_key 替换为在 sub2api 管理面板创建的 API Key
+- 不同平台使用对应的 API 端点（Claude 和 OpenAI 用 /v1, Google 用 /v1beta）
+
+## 使用效果与注意事项
+
+
+部署完成后，你将获得：
+
+1. 无缝切换：当某个账号触发限流时，系统自动切换到其他可用账号，你的工作流不会中断
+2. 用量监控：在管理面板实时查看每个账号的使用情况和剩余配额
+3. 成本优化：多人共享时，每人分摊成本大幅降低
+
+![](https://pbs.twimg.com/media/HArK5RGakAIX4Tn.jpg)
+
+典型场景的用量表现：
+
+- 单人重度使用： 3-5 个 Plus 账号基本够用
+- 2-3 人拼车：每人 2 个账号，共 4-6 个账号池
+- 小团队 (5 人）: 10-15 个账号，平均每人 2-3 个
+
+常见问题
+
+1. 通过 IP 访问时前端 JS 文件加载失败
+
+问题现象：
+
+Docker 容器启动成功，但通过 http://YOUR_SERVER_IP:8080 访问时，页面无法正常显示，浏览器控制台显示 JS 文件加载失败（如 index-CP0CNDtB.js 等文件 404）。
+
+![](https://pbs.twimg.com/media/HArLD5xakAAfisR.jpg)
+
+原因：
+
+sub2api 的前端资源路径配置问题，直接使用 IP 访问时可能导致静态资源加载失败。
+
+解决方案：
+
+方法一：绑定域名访问（推荐）
+
+1. 准备一个域名，并将 A 记录解析到服务器 IP
+2. 使用 1Panel 配置反向代理：
+在 1Panel 中进入“网站” → “创建网站” → “反向代理”
+域名填写你的域名（如 sub2api.yourdomain.com）
+代理地址填写 http://127.0.0.1:8080
+开启 HTTPS（可选）
+3. 通过域名访问：https://sub2api.yourdomain.com
+
+方法二：修改 docker-compose 配置（临时方案）
+
+如果暂时没有域名，可以尝试在 docker-compose.local.yml 中添加环境变量：
+
+```text
+environment:
+  - BASE_URL=http://YOUR_SERVER_IP:8080
+```
+
+然后重启服务：
+
+```text
+docker compose -f docker-compose.local.yml down
+docker compose -f docker-compose.local.yml up -d
+```
+
+注意：强烈建议使用域名访问，这样不仅能解决 JS 加载问题，还能配置 HTTPS 保证安全性。
+
+## 总结
+
+
+通过 sub2api + 多账号池的方案，你可以用相对低廉的成本（30 元 VPS + 若干订阅账号）实现近乎无限的 Claude/Codex 使用额度。虽然部署过程需要一些技术基础，但一旦配置完成，使用体验和官方 API 几乎无差别。
+
+这套方案特别适合以下场景：
+
+个人重度使用：告别单账号限流困扰，多账号自动轮换，让你的 AI 编程工作流保持连续性。
+
+朋友拼车共享：几个人一起分摊成本，每人只需支付很少的费用，就能获得充足的使用额度。通过兑换码系统，可以灵活分配每个人的配额。
+
+团队协作场景：对于小型开发团队来说，这套方案能够将订阅账号的价值最大化。相比每人单独购买 Plus 账号，集中管理的账号池不仅成本更低，还能根据团队成员的实际使用情况动态调配资源，避免某些账号闲置而另一些账号频繁触发限流的情况。团队管理员可以统一监控用量、设置配额限制，确保资源的合理分配。
+
+如果你是重度 AI 编程用户，或者团队需要稳定、高性价比的 AI 能力支持，这套方案值得一试。
+
+相关链接：
+
+- sub2api GitHub: [https://github.com/Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api)
+- 在线 Demo: [https://demo.sub2api.org/](https://demo.sub2api.org/)
+- 1Panel 官网： [https://1panel.cn/](https://1panel.cn/)
+
+## Thread
+
+
+### 最近的新文章，如果对你有帮助，动动小手点个赞，这对我真的很重要，谢谢 ！！🫡
+
+https://x.com/mkdir700/status/2030636031943618756
+
+https://t.co/8pdoHu2Int
+
+> Author: mkdev ｜我爱吃清补凉 (@mkdir700)
+> URL: https://x.com/mkdir700/status/2030299845739811086
+>
+> https://t.co/KODdmd8r7M

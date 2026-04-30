@@ -1,0 +1,934 @@
+---
+title: "OpenClaw Complete Tutorial: From Beginner to Intermediate"
+slug: "openclaw-20260430160403-36jn"
+locale: "en"
+description: "OpenClaw Complete Tutorial: From Beginner to Intermediate"
+category: "LLM Models"
+tags: ["OpenAI", "Claude", "Llama", "Node.js", "Ollama"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HB6ZZJabkAEeDRX.jpg"
+featured: false
+date: 2026-04-30
+---
+
+# OpenClaw Complete Tutorial: From Beginner to Intermediate
+
+## Last Updated: February 2026
+
+## 📚 Table of Contents
+
+1.  What is OpenClaw
+2.  Beginner Stage: Getting Started
+3.  Intermediate Stage: Practical Skills
+4.  Advanced Stage: Advanced Applications
+5.  Practice Task Checklist
+6.  Frequently Asked Questions
+7.  Learning Resources
+
+# What is OpenClaw
+
+OpenClaw (formerly ClawdBot/Moltbot) is the hottest open-source AI Agent project of 2026, having garnered over 68,000 stars on GitHub. It's not an ordinary chatbot, but a personal AI assistant capable of actually executing tasks.
+
+**Local Execution**
+Data is stored on your device, no need to upload to the cloud
+Full control over privacy and data security
+
+**Real Execution**
+Not just conversation, can actually operate your computer
+Automates tasks like email, calendar, file management
+
+**Multi-Platform Messaging**
+Supports 10+ platforms including WhatsApp, Telegram, Discord, Slack
+Manage all communications from a single entry point
+
+**Persistent Memory**
+Saves context and user preferences across sessions
+Learns more about you over time, continuously improving efficiency
+
+**Open Source & Free**
+Completely open source, just need your own API Key
+Free, fully autonomous control
+
+**OpenClaw vs. Traditional AI Assistants**
+
+Traditional AI (e.g., ChatGPT):
+
+-   You: "Help me organize my desktop files"
+-   AI: "I suggest you can do this: 1. Create folders... 2. Sort by type..."
+
+OpenClaw:
+
+-   You: "Help me organize my desktop files"
+-   OpenClaw: Directly renames, categorizes, and moves files. "Done! I organized 47 files into 5 folders by type."
+
+This is the fundamental difference between a "chatbot" and an "AI Agent."
+
+# Beginner Stage: Getting Started
+
+## Step 1: Environment Preparation
+
+**System Requirements**
+
+-   Operating System: macOS, Linux, or Windows (requires WSL)
+-   Node.js: v18 or higher
+-   AI Model API Key: API key for Claude or GPT
+
+🔨 **Practice Task 1: Check Environment**
+
+```bash
+# Check Node.js version
+node --version
+
+# If version is below v18, upgrade
+
+# macOS/Linux using nvm
+nvm install 18
+nvm use 18
+
+# Windows: visit nodejs.org to download and install
+```
+
+✅ **Completion Criteria:** Terminal displays Node.js version >= v18.0.0
+
+## Step 2: Install OpenClaw
+
+**Method 1: NPM Installation (Recommended for Beginners)**
+
+```bash
+# Install OpenClaw globally
+npm install -g openclaw
+
+# Verify installation
+openclaw --version
+```
+
+**Method 2: Docker Installation (Recommended for Docker Users)**
+
+```bash
+# Pull the image
+docker pull openclaw/openclaw:latest
+
+# Run the container
+docker run -d --name openclaw \
+  -v ~/.openclaw:/root/.openclaw \
+  openclaw/openclaw:latest
+```
+
+**Method 3: Source Installation (For Developers)**
+
+```bash
+# Clone the project
+git clone https://github.com/openclaw/openclaw.git
+cd openclaw
+
+# Install dependencies
+npm install
+
+# Start
+npm run start
+```
+
+🔨 **Practice Task 2: Complete Installation**
+
+Choose one installation method and complete the installation of OpenClaw.
+
+✅ **Completion Criteria:** Running `openclaw --version` or `openclaw --help` displays information correctly.
+
+## Step 3: Initial Configuration
+
+**Run the Wizard**
+
+```bash
+# Start the initialization wizard
+openclaw onboard
+```
+
+The wizard will guide you through:
+
+1.  Selecting an AI model provider (Anthropic Claude / OpenAI GPT / Local Model)
+2.  Entering your API Key
+3.  Choosing a messaging platform (Telegram / Discord / WhatsApp, etc.)
+4.  Configuring system permissions (recommend starting with Sandbox Mode)
+
+**Configure API Key**
+
+If you don't have an API Key yet, you can obtain one through:
+
+-   Anthropic Claude: [anthropic.com](http://anthropic.com/) (Recommended, $20/month Pro subscription)
+-   OpenAI GPT: [platform.openai.com](http://platform.openai.com/)
+-   API Aggregation Service: [apiyi.com](http://apiyi.com/) (Supports multiple models, free credits for new users)
+
+🔨 **Practice Task 3: Complete Initialization**
+
+Run `openclaw onboard` and complete all configuration steps.
+
+✅ **Completion Criteria:**
+
+-   Successfully configured API Key
+-   Selected at least one messaging platform
+-   Completed permission settings (recommend choosing Sandbox Mode first)
+
+## Step 4: First Conversation
+
+**Start OpenClaw**
+
+```bash
+# Start OpenClaw
+openclaw
+
+# Or start the Dashboard (Web Interface)
+openclaw dashboard
+```
+
+**Connect a Messaging Platform**
+
+Telegram Example:
+
+1.  Search for @BotFather in Telegram
+2.  Send /newbot to create a new bot
+3.  Get the Bot Token
+4.  Configure it in OpenClaw:
+
+```bash
+openclaw config set channels.telegram.botToken "YOUR_BOT_TOKEN"
+openclaw config set channels.telegram.enabled true
+```
+
+5.  Search for your bot in Telegram and start a conversation.
+
+🔨 **Practice Task 4: First Conversation**
+
+Have your first conversation with your OpenClaw assistant, testing these commands:
+
+```text
+Hello, introduce yourself.
+```
+
+```text
+What can you help me with?
+```
+
+```text
+What time is it?
+```
+
+✅ **Completion Criteria:** The bot can reply to your messages normally.
+
+## Step 5: Understand Core Concepts
+
+**Gateway**
+
+A Gateway is how OpenClaw interacts with the outside world:
+
+-   Message Gateway: Telegram, Discord, WhatsApp
+-   API Gateway: HTTP API interface
+-   CLI Gateway: Command-line interaction
+
+**Skills**
+
+Skills are OpenClaw's capability extensions, similar to "plugins" or "apps":
+
+-   Each Skill defines a set of specific tasks
+-   Third-party Skills can be installed from Clawhub
+-   You can also write custom Skills yourself
+
+**Memory**
+
+OpenClaw remembers:
+
+-   Your preferences and habits
+-   Context from previous conversations
+-   Important information and tasks
+
+**Sandbox**
+
+Sandbox mode restricts OpenClaw's system access permissions to protect your computer:
+
+-   Sandbox Mode: Restricts filesystem, network, and shell access
+-   Full Access Mode: Complete permissions (use with caution)
+
+🔨 **Practice Task 5: Explore the Workspace**
+
+```bash
+# View OpenClaw's working directory
+ls ~/.openclaw
+
+# View configuration file
+openclaw config list
+
+# View installed Skills
+openclaw skills list
+
+# Run a security audit
+openclaw security audit
+```
+
+✅ **Completion Criteria:** Understand OpenClaw's file structure and basic configuration.
+
+# Intermediate Stage: Practical Skills
+
+## Step 6: Install and Use Skills
+
+**Browse the Skills Marketplace**
+
+Visit [Clawhub](https://github.com/VoltAgent/awesome-openclaw-skills) or use the command:
+
+```bash
+# Search for Skills
+openclaw skills search email
+
+# View Skill details
+openclaw skills info @author/skill-name
+```
+
+**Install Common Skills**
+
+```bash
+# Install Email Management Skill
+openclaw skills install @openclaw/email-manager
+
+# Install Calendar Management Skill
+openclaw skills install @openclaw/calendar
+
+# Install File Organizer Skill
+openclaw skills install @openclaw/file-organizer
+
+# Install Web Search Skill (using Tavily instead of Brave)
+openclaw skills install @openclaw/tavily-search
+```
+
+🔨 **Practice Task 6: Install and Test Skills**
+
+1.  Install at least 3 Skills
+2.  Test the functionality of each Skill
+3.  Record which Skills are most useful to you
+
+✅ **Completion Criteria:** Successfully installed and used at least 3 Skills.
+
+## Step 7: Google Workspace Integration
+
+OpenClaw can manage your Gmail, Google Calendar, Google Docs, etc.
+
+**Configuration Steps**
+
+1.  Create a Google Cloud Project
+    -   Visit [console.cloud.google.com](http://console.cloud.google.com/) and create a new project
+    -   Enable Gmail API, Google Calendar API, Google Drive API
+2.  Create a Service Account
+    -   Go to IAM & Admin → Service Accounts and create a service account
+    -   Download the JSON key file
+3.  Configure OpenClaw
+
+```bash
+openclaw config set integrations.google.enabled true
+openclaw config set integrations.google.credentialsPath "/path/to/credentials.json"
+```
+
+4.  Authorize Access
+
+```bash
+openclaw integrations google authorize
+```
+
+🔨 **Practice Task 7: Google Integration Practice**
+
+Complete the following tasks:
+
+1.  **Calendar Management:** Have OpenClaw create a meeting invitation for you.
+
+```text
+Help me create a 1-hour meeting at 3 PM tomorrow with the subject "Project Review"
+```
+
+2.  **Email Processing:** Have OpenClaw check unread emails.
+
+```text
+Check my unread emails and summarize the 3 most important ones.
+```
+
+3.  **Document Editing:** Create a Google Doc.
+
+```text
+Create a new Google Doc titled "Weekly Report Template" containing a framework for the weekly work summary.
+```
+
+✅ **Completion Criteria:** Successfully completed at least 2 Google Workspace tasks.
+
+## Step 8: Set Up Scheduled Tasks (Cron Jobs)
+
+OpenClaw can automatically execute tasks periodically.
+
+**Create a Daily Briefing**
+
+```text
+I want you to send me a briefing every morning at 8 AM containing:
+1. Today's weather
+2. My calendar schedule
+3. Number of unread emails
+4. An inspirational quote
+```
+
+OpenClaw will automatically create a scheduled task (cron job).
+
+**View Scheduled Tasks**
+
+```bash
+# List all scheduled tasks
+openclaw cron list
+
+# View task details
+openclaw cron show <task-id>
+
+# Disable a task
+openclaw cron disable <task-id>
+
+# Delete a task
+openclaw cron delete <task-id>
+```
+
+🔨 **Practice Task 8: Create Scheduled Tasks**
+
+Create the following scheduled tasks:
+
+1.  **Daily Briefing:** Send weather and schedule every morning.
+2.  **Weekly Summary:** Send weekly statistics every Friday afternoon.
+3.  **Scheduled Reminder:** Remind you to finish work at 6 PM every day.
+
+✅ **Completion Criteria:** Created at least 2 scheduled tasks and verified they run correctly.
+
+## Step 9: Configure Persistent Memory
+
+OpenClaw's memory system allows it to remember your preferences.
+
+**Train Your Assistant**
+
+Tell OpenClaw about yourself:
+
+```text
+Remember the following information about me:
+- My name is [Your Name]
+- My job is [Your Profession]
+- My working hours are Monday to Friday, 9:00-18:00
+- I like concise replies, not too wordy
+- I communicate in Chinese
+- My timezone is GMT+8
+```
+
+**View Memory**
+
+```bash
+# View memory file
+cat ~/.openclaw/memory/long-term.json
+
+# Or ask in conversation
+What information do you remember about me?
+```
+
+🔨 **Practice Task 9: Personalize Your Assistant**
+
+1.  Give your assistant a name.
+2.  Tell it your basic information and preferences.
+3.  Set your work habits and schedule.
+4.  Test if it remembers this information.
+
+✅ **Completion Criteria:** OpenClaw can demonstrate its understanding of you in conversation.
+
+# Advanced Stage: Advanced Applications
+
+## Step 10: Write a Custom Skill
+
+Skills are defined using YAML or Markdown format.
+
+**Skill Basic Structure**
+
+Create file `~/.openclaw/skills/my-first-skill.yaml`:
+
+```yaml
+name: "Daily News Summary"
+description: "Fetch and summarize today's tech news"
+version: "1.0.0"
+
+triggers:
+  - "today's news"
+  - "tech news"
+
+steps:
+  - action: web_search
+    query: "latest tech news today"
+    max_results: 5
+    
+  - action: summarize
+    content: "{{search_results}}"
+    style: "bullet_points"
+    
+  - action: respond
+    message: "📰 Today's Tech News Summary:
+
+{{summary}}"
+```
+
+**Install Custom Skill**
+
+```bash
+# Reload Skills
+openclaw skills reload
+
+# Test Skill
+openclaw skills test "Daily News Summary"
+```
+
+🔨 **Practice Task 10: Create a Custom Skill**
+
+Create a custom Skill that implements one of the following functions:
+
+1.  **Weather Assistant:** Query weather for a specified city and format the output.
+2.  **Task Manager:** Add, view, and complete to-do items.
+3.  **Website Monitor:** Periodically check if a website is accessible.
+4.  **Price Tracker:** Monitor price changes for a specific product.
+
+✅ **Completion Criteria:** Successfully created and run a custom Skill.
+
+## Step 11: Multi-Agent Management
+
+You can run multiple OpenClaw instances, each with different configurations and purposes.
+
+**Create Multiple Agents**
+
+```bash
+# Create a Work Agent
+openclaw create-agent work
+openclaw config --agent work set ai.model "claude-sonnet-4.6"
+
+# Create a Personal Agent
+openclaw create-agent personal
+openclaw config --agent personal set ai.model "gpt-5.3"
+
+# Switch Agent
+openclaw switch-agent work
+openclaw switch-agent personal
+
+# List all Agents
+openclaw list-agents
+```
+
+**Use Cases**
+
+-   **Work Agent:** Connect to company email, project management tools.
+-   **Personal Agent:** Manage personal schedule, household tasks.
+-   **Experimental Agent:** Test new features, new Skills.
+
+🔨 **Practice Task 11: Configure Multi-Agent**
+
+Create at least 2 Agents for different purposes and configure them with different:
+
+-   AI Models
+-   Messaging Platforms
+-   Skills
+-   Permission Levels
+
+✅ **Completion Criteria:** Able to switch between different Agents and use them.
+
+## Step 12: Docker Sandbox Security Practices
+
+Docker sandbox provides the strongest security isolation.
+
+**Configure Docker Sandbox**
+
+```bash
+# Install Docker (if not already installed)
+
+# macOS: Download Docker Desktop
+# Linux: sudo apt install docker.io
+
+# Configure OpenClaw to use Docker sandbox
+openclaw config set sandbox.mode "docker"
+openclaw config set sandbox.docker.image "openclaw/sandbox:latest"
+
+# Test the sandbox
+openclaw sandbox test
+```
+
+**Sandbox Restrictions**
+
+Docker sandbox restricts:
+
+-   Filesystem access (only accessible to specified directories)
+-   Network access (configurable whitelist)
+-   System command execution
+-   Resource usage (CPU, memory limits)
+
+🔨 **Practice Task 12: Security Configuration**
+
+1.  Enable Docker sandbox mode.
+2.  Run a security audit: `openclaw security audit --deep`
+3.  Fix security issues based on the audit results.
+4.  Test if the sandbox restrictions are effective.
+
+✅ **Completion Criteria:** Security audit passes, sandbox works correctly.
+
+## Step 13: Browser Control
+
+OpenClaw can control browsers to perform complex web page operations.
+
+Enable Browser Control
+
+```bash
+# Install the browser control plugin
+openclaw plugins install @openclaw/browser-control
+
+# Configure the browser
+openclaw config set browser.enabled true
+openclaw config set browser.headless false  # false means show the browser window
+```
+
+Usage Examples
+
+```text
+Open the browser, visit GitHub, search for "openclaw", and tell me the top 3 results
+```
+
+```text
+Help me search for "mechanical keyboard" on Amazon, find the top 3 highest-rated products, and record their prices
+```
+
+🔨 Practice Task 13: Browser Automation
+
+Use browser control to complete the following tasks:
+
+1.  **Information Gathering:** Scrape data from a website and organize it
+2.  **Form Filling:** Automatically fill out an online form
+3.  **Price Comparison:** Compare prices of the same product across multiple websites
+
+✅ Completion Criteria: Successfully complete at least 1 browser automation task
+
+## Step 14: Integration with Other Tools
+
+**Linear Integration (Project Management)**
+
+```bash
+# Install the Linear Skill
+openclaw skills install @openclaw/linear
+
+# Configure the API Key
+openclaw config set integrations.linear.apiKey "YOUR_LINEAR_API_KEY"
+```
+
+Usage Example:
+
+```text
+Create a new task in Linear: "Fix the login page bug", priority high
+```
+
+**Obsidian Integration (Note-Taking)**
+
+```bash
+# Install the Obsidian Skill
+openclaw skills install @openclaw/obsidian
+
+# Configure the Obsidian vault path
+openclaw config set integrations.obsidian.vaultPath "/path/to/obsidian/vault"
+```
+
+Usage Example:
+
+```text
+Create a new note in Obsidian with the title "OpenClaw Learning Notes"
+```
+
+🔨 Practice Task 14: Integrate Third-Party Tools
+
+Choose at least 2 tools you frequently use and integrate them with OpenClaw:
+
+-   **Project Management:** Linear, Jira, Trello
+-   **Note-Taking:** Obsidian, Notion, Evernote
+-   **Code:** GitHub, GitLab
+-   **Communication:** Slack, Discord, Teams
+-   **Other:** Based on your needs
+
+✅ Completion Criteria: Successfully integrate and use at least 2 third-party tools
+
+## Step 15: Advanced Configuration Optimization
+
+**Performance Optimization**
+
+```bash
+# Configure caching
+openclaw config set cache.enabled true
+openclaw config set cache.ttl 3600
+
+# Configure concurrent requests
+openclaw config set ai.maxConcurrentRequests 3
+
+# Configure timeout
+openclaw config set ai.timeout 30000
+```
+
+**Cost Control**
+
+```bash
+# Set daily API call limit
+openclaw config set ai.dailyLimit 1000
+
+# Set monthly budget (USD)
+openclaw config set ai.monthlyBudget 50
+
+# View usage statistics
+openclaw stats usage
+openclaw stats cost
+```
+
+**Logging and Debugging**
+
+```bash
+# Enable verbose logging
+openclaw config set logging.level "debug"
+
+# View logs
+openclaw logs
+
+# View logs for a specific time
+openclaw logs --since "2026-02-20"
+
+# Export logs
+openclaw logs --export logs.txt
+```
+
+🔨 Practice Task 15: Optimize Configuration
+
+1.  Optimize performance configuration based on your usage
+2.  Set up cost controls to avoid unexpected high fees
+3.  Configure logging for easier debugging
+4.  Monitor usage and costs for one week
+
+✅ Completion Criteria:
+
+-   Cost controls are configured
+-   Can view usage statistics
+-   Understands the logging system
+
+## Practice Task Checklist
+
+**Beginner Stage (Mandatory)**
+
+-   Task 1: Check and install Node.js v18+
+-   Task 2: Complete OpenClaw installation (choose one method)
+-   Task 3: Run the initialization wizard, configure the API Key
+-   Task 4: Have your first conversation with OpenClaw
+-   Task 5: Explore the workspace and configuration files
+
+**Intermediate Stage (Recommended)**
+
+-   Task 6: Install and test at least 3 Skills
+-   Task 7: Complete Google Workspace integration (at least 2 features)
+-   Task 8: Create at least 2 scheduled tasks
+-   Task 9: Personalize your assistant, configure the memory system
+
+**Advanced Stage (Progressive)**
+
+-   Task 10: Create a custom Skill
+-   Task 11: Configure multiple Agents for different scenarios
+-   Task 12: Enable Docker sandbox and pass a security audit
+-   Task 13: Complete a browser automation task
+-   Task 14: Integrate at least 2 third-party tools
+-   Task 15: Optimize configuration and set up cost controls
+
+**Practical Projects (Challenge)**
+
+-   Project 1: Build an automated workflow that sends a personalized briefing every morning
+-   Project 2: Create an automatic email classification and reply system
+-   Project 3: Build a multi-channel message aggregation center
+-   Project 4: Develop a price monitoring and alert system
+-   Project 5: Build an automated content publishing system (blog/social media)
+
+# Frequently Asked Questions
+
+## Q1: What are the technical requirements for OpenClaw?
+
+OpenClaw is primarily aimed at users with some technical background. You need to:
+
+-   Be comfortable using the command line
+-   Understand environment variable configuration
+-   Know the concept of an API Key
+
+However, the installation process has been greatly simplified. As long as you can run npm commands, you can use OpenClaw.
+
+## Q2: How do I manage security risks?
+
+Key security recommendations:
+
+1.  **Use Sandbox Mode:** Use sandbox mode during initial testing
+2.  **Don't Store Sensitive Passwords:** Do not store plain-text passwords in configuration files
+3.  **Regular Review:** Regularly check automation rules
+4.  **Understand Permissions:** Only enable the permissions you need
+5.  **Dedicated Device:** It is recommended to run on a dedicated device (e.g., Mac Mini, old laptop)
+6.  **Separate Accounts:** Create separate email addresses and accounts for OpenClaw
+
+## Q3: What are the approximate API costs?
+
+It depends on usage intensity:
+
+-   **Light Usage (10-20 conversations/day):** Approximately $5-10/month
+-   **Moderate Usage (50-100 conversations/day + scheduled tasks):** Approximately $20-30/month
+-   **Heavy Usage (heavy automation + browser control):** Approximately $50-100/month
+
+Money-Saving Tips:
+
+-   Use API aggregation services for better prices
+-   Set daily/monthly usage limits
+-   Prioritize using cheaper models
+-   New users usually have free credits
+
+## Q4: Can I use local models?
+
+Yes! OpenClaw supports connecting to local models via Ollama:
+
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Download a model
+ollama pull llama3.2
+
+# Configure OpenClaw
+openclaw config set ai.provider "ollama"
+openclaw config set ai.model "llama3.2"
+openclaw config set ai.baseUrl "http://localhost:11434"
+```
+
+Note: The capabilities of local models are usually inferior to cloud-based large models, and they may perform poorly on complex tasks.
+
+## Q5: Does OpenClaw support Chinese?
+
+Yes, fully! OpenClaw has a Chinese version maintained by the community:
+
+-   GitHub: MaoTouHU/OpenClawChinese
+-   Provides a Chinese interface and Chinese documentation
+-   Automatically syncs official updates every hour
+
+You can also use the English version, which can understand and respond in Chinese.
+
+## Q6: How do I back up my configuration?
+
+```bash
+# Back up the entire working directory
+cp -r ~/.openclaw ~/.openclaw-backup
+
+# Or use Git for synchronization (recommended)
+cd ~/.openclaw
+git init
+git add .
+git commit -m "Initial backup"
+git remote add origin YOUR_GITHUB_REPO
+git push -u origin main
+```
+
+OpenClaw supports GitHub sync functionality, which can automatically back up configurations.
+
+## Q7: How do I debug when encountering problems?
+
+```bash
+# 1. View logs
+openclaw logs
+
+# 2. Run a health check
+openclaw doctor
+
+# 3. Run a security audit
+openclaw security audit
+
+# 4. Enable debug mode
+openclaw config set logging.level "debug"
+openclaw
+
+# 5. View configuration
+openclaw config list
+```
+
+## Q8: Can I run it on a server?
+
+Yes! Many users run OpenClaw on VPS or cloud servers:
+
+**Recommended Platforms:**
+
+-   DigitalOcean (has one-click deployment)
+-   AWS EC2
+-   Alibaba Cloud Lightweight Application Server
+-   Cloudflare Workers ($5/month plan)
+
+**Important Notes:**
+
+-   Ensure server security configuration
+-   Use HTTPS connections
+-   Configure a firewall
+-   Update the system regularly
+
+## Learning Resources
+
+**Official Resources**
+
+-   Official Website: [https://openclaw.ai/](https://openclaw.ai/)
+-   GitHub Repository: [github.com/openclaw/openclaw](https://github.com/openclaw/openclaw)
+-   Official Documentation: [https://docs.openclaw.ai/en](https://docs.openclaw.ai/en)
+-   Skills Marketplace: [github.com/VoltAgent/awesome-openclaw-skills](https://github.com/VoltAgent/awesome-openclaw-skills)
+
+**Video Tutorials**
+
+-   freeCodeCamp Full Tutorial (1 hour): [YouTube](https://youtu.be/n1sfrc-RjyM)
+-   OpenClaw Beginner's Guide (30 minutes): [YouTube](https://www.youtube.com/watch?v=BoC5MY_7aDk)
+-   Master OpenClaw in 30 Minutes: [YouTube](https://youtu.be/ji_Sd4si7jo)
+-   OpenClaw Crash Course: [YouTube](https://www.youtube.com/watch?v=u4ydH-QvPeg)
+
+**Text Tutorials**
+
+-   freeCodeCamp Beginner's Tutorial: [freecodecamp.org](https://www.freecodecamp.org/news/openclaw-full-tutorial-for-beginners/)
+-   DigitalOcean Deployment Tutorial: [digitalocean.com](https://www.digitalocean.com/community/tutorials/how-to-run-openclaw)
+-   Reddit Detailed Guide: [reddit.com/r/clawdbot](https://www.reddit.com/r/clawdbot/comments/1qwx6ls/openclaw_101_a_detailed_guide_for_new_users_so/)
+
+**Chinese Resources**
+
+-   CSDN Chinese Version Tutorial: [blog.csdn.net](https://blog.csdn.net/qq_44866828/article/details/157876493)
+-   OpenClaw Chinese Usage Tutorial: [lua.ren](https://lua.ren/openclaw/2026-02-15-openclaw-tutorial/index.html)
+-   Alibaba Cloud Deployment Tutorial: [help.aliyun.com](https://help.aliyun.com/zh/simple-application-server/use-cases/quickly-deploy-and-use-openclaw)
+-   Apifox Installation Guide: [apifox.com](https://apifox.com/apiskills/openclaw-installation-and-usage-guide/)
+
+**Community**
+
+-   Reddit: r/clawdbot, r/AiForSmallBusiness
+-   Discord: OpenClaw Official Discord Server
+-   GitHub Discussions: Ask questions in the Discussions section of the GitHub repository
+-   Chinese Community: MaoTouHU/OpenClawChinese
+
+## Next Steps
+
+After completing this tutorial, you should have mastered most of the core skills of OpenClaw, from beginner to intermediate level. Next, you can:
+
+1.  **Deep Dive into an Area:** Choose a feature that interests you most (e.g., browser automation, email management) and study it in depth
+2.  **Join the Community:** Contribute code on GitHub, or share your Skills on Clawhub
+3.  **Build Practical Projects:** Use OpenClaw to solve problems in your actual work or life
+4.  **Explore Advanced Features:** Research advanced topics like multi-agent collaboration, custom plugin development, etc.
+
+OpenClaw represents the next step for AI assistants: from a "tool that can talk" to an "assistant that can do things." For users willing to invest time in configuration, it can become a true digital twin.
+
+Wishing you a fruitful journey of discovery with OpenClaw! 🦞✨
+
+**Last Updated:** February 24, 2026
+**Version:** 1.0
+**Author:** YouMind, compiled from the latest online resources
+
+## Thread
+
+### I've been learning about OpenClaw these past few days, and the sheer volume of information is a bit overwhelming.
+
+https://x.com/stark_nico99/status/2026243026918805974
+
+So I compiled this
+"OpenClaw Complete Tutorial: From Beginner to Intermediate"
+Covering 15 practical tasks from intermediate to advanced levels
+The growth path is much clearer now
+Includes some commonly used learning resources for OpenClaw
+
+Of course, a lot of the information comes from the internet. Please feel free to correct any errors.
+I have already practiced some of it myself.
+I will update the information for everyone after I practice the rest.

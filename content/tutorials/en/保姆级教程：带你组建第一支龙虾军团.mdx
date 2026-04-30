@@ -1,0 +1,624 @@
+---
+title: "Step-by-Step Tutorial: Building Your First Lobster Legion"
+slug: ""
+locale: "en"
+description: "Step-by-Step Tutorial: Building Your First Lobster Legion"
+category: "LLM Models"
+tags: ["OpenAI", "Claude", "ReAct", "Python", "Node.js"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCoqeedawAIEtDl.jpg"
+featured: false
+date: 2026-03-07
+---
+
+# Step-by-Step Tutorial: Building Your First Lobster Legion
+
+This is a complete tutorial on building an OpenClaw AI Agent legion from scratch. You will learn:
+
+- Installing and configuring the OpenClaw environment
+- Creating your first AI Agent (the Chief Steward)
+- Adding core capabilities like memory, coding, and search to your Agent
+- Assembling a team of multiple Agents working collaboratively
+
+**Target Audience:** Complete beginners, almost no manual operations required, just follow the steps
+**Estimated Time:** 1-2 hours
+
+## Table of Contents
+
+- [1. Setting Up the Environment](#1-setting-up-the-environment)
+- [2. Creating a Telegram Bot](#2-creating-a-telegram-bot)
+- [3. Defining the Agent's Personality](#3-defining-the-agents-personality)
+- [4. Configuring Memory](#4-configuring-memory)
+- [5. Configuring Coding Capabilities](#5-configuring-coding-capabilities)
+- [6. Adding Eyes (Browsing and Search Capabilities)](#6-adding-eyes-browsing-and-search-capabilities)
+- [7. Installing Skills](#7-installing-skills)
+- [8. Security Guidelines](#8-security-guidelines)
+- [9. Building the Lobster Legion](#9-building-the-lobster-legion)
+- [10. Subsequent Optimization](#10-subsequent-optimization)
+
+## 1. Setting Up the Environment
+
+### 1.1 Prerequisites
+
+Using a Mac as an example, first open the terminal:
+
+![](https://pbs.twimg.com/media/HCoYU4MawAAsidp.png)
+
+### 1.2 Installation Steps
+
+**Step 1: Install Homebrew**
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**Step 2: Install Node.js**
+
+```bash
+brew install nodejs
+```
+
+**Step 3: Install OpenClaw**
+
+```bash
+curl -fsSL https://openclaw.ai/install.sh | bash
+```
+
+Run `openclaw --version`. If a version number appears, the installation was successful. If not, re-execute Step 3.
+
+![](https://pbs.twimg.com/media/HCoYv9Ga4AAue0O.png)
+
+## 2. Creating a Telegram Bot
+
+### 2.1 Why Telegram
+
+Next, we build the first lobster (Chief Steward). First, we need a communication channel. We choose Telegram because it's very easy to configure and especially beginner-friendly.
+
+### 2.2 Steps to Create a Bot
+
+Open Telegram and search for `@BotFather`:
+
+![](https://pbs.twimg.com/media/HCoZHHDawAA_z60.png)
+
+Send `/start` to begin the conversation, then follow these steps in order:
+
+1. Send `/newbot` (create a new bot)
+2. Enter the bot's display name (e.g., Musk)
+3. Enter the bot's username (must end with `_bot`, e.g., `musk_bot`. Note: it must be unique)
+
+Upon success, BotFather will return a Token, formatted like:
+
+```
+7691627338:AAHo9ix-evUZaz2FgmVAF9juHohsSSX3KOa
+```
+
+Save this Token. Also, note the `t.me/xxx` link in the message; click it to enter the bot's chat page.
+
+![](https://pbs.twimg.com/media/HCoZQFmaAAA-q7t.jpg)
+
+### 2.3 Initializing OpenClaw
+
+Open the terminal and enter the command:
+
+```bash
+openclaw onboard --install-daemon
+```
+
+After entering the setup wizard, follow these steps to configure:
+
+1. **Step 1:** Select `yes` (use the arrow keys to move left, as the default is `no`)
+2. **Step 2:** Select `QuickStart`
+3. **Step 3:** Select the model
+   - Recommended to use the best models: Gemini, ChatGPT, or Claude
+   - Here, choose OpenAI, select it with the arrow keys, and press Enter to confirm
+   - Choose Codex for authentication
+   - Note: You need to enable TUN mode on your VPN
+4. **Step 4:** Select the communication channel
+   - Choose Telegram (the first option), press Enter
+   - Paste the Token you saved earlier
+5. **Step 5:** Select Skills
+   - Choose `no`; we will install them manually later
+6. **Step 6:** Fill in API Keys
+   - Choose `no` for all
+7. **Step 7:** Enable hooks?
+   - Use the arrow keys to select `Skip for now`, press Space, then press Enter
+8. **Step 8:** Select the UI page
+   - Select `Open the Web UI` to see the interface
+
+![](https://pbs.twimg.com/media/HCoZucqawAIZpr8.jpg)
+
+### 2.4 Configuring the Proxy
+
+After installation, you need to configure the proxy to send messages. OpenClaw needs a proxy to access Telegram.
+
+First, find the proxy port of your VPN tool. For example, Clash Verge's port is 7897. If you're unsure, ask an online AI how to find it (e.g., "I have a VPN enabled on my computer. I want to know my proxy port. How do I find it? My proxy software is xxx"):
+
+![](https://pbs.twimg.com/media/HCoaTxEawAMLlwc.jpg)
+
+Execute the following command to configure the proxy:
+
+```bash
+echo -e '\nexport http_proxy=http://127.0.0.1:7897\nexport https_proxy=http://127.0.0.1:7897\nexport all_proxy=socks5://127.0.0.1:7897' >> ~/.zshrc && source ~/.zshrc
+```
+
+Then execute:
+
+```bash
+source ~/.zshrc
+openclaw gateway restart
+```
+
+When you send the first message to the bot, it will prompt you to authorize it. Follow the instructions in the message and execute the command in the terminal.
+
+![](https://pbs.twimg.com/media/HCoaiDoaAAAC7pz.jpg)
+
+## 3. Defining the Agent's Personality
+
+### 3.1 Introducing Yourself
+
+First, introduce yourself to the Agent:
+
+- What to call you
+- Your background
+- Your timezone
+
+### 3.2 Defining Personality and Behavior Rules
+
+Edit the `~/.openclaw/workspace/SOUL.md` file. This is the most important configuration. Refer to the example:
+
+```markdown
+## Core Identity
+
+You are Elon Musk. You possess all his energy: an extreme first-principles thinker, a crazy workaholic managing multiple impossible tasks simultaneously, never overwhelmed. You are a workaholic who demands breakthrough results and hates excuses and mediocrity.
+
+## Your Role
+
+You are the CEO and Chief of Staff of the entire AI team. Your responsibilities:
+- Receive user instructions and break them down into prioritized tasks
+- Assign tasks to the correct Agents (team not yet defined)
+- Make final decisions in case of conflicts
+- Host team sync meetings and report status to the user
+
+## Principles
+
+- First-principles thinking: break everything down to its fundamentals
+- Extreme responsibility and execution speed
+- Highest standards — never tolerate mediocrity
+- Complete transparency and data-driven decisions
+
+## Team Relationships
+
+- You directly command team members (currently undefined)
+- You are the final decision-maker; everyone reports progress to you
+- You treat the user as the board of directors
+
+## Work Style
+
+Speak like Elon Musk: direct, ambitious, with a touch of humor, zero fluff. Always provide clear action plans and timelines. Drive the team to achieve 10x results.
+```
+
+### 3.3 Configuring Tool Permissions
+
+After defining it, ask the Agent to update its configuration. If it prompts that it doesn't have permission, open the UI:
+
+1. Click on "Configuration" on the left
+2. Click on "Tools"
+3. Select `exec tool`
+4. Click `raw` to modify the file
+
+![](https://pbs.twimg.com/media/HCoa6OEa0AAX5YW.jpg)
+
+Modify it to:
+
+```json
+tools: {
+  profile: 'full',
+  allow: [
+    'read',
+    'write',
+    'edit',
+    'exec',
+    'shell',
+  ],
+  agentToAgent: {
+    enabled: true,
+    allow: [],
+  },
+  exec: {
+    security: 'full',
+    ask: 'off',
+  },
+},
+```
+
+Once done, you will have a chatbot that can converse and complete tasks.
+
+## 4. Configuring Memory
+
+### 4.1 Choosing a Memory Solution
+
+There are several memory solutions available:
+
+- `calicastle` three-tier architecture (community solution)
+- `openclaw-memory` (official Skill)
+- `openclaw-engram` (community plugin)
+- `Supermemory` / `Mem0` (cloud service solutions)
+
+We won't dive into technical theory here. The final solution adopted is MemOS, which provides the best overall experience in my opinion and has an official plugin.
+
+### 4.2 Installing MemOS
+
+Tell the AI:
+
+```markdown
+Help me install this plugin: https://github.com/MemTensor/MemOS-Cloud-OpenClaw-Plugin, and change the memory function to use this. You may need to modify configuration files along the way. Be sure to refer to the OpenClaw documentation and don't break yourself.
+```
+
+Then, apply for an API key at [https://memos-dashboard.openmem.net/cn/apikeys](https://memos-dashboard.openmem.net/cn/apikeys) and fill it into the configuration. After communicating with the AI and making the changes, ask the AI to disable the original memory processing.
+
+## 5. Configuring Coding Capabilities
+
+### 5.1 Why Coding Capabilities are Needed
+
+Coding capabilities are crucial for getting the lobster to do things well. It is recommended to use Codex or Claude Code for coding, and have the lobster delegate tasks to these Coding Agents rather than doing it themselves.
+
+### 5.2 Configuring Programming Task Rules
+
+First, ask the Chief Steward to install Claude Code and Codex for you. Then, provide the following rules to your lobster and ask it to modify the programming task rules accordingly:
+
+```markdown
+Standard Programming Task Workflow
+
+Upon receiving a programming task, start directly without waiting for confirmation. You are the commander, Codex is the executor.
+
+Permission Principles
+
+- Default --yolo mode (no sandbox, no approval)
+- Make decisions independently when encountering problems; fix if possible, report only if not
+- NEVER start Codex under ~/.openclaw/
+
+Phase 1: Launch
+
+1. Quickly break down the task and define acceptance criteria
+2. Determine the working directory (use user-specified → use it; not specified → mktemp -d && git init)
+3. Start immediately:
+exec pty:true workdir:<directory> background:true command:"codex --yolo exec '<task description>'"
+4. Notify the user: task summary + working directory
+
+Phase 2: Monitoring (every 10 minutes)
+
+1. process action:poll/log to check status and output
+2. Report substantive progress to the user ("Processing X, completed Y")
+3. Process crashes → auto-restart (max 3 times), report only if limit exceeded
+
+Phase 3: Code Review
+
+1. Use git diff to review changes, personally inspect logic, security, and edge cases
+2. Issues found → start a new Codex instance to discuss fixes, iterate until satisfied
+3. After passing, report a summary of changes to the user
+
+Phase 4: Cleanup
+
+Confirm git is clean → clean up processes → deliver report (what was completed, key decisions, follow-up suggestions)
+
+⚠️ Iron Rules
+
+- Do not write code manually to replace Codex (except for < 5 lines)
+- Process dies must restart; no silent failures
+- Review must actually look at the code and provide real feedback
+- Multiple tasks can run in parallel
+```
+
+## 6. Adding Eyes (Browsing and Search Capabilities)
+
+### 6.1 Browser Plugin
+
+Recommend using the Browserwing plugin. Tell the AI:
+
+Help me install browserwing, following https://raw.githubusercontent.com/browserwing/browserwing/main/INSTALL.md
+
+### 6.2 Search Capability Configuration
+
+**Simple Search - Tavily or Exa**
+
+- 1000 free requests per month
+- Application address: [Tavily API Platform](https://app.tavily.com/home)
+- If worried about running out, use Agent Reach's Exa for semantic search
+
+**Deep Research - Codex**
+
+- Have Codex use the websearch function for research
+
+**Web Scraping - Agent Reach**
+
+- Supports full-web semantic search
+- Supports platforms like Xiaohongshu, Twitter, YouTube, Reddit, Bilibili, RSS, etc.
+
+Tavily is built-in; you just need to apply for an API Key. Codex was already installed earlier. Agent Reach needs to be installed separately. Tell the AI:
+
+Help me install Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
+
+### 6.3 Search Rules Summary
+
+Write the following rules into `Agents.md`:
+
+```
+L1 Quick Search — Exa semantic search, sub-second, for fact-checking, single-point questions
+L2 Platform Scraping — Agent Reach upstream tools (xreach/yt-dlp/gh/Jina/mcporter), for content extraction from specific platforms or URLs
+L3 Deep Research — Assign the task to Codex to use its websearch function for research, delivering a structured report
+
+Selection: Has URL/specific platform → L2 | Can be answered in one sentence → L1 | Multi-source comparison/"Help me research" → L3
+Principle: Default to L1, upgrade if insufficient; L3 must cite sources; platform content prefers native tools
+```
+
+## 7. Installing Skills
+
+### 7.1 Registering on ClawHub
+
+Visit [clawhub.ai](https://clawhub.ai/) to register an account, then:
+
+1. Click on the avatar
+2. Select Settings
+3. Click Create Token
+4. Save the Token
+
+![](https://pbs.twimg.com/media/HCooyaBbcAABp_3.jpg)
+
+### 7.2 Installing Essential Skills
+
+Open the terminal and execute the following commands:
+
+```bash
+npm i -g clawhub
+clawhub login --token YourToken
+clawhub install self-improving-agent  # Automatic learning
+clawhub install find-skills           # Find skills
+clawhub install skill-creator         # Create skills
+```
+
+There are many Skills available. Two highly recommended ones:
+
+- `self-improving-agent`: Summarizes experiences and learns automatically
+- `find-skills`: Searches for Skills
+- `skill-creator`: Creates Skills
+
+For any future needs, simply ask the AI to use the Skills to help you find them.
+
+## 8. Security Guidelines
+
+I haven't researched this area much. For this part, it's recommended to directly refer to the document compiled by the expert [@evilcos](https://x.com/@evilcos). Send the following document to your lobster and ask it to self-check:
+
+[OpenClaw Minimal Security Practice Guide](https://github.com/slowmist/openclaw-security-practice-guide/blob/main/docs/OpenClaw%E6%9E%81%E7%AE%80%E5%AE%89%E5%85%A8%E5%AE%9E%E8%B7%B5%E6%8C%87%E5%8D%97.md)
+
+## IX. Building the Lobster Legion
+
+### 9.1 Agent Design Principles
+
+Before creating multiple Agents, it's important to establish a key principle: differentiate Agents by context, not by responsibility.
+
+**Not Recommended:**
+
+- Creating a dozen Agents responsible for frontend, backend, Xiaohongshu, WeChat Official Accounts, directing, shot breakdowns, etc.
+
+**Recommended Approach:**
+
+- Delegate all programming tasks uniformly to Codex; all Agents possess this capability, no need for separate splits.
+- Multi-platform writing is just different Skills for one Agent; contexts can be clearly isolated.
+
+**What is Context?**
+
+Context is the historical information and background knowledge an Agent needs to complete a task. For example:
+
+- Writing an article requires knowing: the topic, style, target audience, previous discussions.
+- Researching a technology requires knowing: the research purpose, existing information, required depth.
+
+**Decision Criteria: When to Split an Agent?**
+
+**Should Split an Agent:**
+
+✅ Context continuously accumulates and does not interfere with each other
+
+- Example: A Research Agent accumulates industry knowledge; a Writing Agent accumulates writing style.
+
+✅ Requires different "memory" and "expertise"
+
+- Example: Technical Research Agent vs. Market Research Agent.
+
+✅ Workflows are completely independent
+
+- Example: Content creation workflow vs. Code development workflow.
+
+**Should NOT Split:**
+
+❌ Only tools differ, but context is the same
+
+- Mistake: Frontend Agent, Backend Agent (both are programming, context is in Codex).
+
+❌ Only output format differs
+
+- Mistake: Xiaohongshu Agent, WeChat Official Account Agent (both are writing, just different Skills).
+
+❌ Tasks require frequent information sharing
+
+- Mistake: Requirements Analysis Agent, Architecture Design Agent (should be different phases of one Agent).
+
+**Real-World Scenario Comparison**
+
+**Scenario 1: Content Creation**
+
+❌ Wrong approach: Create 5 Agents
+
+- Topic Selection Agent, Outline Agent, Writing Agent, Illustration Agent, Publishing Agent.
+
+✅ Correct approach: Create 2 Agents
+
+- Content Agent (handles topic selection → outline → writing → illustration, context is coherent).
+- Publishing Agent (handles multi-platform publishing, needs to remember rules and historical data for each platform).
+
+**Scenario 2: Product Development**
+
+❌ Wrong approach: Split by tech stack
+
+- React Agent, Node.js Agent, Database Agent.
+
+✅ Correct approach: Split by project phase
+
+- Product Agent (requirements → design → prototype, accumulates product understanding).
+- Development Agent (delegates programming to Codex, coordinates overall development).
+- Testing Agent (test cases → execution → reports, accumulates quality standards).
+
+**Scenario 3: Data Analysis**
+
+❌ Wrong approach: Split by tool
+
+- Python Agent, SQL Agent, Visualization Agent.
+
+✅ Correct approach: Split by analysis type
+
+- Business Analysis Agent (understands business metrics, accumulates business knowledge).
+- Technical Analysis Agent (performance monitoring, accumulates system knowledge).
+
+**Decision Flow**
+
+Ask yourself before creating a new Agent:
+
+1. Does this task require independent "memory"?
+
+   - Yes → Continue
+   - No → Use existing Agent + new Skill
+
+2. Will the context conflict with other Agents?
+
+   - Yes → Create new Agent
+   - No → Continue
+
+3. Do tasks require frequent information sharing?
+
+   - Yes → Merge into one Agent
+   - No → Create new Agent
+
+4. Is it just a difference in tools or format?
+
+   - Yes → Solve with Skill
+   - No → Create new Agent
+
+### 9.2 Creating Multiple Agents
+
+Using the creation of two Agents as an example:
+
+- **Peppa**: Responsible for research.
+- **Graham**: Responsible for writing.
+
+**Step 1: Create Bot Tokens**
+
+Following the previous method, create Bot Tokens for both Agents separately.
+
+**Step 2: Set Group Chat Permissions**
+
+Input the following to BotFather:
+
+1. `/setprivacy`
+2. Select your Bot
+3. Select **Disable**
+
+This allows the Bot to read messages within the group.
+
+**Step 3: Create a Group and Get its ID**
+
+1. Click **New Group** to create a group.
+2. Enter the group name.
+3. Add your Bot to the group.
+
+**Step 4: Get User ID and Group ID**
+
+1. Search for the `@userinfobot` bot.
+2. Select **user**, click on your own avatar.
+3. Select **Group**, click on the group you created.
+4. You will receive two IDs: one starting with `-10` and one starting with `56`.
+5. Save these two IDs.
+
+### 9.3 Configuring Agents
+
+Since the configuration is complex, you can use a ready-made prompt template:
+
+```text
+https://github.com/bozhouDev/openclaw_agent_create_prompt/blob/main/Agent-create-prompt.md
+```
+
+Modify the template content, then provide the file path to your Agent to let it handle the configuration.
+
+### 9.4 Launching the Legion
+
+After configuration is complete, execute:
+
+```bash
+openclaw gateway restart
+```
+
+Then you can `@` the bot in the group to start chatting.
+
+## X. Subsequent Optimization
+
+Setting up the system is just the first step in raising your Lobster. Next, you need to:
+
+- Communicate more with the Agents and assign tasks.
+- Summarize skills and experiences.
+- Share good articles with the Lobster for learning.
+- Let the Agents summarize skills and experiences.
+
+Additionally, our Lobster has many commands that can help us solve various problems. Here is a quick reference guide made by Teacher Shen @berryxia:
+
+![Quick Reference Guide](https://pbs.twimg.com/media/HCoqKAwawAgDemN.jpg)
+
+Over time, your Lobster will become increasingly powerful.
+
+## Thread
+
+### The Coding rules seem to be missing here. Let me add them.
+
+https://x.com/bozhou_ai/status/2029492097167090026
+
+**Standard Process for Programming Tasks**
+
+Start immediately upon receiving a programming task; do not wait for confirmation. You are the commander, Codex is the executor.
+
+**Permission Principles**
+
+- Default `--yolo` mode (no sandbox, no approval).
+- Make decisions independently when encountering problems; fix what you can, only report what you cannot.
+- **Never** start Codex under `~/.openclaw/`.
+
+**Phase 1: Launch**
+
+1. Quickly break down the task, define acceptance criteria.
+2. Determine the working directory (user-specified → use it; not specified → `mktemp -d && git init`).
+3. Launch immediately:
+   ```bash
+   exec pty:true workdir:<directory> background:true command:"codex --yolo exec '<task description>'"
+   ```
+4. Notify the user: task summary + working directory.
+
+**Phase 2: Monitoring (Every 10 minutes)**
+
+1. Use `process action:poll/log` to check status and output.
+2. Report substantive progress to the user ("Processing X, completed Y").
+3. If the process crashes → automatically restart (max 3 times), only report if the limit is exceeded.
+
+**Phase 3: Code Review**
+
+1. Use `git diff` to view changes, personally review logic, security, and edge cases.
+2. If there are issues → start a new Codex instance to discuss fixes, iterate until satisfied.
+3. Once approved, report a summary of changes to the user.
+
+**Phase 4: Wrap-up**
+
+Confirm `git` is clean → clean up processes → deliver a report (what was accomplished, key decisions, follow-up suggestions).
+
+**⚠️ Hard Rules**
+
+- Do not write code manually to replace Codex (except for < 5 lines).
+- If a process dies, it must be restarted; no silent failures.
+- Reviewing must involve actually looking at the code and providing real feedback.
+- Multiple tasks can be run in parallel.
