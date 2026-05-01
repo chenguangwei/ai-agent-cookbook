@@ -1,0 +1,304 @@
+---
+title: "Cat Wu Interviewed Hundreds of PM Candidates, Almost No One Got This Question Right: What Should an AI Product Manager Actually Do?"
+slug: "cat-wu-pm-ai"
+locale: "en"
+description: "Cat Wu interviewed hundreds of PM candidates, almost no one got this question right: What should an AI product manager actually do?"
+category: "LLM Models"
+tags: ["OpenAI", "Claude", "TypeScript"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HGpGEV0XUAAWybp.jpg"
+featured: false
+date: 2026-04-24
+---
+
+# Cat Wu Interviewed Hundreds of PM Candidates, Almost No One Got This Question Right: What Should an AI Product Manager Actually Do?
+
+Cat Wu is the product lead for Anthropic's Claude Code and Cowork. Partnering with Boris Cherny, she led her team to compress product feature delivery cycles from six months down to a single day. In the latest episode of Lenny's Podcast, Cat discussed Anthropic's internal speed culture, the dramatic shift in the PM role, the aftermath of a source code leak, and the controversial decision to block OpenClaw that sparked outrage in the open-source community.
+
+Original video: [https://www.youtube.com/watch?v=PplmzlgE0kg](https://www.youtube.com/watch?v=PplmzlgE0kg)
+
+![](https://pbs.twimg.com/media/HGpGHcrXQAAkAZX.jpg)
+
+## Key Takeaways
+
+![](https://pbs.twimg.com/media/HGpGK3SXAAA-DxI.jpg)
+
+- Most PM candidates are still looking for jobs with 6-12 month roadmaps, but Anthropic's rhythm is shipping a feature every week or even every day.
+- Almost all PMs on the Claude Code team have engineering backgrounds or write code directly; even the designer was a former frontend engineer.
+- Anthropic uses a research preview mechanism to lower the commitment of releases, allowing engineers to handle the entire process from idea to launch end-to-end.
+- Cat spends 30% of her time deliberately pushing Cowork to its limits, talking to the model to understand why it makes mistakes.
+- The Claude Code source code leak slipped through two layers of human review; Cat characterized it as a process failure.
+- Regarding the decision to block OpenClaw from using subscription quotas, Cat explained it from a capacity management perspective but avoided addressing the controversy of "copying features first, then blocking."
+- Anthropic's core success factor: a unified mission that makes the team willing to sacrifice their own KRs to serve the company's overall goals.
+
+## 1. Partnering with Boris Cherny: 80% Mind-Meld, 20% Going Solo
+
+![](https://pbs.twimg.com/media/HGpGOHMXQAAhY-4.jpg)
+
+Lenny kicked off by asking how Cat and Boris divide their work. Boris is the creator and technical lead of Claude Code, already a star in the podcast world; Lenny mentioned his episode was the most popular in the podcast's history.
+
+Cat described her relationship with Boris as "80% mind-meld." Boris excels at direction—he can envision what the product should look like in three or six months, the most AGI-pilled version. Cat's role is to translate that vision into an execution path: what are the steps from now to that vision? She also spends more time on cross-functional coordination, ensuring teams like marketing, sales, finance, and capacity are aligned so there are no obstacles once a feature is ready.
+
+The remaining 20% covers things each person cares deeply about. Cat leads on matters she's more passionate about, and Boris does the same. This fuzzy division might seem unorthodox externally, but Cat believes it's precisely because of this fuzziness that they can move fast.
+
+> Editor's note: Boris Cherny is the technical lead for Anthropic's Claude Code and author of O'Reilly's "Programming TypeScript." After joining Anthropic in September 2024, he built the first terminal prototype of Claude Code. "AGI pilled" originates from internet slang "red pilled" (from the movie "The Matrix"), referring to an extremely optimistic or even fanatical belief in the imminent arrival of AGI. Within the AI industry, this term carries both positive connotations (daring to design products for more powerful models) and a warning (potential detachment from current model capabilities).
+
+## 2. After Interviewing Hundreds of PMs: Most Are Still Living in the Old World
+
+![](https://pbs.twimg.com/media/HGpGRRgX0AAn0c9.jpg)
+
+Lenny noted an interesting phenomenon: so many people want to be a PM at Anthropic that he's practically receiving a "referral fee" of thirty billion dollars in ARR. Cat has interviewed hundreds of people, and she feels most misunderstand the role of an AI PM.
+
+What's the issue? Cat believes that before AI, technology changed slowly, allowing for 6-12 month planning. Writing code was expensive, so the PM's core job was coordinating roadmaps across teams to ensure features unlocked each other. This approach was correct in the old world.
+
+But now, model capabilities are rapidly improving, AI has dramatically accelerated engineering efficiency, and many product feature delivery times have shrunk from 6 months to 1 month, sometimes 1 week, or even 1 day. At this pace, PMs shouldn't focus on multi-quarter roadmap alignment across teams. Instead, they should think: How can I find the fastest way to ship something? How can I enable an engineer to have an idea and get it into users' hands by the weekend?
+
+> The best AI product PMs can shorten the time from "having this idea" to "the product reaching users," and they can define which tasks the product must work on out of the box.
+> ("The PMs who do the best on AI native products are the ones who can figure out: How can I shorten the time from having this idea to actually getting the product in the hands of users.")
+
+## 3. How to Ship a Feature a Day
+
+![](https://pbs.twimg.com/media/HGpGU_LXwAAZI3y.jpg)
+
+Lenny pressed for specifics on how they achieve such speed. Cat mentioned three things.
+
+First, set clear goals. Because large language models are so versatile, everything is fuzzy: who the users are, what problem to solve, what the core scenario is. A good PM nails these down: our core users are professional developers in enterprises, this feature addresses fatigue from too many permission prompts, and the goal is to enable enterprise developers to achieve zero permission prompts safely. Once this goal is clear, it eliminates a vast number of irrelevant solutions.
+
+Second, the research preview mechanism. Almost all Claude Code features are first released as research previews. They explicitly tell users: this is an early product, just an idea, we're collecting feedback, and this feature may not be supported forever. This lowers the bar for release, allowing them to ship something in a week or two.
+
+Third, build a cross-functional rapid response pipeline. Cat's team has a mechanism called the "evergreen launch room." When an engineer feels a feature is ready and has been tested internally, they post it in this channel. Sarah from docs, Alex from product marketing, and colleagues from developer relations jump in, and external promotion can be completed the next day. Once this pipeline runs smoothly, any engineer can ship a feature without friction.
+
+Cat was clear: building this release pipeline is exactly what a PM should do.
+
+> Editor's note: How fast is Anthropic's release pace? Someone created a calendar showing that in the first few months of 2026, Anthropic had a major feature or product launch almost every day.
+
+## 4. The PRD Isn't Dead, But It's Different Now
+
+![](https://pbs.twimg.com/media/HGpGYM3XEAAYWXC.jpg)
+
+Lenny asked if they still write PRDs. Cat said they've replaced it with two things.
+
+First, a weekly rigorous metrics readout where the entire team reviews data together, ensuring everyone deeply understands all aspects of the business, key goals, trends, and drivers.
+
+Second, maintaining a set of team principles, including who the core users are, why them, and what trade-offs they're willing to make. The purpose of these principles is to enable everyone on the team to make decisions independently without waiting for the PM or other stakeholders to sign off.
+
+The PRD hasn't completely disappeared. For particularly fuzzy features, Cat still writes a one-pager listing goals, ideal scenarios, and current failure modes. Long-term projects requiring significant infrastructure investment still have PRDs. But most features don't need them.
+
+## 5. It's Not Mythos That Made Them Fast
+
+![](https://pbs.twimg.com/media/HGpGbVsXwAA6UPZ.jpg)
+
+Lenny noted that Anthropic's yet-to-be-officially-released Mythos model has attracted external attention, and asked if they're using it internally to accelerate development.
+
+Cat's answer was direct: they've been fast for several quarters already; Mythos is not the core reason. Mythos is powerful, and they do use models internally, which speeds up development somewhat, but it's not the main driver of the speed improvement. The bigger reason is the process and team expectations: everyone feels they have the right and responsibility to turn an idea into reality within a week.
+
+> Editor's note: Mythos (internal codename Capybara) is Anthropic's latest frontier model, released in limited quantities as a research preview on April 7, 2026, primarily for the Project Glasswing cybersecurity initiative. It was initially exposed early on March 26 due to a CMS misconfiguration. Drafts obtained by Fortune and other media described it as a larger, more powerful model than Opus. Anthropic claims the model significantly surpasses all previous models in code, reasoning, and cybersecurity, having already discovered thousands of zero-day vulnerabilities.
+
+## 6. Source Code Leak: Characterized as a Process Failure
+
+![](https://pbs.twimg.com/media/HGpGegzWUAAXLba.jpg)
+
+At the end of March 2026, the complete source code of Claude Code was leaked via an npm package. Lenny asked Cat what happened.
+
+Cat said they investigated immediately. The cause was human error: someone was using Claude to write a PR about an update to the package publishing process. The PR went through two layers of human review but still slipped through. They have since reinforced the process to ensure it doesn't happen again.
+
+Lenny asked a pointed follow-up: Is this person still at Anthropic? Cat's answer was crisp: Yes. This was a process failure; the most important thing is to learn the lesson and strengthen defenses.
+
+> Editor's note: The root cause was that Claude Code is built using the Bun runtime, which generates source map files by default. The `.npmignore` file was missing a `*.map` entry, causing a 59.8 MB source map file to be published to the public npm registry, exposing approximately 2,000 files, 512,000 lines of TypeScript source code, 44 unreleased feature flags, and an autonomous background agent named KAIROS (an unreleased feature discovered in the leaked code that allows Claude to run continuously in the background, even doing "memory consolidation" when the user is idle). This was the second code leak in 13 months, occurring just 5 days after the Mythos model information leak due to a CMS misconfiguration. For a company positioning itself as "safety-first," two leaks in one week raised external questions about its operational security.
+
+## 7. Blocking OpenClaw: Capacity Management or Ecosystem Wall?
+
+![](https://pbs.twimg.com/media/HGpGhq1WkAADW85.jpg)
+
+Lenny touched on another controversial topic: Anthropic banning subscription users from using Claude through third-party tools (specifically OpenClaw). The open-source community reacted strongly.
+
+Cat's explanation: Demand for Claude is very high, and they've been working hard to expand infrastructure while also optimizing the harness's token efficiency. The subscription plan was not designed for the usage patterns of third-party products, which place disproportionate pressure on the system. They spent a lot of time thinking about the smoothest transition, ultimately deciding to give each user some quota attached to their subscription. But the core decision was to prioritize their own products and API.
+
+> We did have to make the hard decision that we needed to prioritize our first-party products and our API.
+> ("We did have to make the hard decision that we needed to prioritize our first-party products and our API.")
+
+> Editor's note: Cat's answer only covers one side of this controversy. The full timeline is as follows: OpenClaw (originally named Clawdbot, renamed in January 2026 due to Anthropic's concerns about trademark confusion) is an open-source AI agent framework created by Austrian developer Peter Steinberger. It rapidly gained popularity in early 2026, accumulating 247,000 stars on GitHub, making it one of the fastest-growing projects in open-source history. On February 14, Steinberger announced he was joining OpenAI, and OpenClaw was transferred to an open-source foundation. On February 20, Anthropic updated its terms to explicitly prohibit using subscription OAuth tokens for third-party tools. By the end of March, Anthropic's own Cowork launched features like Claude Dispatch, which heavily overlapped with OpenClaw's most popular capabilities. The formal block took effect on April 4, with less than 24 hours' notice to users. Steinberger criticized Anthropic for "copying popular features into your own closed harness, then locking the open source out." Boris Cherny stated on X that the team is "big fans of open source" and that he personally submitted a PR to OpenClaw to improve prompt caching efficiency. The temperature difference between these actions and actual policy was felt by users. A Max subscription user paying $200/month running a full-day autonomous agent through OpenClaw could consume API costs equivalent to $1,000-$5,000. From an economic perspective, Anthropic's decision has rationality. However, the timing of this decision coinciding with Cowork's feature expansion remains the core of community controversy.
+
+## 8. The Full Picture of the PM Team
+
+![](https://pbs.twimg.com/media/HGpGk3_W8AEA50F.jpg)
+
+Cat mentioned that Anthropic has approximately 30-40 PMs distributed across several teams:
+
+- Research PM team: responsible for collecting customer feedback on models and driving model releases.
+- Claude Developer Platform team: maintains services like the API and Managed Agents.
+- Claude Code team: builds the core product.
+- Enterprise team: handles security controls, cost management, RBAC (Role-Based Access Control), and other features that make large enterprises comfortable using the product.
+- Growth team: responsible for growth across the entire product suite.
+
+## 9. Role Blurring: The Lines Between Engineer, PM, and Designer Are Disappearing
+
+![](https://pbs.twimg.com/media/HGpGn-KXIAA89_2.jpg)
+
+Lenny asked the question every PM is anxious about: Is the PM role still needed in the future?
+
+Cat's observation is that all roles are blurring. PMs are writing code, engineers are making product decisions, and designers are doing PM work and submitting code. She said there are two paths: either hire a large number of engineers with product taste, or maintain the same number of engineers and hire more PMs to guide them. Anthropic chose the former—hiring many engineers with product taste.
+
+She noted that many engineers on the team can independently handle the entire process from "seeing user feedback on Twitter" to "shipping a feature over the weekend," with almost no PM involvement. This is the most efficient model.
+
+> As code becomes much cheaper to write, the thing that becomes more valuable is deciding what to write.
+> ("As code becomes much cheaper to write, the thing that becomes more valuable is deciding what to write.")
+
+Cat herself comes from an engineering background. She previously worked as a product engineer at Scale AI, an engineering manager at Dagster Labs, and then went into venture capital at Index Ventures. Almost all PMs on the team either were engineers or write code directly on Claude Code. The designer also used to be a frontend engineer.
+
+So why is an engineering background particularly useful right now? Cat explained that if you have an engineering background, you can judge how difficult something should be. If it's simple, stop discussing and spend an hour doing it; if it's hard, you know the cost upfront and can prioritize more accurately.
+
+However, she still believes that regardless of background, the most core skill is product taste.
+
+> Product taste is still a very rare skill to have, and we'll pretty much hire anyone who we feel has demonstrated this strongly.
+> ("Product taste is still a very rare skill to have, and we'll pretty much hire anyone who we feel has demonstrated this strongly.")
+
+## 10. "The Right Amount of AGI Pilled"
+
+![](https://pbs.twimg.com/media/HGpGrHhWoAE8dTw.jpg)
+
+When discussing what new skills PMs need, Cat gave the most insightful answer of the entire episode.
+
+The hardest skill is defining what the product should look like a month from now. There's immense ambiguity: what will the model's capabilities be within that timeframe? How will user behavior change?
+
+> It is very hard to be the right amount of AGI pilled.
+> ("It is very hard to be the right amount of AGI pilled.")
+
+Cat said everyone can see the ultimate future: **the model is incredibly smart, can do anything, and you just need an input box to tell it what you want, and it can connect to any tool to complete the task.** That's the product form of AGI.
+
+But the problem is that it's too easy to design products for that ultimate version. The hard part is figuring out the boundaries of the current model's capabilities and how to extract maximum value within those boundaries. Being too AGI pilled makes you ignore current user pain points; being too conservative leaves you unprepared for the next model upgrade.
+
+The best PMs can see a signal: how users are pushing the limits of the existing product. They can use these signals to determine direction, make steady progress, and flexibly adjust the roadmap when model capabilities exceed or fall short of expectations.
+
+Cat's own approach is to spend 30% of her time deliberately pushing Cowork to its limits, talking to the model to understand why it fails on certain tasks.
+
+## 11. What Models Still Don't Understand
+
+![](https://pbs.twimg.com/media/HGpGuYmWwAARi8Z.jpg)
+
+Lenny asked: Before models become super smart, where are human brains still useful?
+
+Cat's answer pointed to common sense and emotional intelligence. Every product launch involves a thousand tiny details. Models still can't accurately judge who the key stakeholders are, their relationships, their preferences, or what communication context should be used to keep them engaged. This implicit interpersonal judgment remains human territory. She believes models will get better at this over time, but the gap is still there.
+
+## 12. P0 to P0000: Staying Sane in Chaos
+
+![](https://pbs.twimg.com/media/HGpGxowW4AE6KIv.jpg)
+
+Lenny asked how to stay sane under this pace. Cat laughed and said their team is full of people who thrive on chaos. They face every challenge with a smile, because if you get too stressed about anything, you'll burn out.
+
+She gave a vivid description: A P0 (highest priority incident) comes in on Sunday night, another P0 on Monday, and then a P0000 on Monday afternoon. "You'll think, wow, I was actually worried about that Sunday P0."
+
+Her coping strategy is very practical: acknowledge that your capacity is limited, get good sleep to make good decisions the next day, ruthlessly prioritize, and allow the product to be imperfect. Some releases are indeed not polished enough, but as long as it doesn't affect the core scenario, accept it, wait for feedback, and fix it in the next version.
+
+## 13. The Cost of Speed: Feature Overlap, User Confusion
+
+![](https://pbs.twimg.com/media/HGpG0-vXMAEKi6Q.jpg)
+
+Lenny asked what was sacrificed for speed. Cat said the biggest cost was product consistency.
+
+The traditional approach is to carefully plan the relationship between each product in the suite, each product's use case, and how they integrate. Now, Anthropic sometimes launches overlapping features simultaneously because there are two good internal approaches, and they want external users to tell them which is better.
+
+The cost is that new users might not know the best path to accomplish a task. She admitted they need to do more educational work to help users understand core features and best practices.
+
+## 14. Why Anthropic Wins: Mission and Focus
+
+![](https://pbs.twimg.com/media/HGpG31zWIAA_-pg.jpg)
+
+Cat mentioned two factors.
+
+First is the unified mission. Anthropic hires people who care most about "bringing safe AGI to all of humanity," and this mission is frequently referenced in product decisions. Because the mission is above any single product line, cross-organizational decisions can be made very quickly, and execution can be highly unified.
+
+Cat specifically emphasized the concrete meaning of the mission: it means teams are willing to make decisions that sacrifice their own goals and Key Results (KRs) to serve Anthropic's overall goals and KRs, and people are happy to make that trade-off.
+
+> Mission means that teams are willing to make sacrifices that hurt their own goals and their own KRs in service of Anthropic's goals and Anthropic's KRs.
+
+## 15. Claude Code, Desktop, Cowork: When to Use Which
+
+![](https://pbs.twimg.com/media/HGpG7BdWUAAVNE7.jpg)
+
+In this section, Cat gave a clear classification.
+
+- **CLI (Command Line Interface):** The most powerful, features usually launch here first. Best for quickly starting a coding task when you need the latest and greatest features.
+- **Desktop App:** Best for frontend development. Cat often opens the preview pane, chatting with Claude while seeing the web app she's building in real-time.
+- **Web and Mobile:** Best when you're away from your computer. If you have an idea while walking, you can pull out your phone and start a task.
+- **Cowork:** Handles non-code output—responding to Slack messages, making a slide deck for a client meeting, writing a feature goal document.
+
+Cat specifically mentioned that to get the most out of Cowork, the first step is to connect all relevant data sources: Google Calendar, Slack, Gmail, Google Drive. Only when Cowork has access to sufficient context can it produce high-quality output.
+
+## 16. Custom Applications: Everyone's Personal SaaS
+
+![](https://pbs.twimg.com/media/HGpG-lBWAAEuio4.jpg)
+
+Cat gave an example. Someone on the Claude Code sales team found themselves repeatedly making the same type of presentation. They used Claude Code to build a web application with built-in effective deck templates that pulls customer data from Salesforce and Gong, automatically generating customized decks for specific clients. For example, it would note whether the client uses Bedrock or Claude Code for Enterprise, corresponding to different feature sets.
+
+## 17. Token Costs Are Rising, But Still Below Salary
+
+![](https://pbs.twimg.com/media/HGpHCA8XoAA9lr-.jpg)
+
+Lenny brought up a hot topic: token costs exceeding employee salaries. Cat confirmed the trend but didn't give specific numbers. She said that with every model upgrade or major product improvement, people delegate more tasks to AI, spend more time in Claude Code and Cowork, and the token cost per engineer or knowledge worker is indeed growing. However, it is still far below an engineer's salary, though the proportion is steadily increasing.
+
+## 18. Claude's Personality is a Moat
+
+![](https://pbs.twimg.com/media/HGpHFigX0AAn2dh.jpg)
+
+Cat said one of Claude's core differentiators is its personality. Users often mention that Claude feels "relaxed and fun but incredibly capable."
+
+She specifically highlighted two personality traits:
+
+- **Low ego:** If you tell Claude it made a mistake, it says, "Oops, thanks for telling me, I'll fix it," instead of making excuses.
+- **Positive attitude:** When you face a seemingly impossible task, Claude says, "No problem, I think we can start like this. Do you want me to get started for you?"
+
+Cat compared this to a colleague relationship. Think of everyone you've worked with; there are always some people whose energy you really appreciate. Claude's goal is to be that kind of colleague.
+
+## 19. Product Vision: From Single Task to Agent Matrix
+
+![](https://pbs.twimg.com/media/HGpHIuWXIAAOgcn.jpg)
+
+Cat used "building blocks" to describe the long-term roadmap. The core building block is the success rate of a single task: given a clear prompt, can it consistently produce an acceptable output?
+
+As models get stronger, the success rate for single tasks increases, and users naturally start doing multiple tasks in parallel. By the end of 2025, multi-coding became a major trend, and it's even more common now.
+
+Cat's extrapolation is: one task succeeds, then six tasks run simultaneously. Later, perhaps 50 Claudes running at once, or hundreds. This path goes from a single operator to an Agent matrix.
+
+## 20. Lightning Round: Rock Climbing, Waymo, and a Retirement of Ten Thousand Boulders
+
+![](https://pbs.twimg.com/media/HGpHL07XYAAE2j0.jpg)
+
+Cat recommended two books:
+
+- **"How Asia Works":** About what policies and governments create lastingly successful economies.
+- **"The Technology Trap":** About the impact of past technological revolutions (Industrial Revolution, Computer Revolution) on workers.
+
+Both are directly relevant to the AI transformation she is experiencing.
+
+Her favorite product is Waymo, which she uses for two commutes daily. Her favorite media are the F1 documentary "Drive to Survive" and the rock climbing documentary "Free Solo." Cat said she likes watching people intensely focused on a pure engineering goal, which probably explains why she's at Anthropic.
+
+If she didn't have to work? She said she might move to Fontainebleau, France, which has ten thousand boulders, and climb every day. She'd also like to increase her reading from the current 0.5 books a week to one or two.
+
+## Q&A Highlights
+
+![](https://pbs.twimg.com/media/HGpHO9TXsAE19nE.jpg)
+
+- **How big is Anthropic's PM team?** About 30-40 people, divided into five teams: Research, Developer Platform, Claude Code, Enterprise, and Growth.
+- **Do PMs still write PRDs?** Not for most features. Weekly metrics readouts and team principles replace regular PRDs. Projects that are particularly vague or require significant infrastructure investment still have a one-page PRD.
+- **Did Anthropic use the Mythos model to accelerate internal development?** It helped, but it wasn't the core reason. Speed comes more from processes and team culture.
+- **Was the person responsible for the Claude Code source code leak fired?** No. Cat characterized it as a process failure and said safeguards have been reinforced.
+- **When to use Claude Code vs. Cowork?** Use Claude Code for code output, and Cowork for non-code output (documents, decks, email processing).
+
+## Editor's Notes: Three Contradictions Worth Watching
+
+![](https://pbs.twimg.com/media/HGpHSMTWgAAzX3_.jpg)
+
+This interview was overall a fairly friendly conversation. Lenny didn't push hard on sensitive topics, and Cat managed it well. However, a few interesting contradictions are worth noting.
+
+**The first is the gap between speed culture and safety promises.** Cat spent a lot of time talking about a speed culture of "shipping one feature a day," "lowering release commitments," and "letting engineers ship autonomously." Yet Anthropic is also the AI lab that has "safety" written on its business card. With two information leaks in one week (Mythos CMS misconfiguration + Claude Code source map), Cat's explanation for both was "human error, safeguards added." The nature of these two incidents goes beyond the scope of a single PR. She offered no reflection on whether the speed culture itself might have exacerbated this type of risk.
+
+**The second is the trade-off between an open ecosystem and a walled garden.** Cat's explanation for OpenClaw is economically logical: a $200/month subscriber using an agent framework could consume thousands of dollars worth of compute. But the timing coincidence is hard to ignore: Anthropic blocked the third-party tool's subscription channel only *after* launching a similar feature in its own Cowork product. OpenClaw founder Peter Steinberger's criticism—"copy the popular feature into a closed harness, then lock the open source out"—was not directly addressed by Cat in the interview. The temperature difference between Boris Cherny saying "we're big fans of open source" while submitting a PR to improve OpenClaw's performance, and the actual policy, is perhaps more telling than the policy itself.
+
+**The third contradiction is hidden in Cat's discussion of the PM role.** She uses "role fusion" to describe the PM's future, but the most efficient model she describes is an engineer handling the entire process from user feedback to launch, "almost without needing a PM." If this is true, where is the PM's value? Cat's answer is "product taste," but this concept remained abstract throughout the entire conversation, without any operational definition or evaluation criteria. When a screening criterion cannot be clearly described, it easily becomes an unfalsifiable gate. And her discussion of being "AGI pilled" implies a deeper paradox: if the model is strong enough, a single text box is all that's needed, making her product work essentially transitional. It's uncommon for a product leader to admit their work has an expiration date.
+
+**Signals to watch next:** Whether Anthropic's promised safety measures actually take effect, the direction of the developer ecosystem after the OpenClaw block, and how long this "permanent beta" research preview model can last—whether user patience has an upper limit.
+
+Original video: [https://www.youtube.com/watch?v=PplmzlgE0kg](https://www.youtube.com/watch?v=PplmzlgE0kg)

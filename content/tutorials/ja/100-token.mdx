@@ -1,0 +1,542 @@
+---
+title: "月100元未満でトークン自由を実現する方法（ステップバイステップガイド）"
+slug: "100-token"
+locale: "ja"
+description: "月100元未満でトークン自由を実現する方法（ステップバイステップガイド）"
+category: "LLMモデル"
+tags: ["OpenAI", "Claude"]
+techStack: []
+difficulty: "初心者"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HC9PBuzaAAAhd46.jpg"
+featured: false
+date: 2026-04-28
+---
+
+# 月100元未満でトークン自由を実現する方法（ステップバイステップガイド）
+
+並列タスク、バッチエージェント実行、長時間の対話型プログラミングセッションなどのシナリオでは、単一のアカウントではレート制限に頻繁に引っかかります。
+
+解決策はシンプルです。複数のPlusアカウントをプールすることです。`sub2api`を使用して外部に単一のAPIエンドポイントを公開し、内部でアカウントをスケジュールし、リアルタイムのクォータ状況に基づいて負荷分散を行います。
+
+さらに重要なのは、このソリューションのコストが非常に管理しやすいことです。以下の画像は、昨日の私の実際の使用状況です：2億トークン。
+
+それでは、この詳細なガイドを始めましょう。役に立ったと思ったら、いいねをお願いします🥰。ありがとうございます。
+
+![](https://pbs.twimg.com/media/HArIeDsa8AAyBUy.jpg)
+
+> 長文注意、先に保存することをおすすめします。
+
+## ソリューション概要：sub2api + マルチアカウントプールアーキテクチャ
+
+`sub2api`は、AIサブスクリプションクォータの管理と配布に特化したオープンソースのAI APIゲートウェイプラットフォームです。そのコア機能は以下の通りです：
+
+- **統一インターフェース**：複数のClaude/Codex Plusアカウントを単一のAPIエンドポイントに統合します。
+- **インテリジェントスケジューリング**：リアルタイムクォータに基づいて利用可能なアカウントを自動選択し、レート制限を回避します。
+- **負荷分散**：アカウントグループ化と重み設定をサポートし、リクエストを適切に分散します。
+- **相乗り共有**：複数のAPIキーを生成して、友人と使用量を共有できます。
+- **使用状況監視**：Webパネルで各アカウントの使用量とリクエスト統計をリアルタイムに確認できます。
+
+アーキテクチャ図：
+
+```text
+あなたのアプリケーション/ツール
+    ↓ (APIキーを使用)
+sub2apiゲートウェイ（Dockerデプロイ）
+    ↓ (インテリジェントスケジューリング)
+アカウントプール：Plusアカウント1、Plusアカウント2、Plusアカウント3...
+    ↓
+Claude/Codex公式API
+```
+
+システム全体は、Docker Composeを使用して1つのコマンドでデプロイされ、バックエンドサービス、PostgreSQLデータベース、Redisキャッシュが含まれます。
+
+## コストと前提条件
+
+このソリューションは「ゼロコスト」ではありませんが、全体的な投資は非常に管理しやすいです：
+
+1. **海外VPS**
+   - 推奨：シンガポールノード（低レイテンシーで中国からのアクセスが安定）。
+   - Alibaba Cloud/Tencent Cloudの軽量サーバーで月約30元で十分です。
+2. **複数のCodex Plusアカウント**
+   - 数量は使用頻度によります。まずは2つでテストし、必要に応じて追加することをおすすめします。
+   - ⚠️ **重要**：これはアカウント自体を購入するのではなく、「Businessチームに招待される」サービスに対して支払うものです。OpenAIに既に登録されているメールアドレスを提供する必要があります。販売者があなたのアカウントを自分のBusinessチームに招待し、Codex 5.3へのアクセスを付与します。
+   - Xianyuでの価格は通常、アカウントあたり約10元（月額課金）です。
+3. **ドメイン名（推奨）**
+   - ⚠️ **重要**：IP経由での直接アクセスは、フロントエンドJSファイルの読み込みに失敗する可能性があります。ドメイン名をバインドすることを強くおすすめします。
+   - Alibaba CloudやTencent Cloudなどのプラットフォームでドメイン名を購入できます。安いもので十分です。
+
+## デプロイ手順
+
+### 前提条件
+
+1. **DockerとDocker Composeのインストール**
+
+   サーバーにDockerとDocker Compose V2がインストールされていることを確認してください。
+
+2. **1Panelのインストール（推奨）**
+
+   1Panelは、オープンソースのLinuxサーバー運用管理パネルです。Dockerコンテナの管理、リバースプロキシの設定、ドメイン名のバインドなどを容易に行えます。特にドメイン名アクセスが必要なシナリオで強くおすすめします。
+
+   インストールコマンド：
+
+   ```bash
+   bash -c "$(curl -sSL https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh)"
+   ```
+
+   インストール手順：
+
+   1. 言語を選択（中国語/英語）。
+   2. デフォルト設定を使用するため、Enterキーを押し続けます。
+   3. **重要**：インストール後に表示される以下を覚えておいてください：
+      - セキュリティエントリ
+      - パネルユーザー名
+      - パネルパスワード
+      - 外部アクセスアドレス（例：`http://YOUR_SERVER_IP:24045/security_entry`）
+
+   ![](https://pbs.twimg.com/media/HArJUEBbAAAJJCO.jpg)
+
+   1. ブラウザで外部アドレスにアクセスし、ユーザー名とパスワードでログインします。
+
+   ![](https://pbs.twimg.com/media/HArJWcKawAAvS3M.jpg)
+
+   パネルにアクセスできない場合：
+
+   サーバーのファイアウォールでポートが開いていない可能性があります。1Panelはデフォルトでポート24045を使用します。クラウドサーバーのセキュリティグループにインバウンドルールを追加して、このポートを開く必要があります。
+
+   ![](https://pbs.twimg.com/media/HArJZgzbsAEbvPM.jpg)
+
+   **1Panelの役割**：
+
+   - Dockerコンテナを視覚的に管理します。
+   - Nginxリバースプロキシを設定し、ドメイン名をバインドします。
+   - SSL証明書（Let's Encrypt）を自動的に取得および更新します。
+   - サーバーリソースの使用状況を監視します。
+
+   インストール後、`sub2api`のデプロイに進むことができます。
+
+### sub2apiのデプロイ
+
+`sub2api`は2つの`docker-compose`設定ファイルを提供します：
+
+- `docker-compose.local.yml`：データはローカルディレクトリに保存され、バックアップと移行が容易です（推奨）。
+- `docker-compose.yml`：データはDocker名前付きボリュームに保存され、シンプルなシナリオに適しています。
+
+このチュートリアルでは、`docker-compose.local.yml`を使用してデプロイします。
+
+#### Docker Composeデプロイ手順
+
+**ステップ1：プロジェクトディレクトリを作成**
+
+```bash
+mkdir -p ~/sub2api && cd ~/sub2api
+```
+
+**ステップ2：docker-compose設定ファイルをダウンロード**
+
+```bash
+wget https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-compose.local.yml
+```
+
+または`curl`を使用：
+
+```bash
+curl -o docker-compose.local.yml https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-compose.local.yml
+```
+
+**ステップ3：`.env`設定ファイルを作成**
+
+```bash
+cat > .env << 'EOF'
+
+# データベース設定
+POSTGRES_USER=sub2api
+POSTGRES_PASSWORD=your_secure_db_password_here
+POSTGRES_DB=sub2api
+
+# Redis設定
+REDIS_PASSWORD=your_secure_redis_password_here
+
+# アプリケーション設定
+JWT_SECRET=your_jwt_secret_here_min_32_chars
+ADMIN_PASSWORD=your_admin_password_here
+
+# サービスポート（オプション、デフォルト8080）
+APP_PORT=8080
+EOF
+```
+
+**ステップ4：安全なランダムキーを生成**
+
+⚠️ **重要**：強力なパスワードを使用する必要があります！以下のコマンドで生成できます：
+
+```bash
+# JWT_SECRETを生成（少なくとも32文字）
+openssl rand -base64 32
+```
+
+```bash
+# ADMIN_PASSWORDを生成
+openssl rand -base64 16
+```
+
+生成したキーを`.env`ファイルの対応する場所に記入するか、以下のコマンドを使用して自動的に追加します（注意：以前の値を上書きします）：
+
+```bash
+sed -i "s|your_jwt_secret_here_min_32_chars|$(openssl rand -hex 32)|" .env
+sed -i "s|your_admin_password_here|$(openssl rand -hex 16)|" .env
+sed -i "s|your_secure_db_password_here|$(openssl rand -hex 16)|" .env
+sed -i "s|your_secure_redis_password_here|$(openssl rand -hex 16)|" .env
+```
+
+**ステップ5：サービスを起動**
+
+```bash
+docker compose -f docker-compose.local.yml up -d
+```
+
+![](https://pbs.twimg.com/media/HArJdiiaIAAbf5D.jpg)
+
+**ステップ6：サービス状態を確認**
+
+```bash
+docker compose -f docker-compose.local.yml ps
+```
+
+3つのコンテナすべてがUp状態であることを確認してください：
+
+- sub2api（メインサービス）
+- postgres（データベース）
+- redis（キャッシュ）
+
+![](https://pbs.twimg.com/media/HArJ2oBbAAAVUU-.jpg)
+
+**ステップ7：管理者パスワードを確認**
+
+`.env`ファイルで管理者パスワードを確認します：
+
+```bash
+cat .env | grep ADMIN_PASSWORD
+```
+
+または完全な設定を表示：
+
+```bash
+cat .env
+```
+
+![](https://pbs.twimg.com/media/HArJ9bQagAA13H4.jpg)
+
+## ドメインアクセスの設定（推奨）
+
+⚠️ 重要：IPアドレスでの直接アクセスは、フロントエンドJSファイルの読み込みに失敗する可能性があります。ドメインアクセスの設定を強く推奨します。
+
+ステップ1：1Panelアプリストアの同期
+
+1Panelを初めて使用する場合は、アプリストアをリモート同期する必要があります。
+
+![](https://pbs.twimg.com/media/HArKIdsbgAARii3.jpg)
+
+ステップ2：OpenRestyのインストール
+
+アプリストアでOpenResty（Nginxの拡張版）を検索してインストールします。インストールをクリックし、デフォルト設定を使用します。
+
+ステップ3：リバースプロキシWebサイトの作成
+
+1. 1Panelで「Websites」→「Create Website」→「Reverse Proxy」を選択します
+2. 設定を入力します：
+   - メインドメイン：ドメインを入力（例：sub2api.yourdomain.com）
+   - プロキシアドレス：`127.0.0.1:8080`
+   - その他のオプションはデフォルトのまま
+3. 確認をクリックして作成します
+
+![](https://pbs.twimg.com/media/HArKLJ4bgAEKQ8W.jpg)
+
+ステップ4：DNS解決の設定
+
+ドメインレジストラのコンソール（例：Alibaba Cloud、Tencent Cloud、Cloudflare）でAレコードを追加します：
+
+- レコードタイプ：A
+- ホストレコード：sub2api（または希望するサブドメイン）
+- レコード値：サーバーのパブリックIP
+- TTL：デフォルト値（通常600秒）
+
+![](https://pbs.twimg.com/media/HArKNrBaIAA56Kt.jpg)
+
+ステップ5：アクセスの確認
+
+DNSの伝播（通常1〜10分）を待ち、ブラウザでドメインにアクセス（例：http://sub2api.yourdomain.com）して、ページが正しく表示されるか確認します。
+
+![](https://pbs.twimg.com/media/HArKPp8bwAA8_LM.jpg)
+
+## 初回ログイン
+
+ブラウザでドメイン（例：https://sub2api.yourdomain.com）または http://YOUR_SERVER_IP:8080（ドメイン未設定の場合）にアクセスします。
+
+![](https://pbs.twimg.com/media/HArKRqMaYAEhpt0.jpg)
+
+管理者アカウントでログインします：
+
+- メール：`admin@sub2api.local`
+- パスワード：`.env`ファイルで設定した`ADMIN_PASSWORD`
+
+パスワードを忘れた場合は、`.env`ファイルを確認します：
+
+```bash
+cat ~/sub2api/.env | grep ADMIN_PASSWORD
+```
+
+## アカウントプールの設定
+
+### 1. アカウントグループの作成
+
+アカウントを追加する前に、異なるソースのアカウントをより適切に管理およびスケジュールするためにグループを作成することをお勧めします。
+
+管理パネルで「Groups」→「Create New Group」をクリックします。
+
+![](https://pbs.twimg.com/media/HArKehabAAAGclj.jpg)
+
+グループ情報を入力します：
+
+- グループ名：グループの名前（例：「Codexアカウントプール」）
+- プラットフォーム：プラットフォームの種類を選択
+  - Codex Plusアカウントの場合はOpenAIを選択
+  - 公式Claudeアカウントの場合はClaudeを選択
+  - Antigravityサービスの場合はAntigravityを選択
+- 説明：グループの説明（任意）
+
+![](https://pbs.twimg.com/media/HArKgrnasAAhBFo.jpg)
+
+### 2. Codex Plusアカウントの追加
+
+グループを作成したら、「Accounts」→「Add Account」をクリックします。
+
+![](https://pbs.twimg.com/media/HArKij_akAEddnl.jpg)
+
+アカウント情報を入力します：
+
+- アカウントタイプ：アカウントタイプに基づいて選択
+  - Codex Plusアカウント：OpenAIを選択
+  - 公式Claudeアカウント：Claudeを選択
+  - Antigravityサービス：Antigravityを選択
+- セッションキー：アカウントのSession Tokenを入力
+- アカウント名：アカウントにわかりやすい名前を付ける（例：「Codex Plusアカウント1」）
+- グループ：先ほど作成したグループを選択（例：「Codexアカウントプール」）
+- 重み：数値が大きいほどスケジュールされる確率が高くなります（デフォルトの1で問題ありません）
+
+Session Tokenの取得方法：
+
+1. 認証リンクをコピーして新しいタブで開きます
+2. プラットフォームにログインすると、認証ページにリダイレクトされます
+3. 認証をクリックすると、localhostアドレスにリダイレクトされます
+4. 完全なlocalhostリンクをコピーして貼り付けます
+
+![](https://pbs.twimg.com/media/HArKlzFaAAASx9K.jpg)
+
+上記の手順を繰り返して、すべてのPlusアカウントを追加します。
+
+![](https://pbs.twimg.com/media/HArKnmqbcAAhH0c.jpg)
+
+### 3. APIキーの作成
+
+「API Keys」→「Create New Key」をクリックします。
+
+設定オプション：
+
+- キー名：APIキーの名前（例：「マイ開発環境」）
+- レート制限：レート制限（任意）
+- クォータ：クォータ制限（任意）
+- アカウントグループ：先ほど作成したグループを選択
+
+作成後、APIキーが生成されます。
+
+![](https://pbs.twimg.com/media/HArKq-Ta4AANu36.jpg)
+
+### 4. アカウントへのチャージ（利用コードの使用）
+
+APIキーを作成したら、APIを使用するためにチャージする必要があります。sub2apiはクォータ管理に利用コードシステムを使用します。
+
+![](https://pbs.twimg.com/media/HArKtjKbUAEd22u.jpg)
+![](https://pbs.twimg.com/media/HArKwH8aIAAbMDD.jpg)
+
+ステップ1：利用コードの生成
+
+1. 管理パネルで「Redemption Codes」をクリックします
+2. 利用コード情報を入力します：
+   - 金額：チャージ金額（内部請求用の仮想クォータ）
+   - 有効期限：利用コードの有効期限（任意）
+   - 最大使用回数：最大使用回数（デフォルト1）
+3. 作成をクリックすると、システムが利用コードを生成します
+
+ステップ2：利用コードを使用してチャージ
+
+1. 管理パネルで右上のユーザーメニュー→「Redeem」をクリックします
+2. 生成された利用コードを入力します
+3. 「Redeem」をクリックしてチャージを確定します
+4. チャージが成功すると、アカウント残高が増加し、APIキーが正常に使用できるようになります
+
+注意事項：
+
+- 利用コードシステムは主に相乗り（シェア）シナリオ向けです。管理者がコードを生成して他のユーザーに配布できます。
+- 個人使用の場合は、大きな金額のコードを生成して、アカウントに一度にチャージします。
+- チャージ金額は仮想であり、実際の通貨取引は行われません。内部クォータ管理に使用されます。
+
+## コーディングエージェントでのAPIの使用
+
+設定後、さまざまなAIコーディングツールでsub2apiが提供するAPIを使用できます。
+
+### 方法1：cc-switchを使用したクイック設定（推奨）
+
+`cc-switch`はオープンソースの設定管理ツールで、各コーディングエージェントの設定ファイルを手動で変更することなく、異なるAIサービスプロバイダーの設定を素早く切り替えることができます。
+
+プロジェクトURL：[https://github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)
+
+重要な注意事項：
+
+- APIキーはアカウントグループにバインドされています。異なるプラットフォームには、対応するAPIキーを作成する必要があります。
+- 例：Codex、Claude、Geminiには3つの個別のAPIキーが必要です（それぞれ対応するアカウントグループに関連付けられます）。
+- 一元管理のために、APIキー作成時に名前をカスタマイズし、同じキー値を使用できます（ただし、キーがすべてのプラットフォームのアカウントグループに関連付けられていることを確認してください）。
+
+設定例：
+
+1. Claude設定
+
+![](https://pbs.twimg.com/media/HArK0d0aoAEJ1YR.jpg)
+
+2. Codex設定
+
+![](https://pbs.twimg.com/media/HArK2RobIAAcyY7.jpg)
+
+画像の形式に従って、ドメインとAPIキーを入力します。
+
+### 方法2：手動設定ファイルの変更
+
+ツールが`cc-switch`をサポートしていない場合は、設定ファイルを手動で変更できます。
+
+**OpenCode設定**
+
+OpenCodeでは、3つのプラットフォームに対してbaseURLとAPIキーを設定する必要があります：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "anthropic": {
+      "options": {
+        "baseURL": "https://sub2api.yourdomain.com/v1",
+        "apiKey": "your_claude_api_key"
+      }
+    },
+    "google": {
+      "options": {
+        "baseURL": "https://sub2api.yourdomain.com/v1beta",
+        "apiKey": "your_gemini_api_key"
+      }
+    },
+    "openai": {
+      "name": "OpenAI",
+      "options": {
+        "baseURL": "https://sub2api.yourdomain.com/v1",
+        "apiKey": "your_codex_api_key"
+      }
+    }
+  }
+}
+```
+
+設定の注意事項：
+
+- `sub2api.yourdomain.com`を実際のドメインに置き換えます
+- `your_api_key`をsub2api管理パネルで作成したAPIキーに置き換えます
+- 異なるプラットフォームには対応するAPIエンドポイントを使用します（ClaudeとOpenAIは`/v1`、Googleは`/v1beta`）
+
+## 使用効果と注意点
+
+デプロイ後、以下のメリットが得られます。
+
+1. **シームレスな切り替え**：アカウントがレート制限に達すると、システムが自動的に別の利用可能なアカウントに切り替わり、ワークフローが中断されません。
+2. **使用状況の監視**：管理パネルで各アカウントのリアルタイム使用量と残りクォータを確認できます。
+3. **コスト最適化**：複数ユーザーで共有する場合、一人あたりのコストが大幅に削減されます。
+
+![](https://pbs.twimg.com/media/HArK5RGakAIX4Tn.jpg)
+
+代表的な使用シナリオ：
+
+- **単一のヘビーユーザー**：通常、Plusアカウント3～5つで十分です。
+- **2～3人の共同利用**：一人あたり2アカウント、プール全体で合計4～6アカウント。
+- **小規模チーム（5人）**：10～15アカウント、一人あたり平均2～3アカウント。
+
+## よくある問題
+
+### 1. IP経由でフロントエンドJSファイルが読み込めない
+
+**問題の説明：**
+
+Dockerコンテナは正常に起動しますが、`http://YOUR_SERVER_IP:8080` でアクセスするとページが正しく表示されません。ブラウザのコンソールにJSファイルの読み込み失敗（例：`index-CP0CNDtB.js` が404を返す）が表示されます。
+
+![](https://pbs.twimg.com/media/HArLD5xakAAfisR.jpg)
+
+**原因：**
+
+これはsub2apiのフロントエンドリソースパス設定の問題です。IP直接アクセスでは静的リソースの読み込みに失敗する可能性があります。
+
+**解決策：**
+
+**方法1：ドメインをバインドする（推奨）**
+
+1. ドメインを用意し、AレコードをサーバーIPに設定します。
+2. 1Panelでリバースプロキシを設定します：
+   - 1Panelで「Webサイト」→「Webサイト作成」→「リバースプロキシ」に進みます。
+   - ドメイン：使用するドメインを入力します（例：sub2api.yourdomain.com）。
+   - プロキシアドレス：`http://127.0.0.1:8080`
+   - HTTPSを有効にする（オプション）。
+3. ドメイン経由でアクセスします：`https://sub2api.yourdomain.com`
+
+**方法2：docker-compose設定を変更する（一時的な解決策）**
+
+まだドメインがない場合は、`docker-compose.local.yml` に環境変数を追加してみてください。
+
+```yaml
+environment:
+  - BASE_URL=http://YOUR_SERVER_IP:8080
+```
+
+その後、サービスを再起動します。
+
+```bash
+docker compose -f docker-compose.local.yml down
+docker compose -f docker-compose.local.yml up -d
+```
+
+注：ドメインアクセスを強く推奨します。JS読み込み問題を解決するだけでなく、HTTPSを設定してセキュリティを確保することもできます。
+
+## まとめ
+
+sub2api + マルチアカウントプールのソリューションにより、比較的低コスト（30ドルのVPS + 複数のサブスクリプションアカウント）で事実上無制限のClaude/Codex利用が可能になります。デプロイにはある程度の技術知識が必要ですが、一度設定すれば、ユーザーエクスペリエンスは公式APIを使用するのとほぼ同じです。
+
+このソリューションは特に以下のケースに適しています。
+
+- **個人のヘビーユーザー**：単一アカウントのレート制限に悩まされることなく、マルチアカウント自動ローテーションでAIコーディングのワークフローを継続できます。
+- **友人との共同利用**：複数人でコストを分担できます。一人あたりの負担は非常に少なく、十分な利用量を確保できます。コード引き換えシステムにより、柔軟にクォータを割り当てられます。
+- **チームでのコラボレーション**：小規模な開発チームにとって、このソリューションはサブスクリプションアカウントの価値を最大限に引き出します。各メンバーが個別にPlusアカウントを購入するよりも、一元管理されたアカウントプールの方が安価で、実際の使用状況に基づいて動的にリソースを割り当てることができ、アイドル状態のアカウントや頻繁なレート制限を防げます。チーム管理者は使用状況を監視し、クォータ制限を設定してリソースの公平な配分を確保できます。
+
+もしあなたがAIコーディングのヘビーユーザー、または安定したコスト効率の高いAI機能を必要とするチームなら、このソリューションを試す価値があります。
+
+**関連リンク：**
+
+- sub2api GitHub：<https://github.com/Wei-Shaw/sub2api>
+- オンラインデモ：<https://demo.sub2api.org/>
+- 1Panel Webサイト：<https://1panel.cn/>
+
+## スレッド
+
+### 最近の新しい記事です。役に立ったら、いいねをお願いします。本当に励みになります。ありがとうございます！🫡
+
+<https://x.com/mkdir700/status/2030636031943618756>
+
+<https://t.co/8pdoHu2Int>
+
+> 著者：mkdev | 私は青いブリュレが大好きです (@mkdir700)
+> URL：<https://x.com/mkdir700/status/2030299845739811086>
+>
+> <https://t.co/KODdmd8r7M>
