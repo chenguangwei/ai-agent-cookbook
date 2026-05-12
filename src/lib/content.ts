@@ -27,7 +27,7 @@ export function getTutorialBySlug(slug: string, locale?: string): Tutorial | nul
 
 export function getFeaturedTutorials(limit = 4, locale?: string): Tutorial[] {
   const all = getAllTutorials(locale)
-  return all.slice(0, limit)
+  return [...all.filter(t => t.featured), ...all.filter(t => !t.featured)].slice(0, limit)
 }
 
 export function getRecentTutorials(limit = 3, locale?: string): Tutorial[] {

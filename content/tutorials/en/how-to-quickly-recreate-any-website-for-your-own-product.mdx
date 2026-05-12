@@ -1,0 +1,160 @@
+---
+title: "How to Quickly Recreate Any Website For Your Own Product"
+slug: "how-to-quickly-recreate-any-website-for-your-own-product"
+locale: "en"
+description: "How to Quickly Recreate Any Website For Your Own Product"
+category: "LLM Models"
+tags: ["Claude"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HH92F15WQAAVjic.jpg"
+featured: false
+date: 2026-05-11
+---
+
+# How to Quickly Recreate Any Website For Your Own Product
+
+
+This morning I scrolled into DilumSanjaya's post. 1M views, 10K bookmarks. I built a version for my own product. Here's the full method.
+
+> Quoted tweet
+> Fun interactive science app ideas | Part 3 Played around with generating 3D biological structures and made an app to explore them interactively UI Design GPT Images 2 Code Gemini 3.1 Pro More demos ↓ https://t.co/j0tZl5kicO
+> https://x.com/i/web/status/2053155739389378849
+
+His original is a cell anatomy illustration generated with GPT Images 2, then turned into an interactive website with a code generation tool. The 3D model rotates, click any organelle and you get the details. The details clearly took a lot of time to polish.
+
+My timeline was full of people trying to clone the cell site exactly. But I think the lesson here isn't to copy. It's to take the skeleton and build your own thing inside it.
+
+I build AI agents, so I swapped the cell structure for agent internal structure
+
+![](https://pbs.twimg.com/media/HH-Apo5WUAYnkR4.jpg)
+
+## The tools I used:
+
+
+- GPT Images 2: generate the concept image (lock in visual direction)
+- Tripo API: 3D model generation (signup gives 600 free credits, enough for about 10 models)
+- Google AI Studio (Gemini 3.1 Pro): reference image + the original video → generates the website prototype in one shot. AI Studio's build feature accepts video as a reference, so the model understands what you want at the interaction level, not just from a static image. One-shot magic, but iteration caps at two rounds.
+- Claude + Codex: design review, detail polish, API integration
+
+![](https://pbs.twimg.com/media/HH91SdxXUAIhrip.jpg)
+
+Done in an afternoon. Below is the full chain and every prompt.
+
+## Why Gemini for the base
+
+
+Honestly, Gemini's coding ability itself isn't that strong. What's actually strong is its visual perception. It accepts video input (most other major models only take images), so when you feed it a reference screenshot plus the original video together, it understands what the site looks like and how it behaves at the interaction level. That's why it nails visual fidelity on the first shot.
+
+But because its coding is mediocre, iteration breaks down fast. Quality drops after a few rounds of conversation, even with focused single-area refinement prompts. From what I've tested, two rounds is the ceiling. Anything more and it starts breaking things.
+
+So Gemini's role is clear: visual in, visual out, lay the base. Refine at most twice, then export the code and switch to another model.
+
+## The base layer theory
+
+
+Here's the core insight of the whole pipeline:
+
+Once you have a base with a clear UI/UX direction, any model you bring in afterward will automatically respect that visual direction. Colors stay locked. Layout holds. Style doesn't drift.
+
+Without a base, if you go straight to Claude or Codex from scratch, every model improvises. The result is a mess of clashing styles.
+
+Use Gemini to set the tone (1 base + max 2 refinement rounds), then export the code and let other models handle the details. This pipeline works for any website.
+
+## The flow
+
+
+1. Figure out what your business needs to display. This is step one, not finding a reference image. The original showed cell internal structure. I swapped it for AI agent internal structure: Soul, Identity, Role, Tools. If you build SaaS, break your core feature modules into cards. If you run e-commerce, turn product hierarchy into a browsable directory. If you're building a personal brand, make your portfolio an interactive gallery. Decide what you're showing first, then go find a skeleton.
+2. Find a design you like, take it apart. How many columns, color palette, information hierarchy, interaction patterns. The skeleton is generic. The content is yours.
+3. Use GPT Images to generate concept art and lock direction fast. This step is where you actually have control over the whole pipeline. Image generation takes seconds per shot. You can rapidly try different visual mappings: agent characters on the left or on top? What layout for detail cards? Stay on brand or not? Lock all of this in at the image stage. It's 10x faster than coding it up and changing it later.
+4. Concept image + prompt → Gemini, one shot for the website base.
+5. Max 2 refinement rounds, then export code and switch models.
+
+![](https://pbs.twimg.com/media/HH90z9LWEAAqu7j.jpg)
+
+## The base prompt
+
+
+Feed Gemini your concept image AND the original reference video together (AI Studio's build feature accepts both). This basic template is enough:
+
+```plaintext
+Recreate the UI shown in the attached image as a working web app.
+
+- Image: visual reference for layout, colors, typography, cards, content.
+- Video: interaction patterns to follow.
+- Placeholder areas (like 3D viewers or empty states): describe how they should feel, not what's missing.
+
+Image is the single source of truth for visuals. Video is the single source of truth for interactions. Don't invent anything outside these two references.
+
+```
+
+The two "single source of truth" lines at the end matter most. Without them, Gemini improvises. It adds things it thinks look better but that aren't in your image or video. That's where it breaks.
+
+## The two refinement prompts
+
+
+After the base lands, there will be problems. Gemini holds for two refinement rounds. Round three starts breaking what rounds one and two fixed. So you only get two chances. Each one needs to cover as much as possible.
+
+![](https://pbs.twimg.com/media/HH904DbWAAEuQ59.jpg)
+
+If you still have problems after two rounds, export the code and switch to Claude or Codex. Don't keep grinding. It only gets worse.
+
+Round 1: fix the parts
+
+Pick the 2-3 roughest areas of the base and have the model fix them in one pass. Don't write pixel values or color codes. Just tell it the feeling you want. The base has already locked in the visual direction. What you want at the refinement stage is the model's own design judgment. Writing too specifically actually limits it.
+
+If you don't know how to describe a "feeling," use products you've seen as references. "As clean as Linear's sidebar." "Card layout like Notion." Use product names instead of abstract adjectives. Friendlier for people who aren't designers.
+
+```plaintext
+Improve these areas without changing the overall layout or color scheme:
+
+1. [Your area A, e.g.: the navigation bar feels like a generic SaaS header, make it feel like it belongs to a premium creative tool]
+2. [Your area B, e.g.: the sidebar list items all look the same, each item needs a distinct visual identity, the selected state should clearly say "you are here"]
+3. [Your area C, e.g.: the detail cards read like data tables, they should feel like pages from a beautifully designed dossier]
+
+Keep everything else as is. Only touch these three areas.
+```
+
+Round 2: fix the whole
+
+After round one fixes the parts, the overall coherence breaks. Round two doesn't touch the parts. It fixes the whole.
+
+```plaintext
+Look at the full page as one composition. 
+Check that the visual weight is balanced across all sections. 
+The warmth and tone should feel consistent everywhere, no area should feel colder or more generic than the rest. 
+Refine any spacing that feels cramped or any element that feels disconnected from its neighbors. 
+Add small details that make the page feel polished: subtle shadows, smooth hover states, consistent transitions. 
+The page should feel like one coherent, handcrafted experience from corner to corner.
+```
+
+These two prompts aren't tied to any specific layout. Three-column dashboards, single-page landing pages, e-commerce product pages, all of them work. Round one picks the parts you're least happy with. Round two harmonizes the whole.
+
+From there, export the code and hand it to Claude Code + Codex to keep tuning.
+
+## The result
+
+
+From seeing the post to shipping, I spent about 4-5 hours (concept image 30 minutes, Gemini base + refinement 1 hour, Claude/Codex detail polish 2-3 hours). First time through could take longer. But the point isn't speed. It's that this pipeline is reusable:
+
+1. Screenshot a design you like / download the demo video
+2. Combine your own thinking + GPT Images 2, generate options, pick the best one
+3. One shot through Gemini for the base
+4. Max 2 refinement rounds, then switch models
+
+Next time you see a website design you want to bookmark, try just building your own version. 
+
+play with it here: voxyz.ai/experiments/cast
+
+## Thread
+
+
+### 1
+
+https://x.com/Voxyz_ai/status/2053516630685024610
+
+https://t.co/pxUzUw8Eux
+
+![video](https://pbs.twimg.com/amplify_video_thumb/2053516561822908416/img/QhmcI1TaoKES_wNW.jpg)
+[video](https://video.twimg.com/amplify_video/2053516561822908416/vid/avc1/2980x2160/x3rDYZMb8DjMCLCp.mp4?tag=27)
