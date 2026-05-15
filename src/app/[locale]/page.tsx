@@ -10,17 +10,33 @@ import { getTranslations } from 'next-intl/server';
 import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath, getSiteUrl, SITE_NAME } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { locales } from '@/i18n/config';
+import { getHomeSeo } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations('Home');
+  const seo = getHomeSeo(locale);
+  const canonical = getCanonicalUrl(locale);
 
   return {
-    title: t('seoTitle') || t('title'),
-    description: t('seoDescription') || t('subtitle'),
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
     alternates: {
-      canonical: getCanonicalUrl(locale),
+      canonical,
       languages: buildLocaleAlternates(),
+    },
+    openGraph: {
+      type: 'website',
+      locale: seo.openGraphLocale,
+      url: canonical,
+      siteName: SITE_NAME,
+      title: `${seo.title} | ${SITE_NAME}`,
+      description: seo.description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${seo.title} | ${SITE_NAME}`,
+      description: seo.description,
     },
   };
 }
@@ -60,6 +76,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const t = await getTranslations('Home');
   const tCat = await getTranslations('Home.categories');
   const tStat = await getTranslations('Home.stats');
+  const seo = getHomeSeo(locale);
 
   const hotTopicTutorials = getRecentTutorials(4, locale);
   const hotTopicSlugs = new Set(hotTopicTutorials.map((tutorial) => tutorial.slug));
@@ -105,13 +122,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
-    url: getSiteUrl(),
-    description: t('seoDescription'),
+    url: getCanonicalUrl(locale),
+    description: seo.description,
+    inLanguage: locale,
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${getSiteUrl()}/tutorials?q={search_term_string}`,
+        urlTemplate: `${getSiteUrl()}${getLocalizedPath(locale, 'tutorials')}?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

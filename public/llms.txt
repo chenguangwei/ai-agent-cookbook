@@ -1,0 +1,41 @@
+# Agent Cookbook
+
+Agent Cookbook is a multilingual tutorial platform for learning AI agents, AI tools, and AI software development. It provides practical guides, framework tutorials, tool directories, documentation, news, practice labs, and community examples for developers building AI agent systems.
+
+## Primary Topics
+
+- AI Agent tutorials and implementation guides
+- AI tools for agent development and automation
+- AI software tutorials for building production-ready workflows
+- LangChain, LangGraph, CrewAI, Claude Code, OpenCLAW, and multi-agent systems
+- Prompt engineering, RAG, agent memory, tool calling, evaluation, and deployment
+
+## Main Pages
+
+- [Home](https://agent-cookbook.com/)
+- [Tutorials](https://agent-cookbook.com/tutorials)
+- [AI Tools Directory](https://agent-cookbook.com/tools)
+- [Documentation](https://agent-cookbook.com/docs)
+- [AI News](https://agent-cookbook.com/news)
+- [Practice Labs](https://agent-cookbook.com/practice)
+- [Community Showcase](https://agent-cookbook.com/showcase)
+- [Tutorial Requests](https://agent-cookbook.com/request)
+
+## Language Versions
+
+- [English](https://agent-cookbook.com/)
+- [Chinese](https://agent-cookbook.com/zh)
+- [Japanese](https://agent-cookbook.com/ja)
+- [Korean](https://agent-cookbook.com/ko)
+
+## Content Structure
+
+Tutorial pages are organized by locale and include frontmatter metadata such as title, slug, description, category, tags, tech stack, difficulty, duration, featured status, and date. Tool pages include metadata such as title, description, category, tags, website URL, repository URL, documentation URL, pricing, stars, license, featured status, and date.
+
+Use canonical URLs and hreflang links from each page when indexing multilingual content. Prefer the page language that matches the user's query.
+
+## Discovery
+
+- [Sitemap](https://agent-cookbook.com/sitemap.xml)
+- [Robots](https://agent-cookbook.com/robots.txt)
+

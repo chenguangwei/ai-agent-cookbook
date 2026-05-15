@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
 import { getSiteUrl, SITE_NAME } from "@/lib/utils";
+import { defaultSiteSeo } from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,45 +20,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   applicationName: SITE_NAME,
   title: {
-    default: `${SITE_NAME} - AI Agent 教程、实战、工具与资讯平台`,
+    default: `${defaultSiteSeo.title} | ${SITE_NAME}`,
     template: `%s | ${SITE_NAME}`,
   },
-  description:
-    `${SITE_NAME} 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯，包含 OpenCLAW、LangChain、LangGraph 等框架的详细教程。`,
-  keywords: [
-    "AI Agent",
-    "Agent 教程",
-    "Agent 实战",
-    "Agent 工具",
-    "Agent 新闻",
-    "Agent 资讯",
-    "OpenCLAW",
-    "OpenClaw",
-    "LangChain",
-    "LangGraph",
-    "Autonomous AI",
-    "Multi-Agent Systems",
-    "LLM",
-    "GPT",
-    "Claude",
-    "AI 智能体",
-    "AI 开发教程",
-  ],
+  description: defaultSiteSeo.description,
+  keywords: defaultSiteSeo.keywords,
   authors: [{ name: `${SITE_NAME} Team` }],
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: defaultSiteSeo.openGraphLocale,
     url: getSiteUrl(),
     siteName: SITE_NAME,
-    title: `${SITE_NAME} - AI Agent 教程、实战、工具与资讯平台`,
-    description:
-      `${SITE_NAME} 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。`,
+    title: `${defaultSiteSeo.title} | ${SITE_NAME}`,
+    description: defaultSiteSeo.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} - AI Agent 教程、实战、工具与资讯平台`,
-    description:
-      `${SITE_NAME} 是专业的 AI Agent 教程与资源平台。提供 Agent 实战案例、Agent 工具推荐、Agent 新闻资讯。`,
+    title: `${defaultSiteSeo.title} | ${SITE_NAME}`,
+    description: defaultSiteSeo.description,
   },
   robots: {
     index: true,
