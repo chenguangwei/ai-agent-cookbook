@@ -104,6 +104,7 @@ export async function POST(request: Request) {
       thumbnail ? `thumbnail: "${thumbnail}"` : null,
       `featured: false`,
       `date: ${date}`,
+      `updatedAt: ${date}`,
       '---',
     ].filter(Boolean).join('\n');
 

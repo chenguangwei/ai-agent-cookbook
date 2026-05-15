@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllTools, getAllTutorials } from '@/lib/content';
+import { getAllTools, getAllTutorials, getTutorialUpdatedAt } from '@/lib/content';
 import { locales } from '@/i18n/config';
 import { getCanonicalUrl } from '@/lib/utils';
 
@@ -30,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const tutorials = getAllTutorials();
   const tutorialPages: MetadataRoute.Sitemap = tutorials.map((tutorial) => ({
     url: getCanonicalUrl(tutorial?.locale || 'en', `tutorial/${tutorial?.slug}`),
-    lastModified: tutorial?.date ? new Date(tutorial.date) : now,
+    lastModified: tutorial ? new Date(getTutorialUpdatedAt(tutorial)) : now,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));

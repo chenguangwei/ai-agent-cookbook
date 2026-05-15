@@ -26,6 +26,7 @@ export default defineConfig({
         duration: s.string().optional(),
         featured: s.boolean().default(false),
         date: s.isodate(),
+        updatedAt: s.isodate().optional(),
         thumbnail: s.string().optional(),
         videoUrl: s.string().optional(),
         body: s.raw(),

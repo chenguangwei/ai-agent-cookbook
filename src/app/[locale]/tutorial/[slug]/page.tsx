@@ -7,7 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
 import { TableOfContents } from '@/components/features/TableOfContents';
 import { MDXRenderer } from '@/components/markdown';
-import { getAllTutorials, getTutorialLocalesBySlug } from '@/lib/content';
+import { getAllTutorials, getTutorialLocalesBySlug, getTutorialUpdatedAt } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
 import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat, getLocalizedPath, getSiteUrl, SITE_NAME } from '@/lib/utils';
 import type { Metadata } from 'next';
@@ -53,6 +53,7 @@ export async function generateMetadata({ params }: TutorialPageProps): Promise<M
       description: tutorial.description,
       type: 'article',
       publishedTime: tutorial.date,
+      modifiedTime: getTutorialUpdatedAt(tutorial),
       images: tutorial.thumbnail ? [tutorial.thumbnail] : [],
       tags: (tutorial.tags || []).filter((t): t is string => t !== null),
     },
@@ -88,6 +89,7 @@ export default async function TutorialPage({ params }: TutorialPageProps) {
     description: tutorial.description,
     ...(tutorial.thumbnail && { image: tutorial.thumbnail }),
     ...(tutorial.date && { datePublished: tutorial.date }),
+    dateModified: getTutorialUpdatedAt(tutorial),
     inLanguage: locale,
     url: getCanonicalUrl(locale, `tutorial/${slug}`),
     publisher: {

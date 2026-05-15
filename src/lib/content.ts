@@ -8,9 +8,17 @@ export type PracticeLab = (typeof labs)[number]
 export type Showcase = (typeof showcase)[number]
 export type Tool = (typeof tools)[number]
 
+function getContentTime(value?: string): number {
+  return value ? new Date(value).getTime() : 0
+}
+
+export function getTutorialUpdatedAt(tutorial: Tutorial): string {
+  return tutorial.updatedAt ?? tutorial.date
+}
+
 export function getAllTutorials(locale?: string): Tutorial[] {
   const all = locale ? tutorials.filter(t => t.locale === locale) : tutorials
-  return [...all].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return [...all].sort((a, b) => getContentTime(getTutorialUpdatedAt(b)) - getContentTime(getTutorialUpdatedAt(a)))
 }
 
 export function getTutorialLocalesBySlug(slug: string): string[] {

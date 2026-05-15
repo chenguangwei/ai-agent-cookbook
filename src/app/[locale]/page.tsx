@@ -4,7 +4,7 @@ import { Search, ArrowUpRight, BookOpen, Wrench, Sparkles, Command, Newspaper, C
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TutorialBadge } from '@/components/features/TutorialBadge';
-import { getFeaturedTutorials, getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
+import { getRecentTutorials, getAllTutorials, getAllTools, getAllShowcaseProjects } from '@/lib/content';
 import { getFeaturedNewsByCategory, type NewsItem } from '@/lib/db/news';
 import { getTranslations } from 'next-intl/server';
 import { buildLocaleAlternates, getCanonicalUrl, getLocalizedPath, getSiteUrl, SITE_NAME } from '@/lib/utils';
@@ -61,14 +61,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const tCat = await getTranslations('Home.categories');
   const tStat = await getTranslations('Home.stats');
 
-  const featuredTutorials = getFeaturedTutorials(4, locale);
-  const featuredSlugs = new Set(featuredTutorials.map((tutorial) => tutorial.slug));
-  const heroTutorials = getRecentTutorials(16, locale)
-    .filter((tutorial) => !featuredSlugs.has(tutorial.slug))
+  const hotTopicTutorials = getRecentTutorials(4, locale);
+  const hotTopicSlugs = new Set(hotTopicTutorials.map((tutorial) => tutorial.slug));
+  const heroTutorials = getRecentTutorials(20, locale)
+    .filter((tutorial) => !hotTopicSlugs.has(tutorial.slug))
     .slice(0, 4);
   const heroSlugs = new Set(heroTutorials.map((tutorial) => tutorial.slug));
   const recentTutorials = getRecentTutorials(32, locale)
-    .filter((tutorial) => !featuredSlugs.has(tutorial.slug) && !heroSlugs.has(tutorial.slug))
+    .filter((tutorial) => !hotTopicSlugs.has(tutorial.slug) && !heroSlugs.has(tutorial.slug))
     .slice(0, 12);
   const tutorialCount = getAllTutorials(locale).length;
   const toolCount = getAllTools(locale).length;
@@ -240,9 +240,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             </Link>
           </div>
 
-          {/* Featured Tutorials Grid */}
+          {/* Hot Topics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
-            {featuredTutorials.map((tutorial) => (
+            {hotTopicTutorials.map((tutorial) => (
               <Link
                 href={getLocalizedPath(locale, `tutorial/${tutorial?.slug}`)}
                 key={tutorial?.slug}
