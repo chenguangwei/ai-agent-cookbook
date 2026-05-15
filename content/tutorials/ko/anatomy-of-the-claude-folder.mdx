@@ -1,0 +1,430 @@
+---
+title: "Anatomy of the .claude/ 폴더"
+slug: "anatomy-of-the-claude-folder"
+locale: "ko"
+description: "Anatomy of the .claude/ 폴더"
+category: "실제 사례"
+tags: ["Claude", "RAG", "ReAct", "TypeScript"]
+techStack: []
+difficulty: "초급"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HD78D48b0AAI72h.jpg"
+featured: false
+date: 2026-03-23
+---
+
+# Anatomy of the .claude/ 폴더
+
+CLAUDE.md, 사용자 정의 명령어, 스킬, 에이전트, 권한 및 이를 올바르게 설정하는 방법에 대한 완벽한 가이드입니다.
+
+대부분의 Claude Code 사용자는 `.claude` 폴더를 블랙박스처럼 취급합니다. 존재한다는 것은 알고 있습니다. 프로젝트 루트에 나타나는 것을 본 적도 있습니다. 하지만 열어본 적도, 내부의 모든 파일이 무엇을 하는지 이해한 적도 없습니다.
+
+이는 놓치고 있는 기회입니다.
+
+`.claude` 폴더는 프로젝트에서 Claude가 어떻게 동작할지 제어하는 컨트롤 센터입니다. 여기에는 사용자의 지침, 사용자 정의 명령어, 권한 규칙, 그리고 세션 간 Claude의 기억까지 저장됩니다. 어떤 파일이 어디에 있고 왜 있는지 이해하면, Claude Code를 팀이 필요로 하는 방식으로 정확하게 구성할 수 있습니다.
+
+이 가이드는 매일 사용할 파일부터 한 번 설정하면 잊어버려도 되는 파일까지, 폴더의 전체 구조를 설명합니다.
+
+# 두 개의 폴더, 하나가 아닙니다
+
+시작하기 전에 한 가지 알아두어야 할 점은, 실제로 `.claude` 디렉토리가 하나가 아니라 두 개라는 것입니다.
+
+첫 번째는 프로젝트 내부에 있고, 두 번째는 홈 디렉토리에 있습니다.
+
+![](https://pbs.twimg.com/media/HD70c_tbMAAvhzK.jpg)
+
+프로젝트 수준의 폴더는 팀 구성을 저장합니다. Git에 커밋됩니다. 팀의 모든 구성원은 동일한 규칙, 동일한 사용자 정의 명령어, 동일한 권한 정책을 갖게 됩니다.
+
+글로벌 `~/.claude/` 폴더는 개인 기본 설정과 세션 기록, 자동 메모리와 같은 머신 로컬 상태를 저장합니다.
+
+# CLAUDE.md: Claude의 지침서
+
+이것은 전체 시스템에서 가장 중요한 파일입니다. Claude Code 세션을 시작하면 가장 먼저 읽는 것이 `CLAUDE.md`입니다. 이를 시스템 프롬프트에 직접 로드하여 전체 대화 동안 유지합니다.
+
+간단히 말해: `CLAUDE.md`에 작성하는 모든 것을 Claude가 따릅니다.
+
+Claude에게 항상 구현보다 테스트를 먼저 작성하라고 지시하면 그렇게 할 것입니다. "오류 처리에 `console.log`를 사용하지 말고 항상 사용자 정의 로거 모듈을 사용하라"고 말하면 매번 그 규칙을 존중할 것입니다.
+
+프로젝트 루트의 `CLAUDE.md`가 가장 일반적인 설정입니다. 하지만 모든 프로젝트에 적용되는 글로벌 기본 설정을 위해 `~/.claude/CLAUDE.md`에 하나를 둘 수도 있고, 폴더별 규칙을 위해 하위 디렉토리 내부에 하나를 둘 수도 있습니다. Claude는 이 모든 것을 읽고 결합합니다.
+
+## CLAUDE.md에 실제로 포함해야 할 내용
+
+대부분의 사람들은 너무 많이 쓰거나 너무 적게 씁니다. 다음은 효과적인 방법입니다.
+
+### 작성할 내용:
+
+- 빌드, 테스트, 린트 명령어 (`npm run test`, `make build` 등)
+- 주요 아키텍처 결정 ("Turborepo를 사용하는 모노레포입니다")
+- 명확하지 않은 주의사항 ("TypeScript strict mode가 켜져 있으며, 사용하지 않는 변수는 오류입니다")
+- 임포트 규칙, 네이밍 패턴, 오류 처리 스타일
+- 주요 모듈의 파일 및 폴더 구조
+
+### 작성하지 말아야 할 내용:
+
+- 린터나 포맷터 설정에 속하는 모든 것
+- 이미 링크할 수 있는 전체 문서
+- 이론을 설명하는 긴 문단
+
+`CLAUDE.md`는 200줄 미만으로 유지하세요. 그 이상 길어지면 너무 많은 컨텍스트를 소모하게 되어 Claude의 지침 준수율이 실제로 떨어집니다.
+
+다음은 최소한이지만 효과적인 예시입니다:
+
+```plaintext
+# 프로젝트: Acme API
+
+## 명령어
+
+npm run dev          # 개발 서버 시작
+npm run test         # 테스트 실행 (Jest)
+npm run lint         # ESLint + Prettier 검사
+npm run build        # 프로덕션 빌드
+
+## 아키텍처
+
+- Express REST API, Node 20
+- Prisma ORM을 통한 PostgreSQL
+- 모든 핸들러는 src/handlers/에 위치
+- 공유 타입은 src/types/에 위치
+
+## 규칙
+
+- 모든 핸들러에서 요청 검증에 zod 사용
+- 반환 형태는 항상 { data, error }
+- 클라이언트에 스택 트레이스를 절대 노출하지 않음
+- console.log 대신 logger 모듈 사용
+
+## 주의사항
+
+- 테스트는 모의 객체가 아닌 실제 로컬 DB를 사용합니다. 먼저 `npm run db:test:reset` 실행
+- 엄격한 TypeScript: 사용하지 않는 임포트는 절대 허용되지 않음
+```
+
+약 20줄입니다. 이 정도면 Claude가 지속적인 설명 없이도 이 코드베이스에서 생산적으로 작업하는 데 필요한 모든 것을 제공합니다.
+
+# 개인 재정의를 위한 CLAUDE.local.md
+
+때로는 팀 전체가 아닌 자신에게만 해당하는 선호 사항이 있을 수 있습니다. 다른 테스트 러너를 선호하거나, Claude가 항상 특정 패턴을 사용하여 파일을 열도록 하고 싶을 수 있습니다.
+
+프로젝트 루트에 `CLAUDE.local.md`를 생성하세요. Claude는 이를 기본 `CLAUDE.md`와 함께 읽으며, 자동으로 gitignored 처리되어 개인적인 수정 사항이 저장소에 반영되지 않습니다.
+
+![](https://pbs.twimg.com/media/HD710uUaQAAppSN.jpg)
+
+# rules/ 폴더: 확장 가능한 모듈식 지침
+
+`CLAUDE.md`는 단일 프로젝트에 매우 효과적입니다. 하지만 팀이 성장하면 결국 아무도 유지 관리하지 않고 모두가 무시하는 300줄짜리 `CLAUDE.md`가 만들어집니다.
+
+`rules/` 폴더가 이 문제를 해결합니다.
+
+`.claude/rules/` 내부의 모든 마크다운 파일은 `CLAUDE.md`와 함께 자동으로 로드됩니다. 하나의 거대한 파일 대신, 지침을 관심사별로 분할합니다:
+
+```plaintext
+.claude/rules/
+├── code-style.md
+├── testing.md
+├── api-conventions.md
+└── security.md
+```
+
+각 파일은 집중되어 있고 업데이트하기 쉽습니다. API 규칙을 담당하는 팀원은 `api-conventions.md`를 편집합니다. 테스트 표준을 담당하는 사람은 `testing.md`를 편집합니다. 서로 간섭하지 않습니다.
+
+진정한 힘은 경로 범위 규칙에서 나옵니다. 규칙 파일에 YAML frontmatter 블록을 추가하면 Claude가 일치하는 파일로 작업할 때만 활성화됩니다:
+
+```markdown
+---
+paths:
+  - "src/api/**/*.ts"
+  - "src/handlers/**/*.ts"
+---
+
+# API 디자인 규칙
+
+- 모든 핸들러는 { data, error } 형태 반환
+- 요청 본문 검증에 zod 사용
+- 내부 오류 세부 정보를 클라이언트에 절대 노출하지 않음
+```
+
+Claude는 React 컴포넌트를 편집할 때 이 파일을 로드하지 않습니다. `src/api/` 또는 `src/handlers/` 내부에서 작업할 때만 로드합니다. `paths` 필드가 없는 규칙은 모든 세션에서 조건 없이 로드됩니다.
+
+`CLAUDE.md`가 너무 복잡해지기 시작했다면 이것이 올바른 패턴입니다.
+
+# commands/ 폴더: 사용자 정의 슬래시 명령어
+
+기본적으로 Claude Code에는 `/help` 및 `/compact`와 같은 내장 슬래시 명령어가 있습니다. `commands/` 폴더를 사용하면 자신만의 명령어를 추가할 수 있습니다.
+
+`.claude/commands/`에 넣는 모든 마크다운 파일은 슬래시 명령어가 됩니다.
+
+`review.md`라는 파일은 `/project:review`를 생성합니다. `fix-issue.md`라는 파일은 `/project:fix-issue`를 생성합니다. 파일 이름이 명령어 이름입니다.
+
+![](https://pbs.twimg.com/media/HD72R4zboAEjp6U.jpg)
+
+간단한 예시입니다. `.claude/commands/review.md`를 생성하세요:
+
+```markdown
+---
+description: 병합 전 현재 브랜치의 차이점을 검토하여 문제를 찾습니다
+---
+
+## 검토할 변경 사항
+
+!`git diff --name-only main...HEAD`
+
+## 상세 차이점
+
+!`git diff main...HEAD`
+
+위 변경 사항을 다음 항목에 대해 검토하세요:
+1. 코드 품질 문제
+2. 보안 취약점
+3. 누락된 테스트 커버리지
+4. 성능 문제
+
+파일별로 구체적이고 실행 가능한 피드백을 제공하세요.
+```
+
+이제 Claude Code에서 `/project:review`를 실행하면 Claude가 보기 전에 실제 git diff가 프롬프트에 자동으로 주입됩니다. `!` 백틱 구문은 셸 명령어를 실행하고 출력을 포함시킵니다. 이것이 이러한 명령어를 단순한 저장된 텍스트가 아니라 진정으로 유용하게 만드는 요소입니다.
+
+## 명령어에 인수 전달하기
+
+`$ARGUMENTS`를 사용하여 명령어 이름 뒤에 오는 텍스트를 전달하세요:
+
+```markdown
+---
+description: GitHub 이슈를 조사하고 수정합니다
+argument-hint: [이슈-번호]
+---
+이 저장소에서 #$ARGUMENTS 이슈를 확인하세요.
+
+!`gh issue view $ARGUMENTS`
+
+버그를 이해하고, 근본 원인을 추적하고, 수정하고, 이를 발견했을 테스트를 작성하세요.
+```
+
+`/project:fix-issue 234`를 실행하면 이슈 234의 내용이 프롬프트에 직접 제공됩니다.
+
+## 개인 명령어 vs 프로젝트 명령어
+
+`.claude/commands/` 디렉토리에 있는 프로젝트 명령어는 커밋되어 팀과 공유됩니다. 프로젝트와 상관없이 어디서든 사용하고 싶은 명령어는 `~/.claude/commands/`에 넣으세요. 그러면 `/user:command-name` 형식으로 표시됩니다.
+
+유용한 개인 명령어 예시: 일일 스탠드업 도우미, 정해진 규칙에 따라 커밋 메시지를 생성하는 명령어, 또는 빠른 보안 점검 스크립트.
+
+# skills/ 폴더: 주문형 재사용 가능 워크플로우
+
+이제 명령어가 어떻게 작동하는지 알게 되었습니다. Skills는 표면적으로는 비슷해 보이지만, 트리거 방식이 근본적으로 다릅니다. 더 자세히 알아보기 전에 차이점을 설명하겠습니다:
+
+![](https://pbs.twimg.com/media/HD73p9-bEAAZUSD.jpg)
+
+Skills는 Claude가 작업이 skill의 설명과 일치할 때, 사용자가 슬래시 명령어를 입력하지 않아도 스스로 호출할 수 있는 워크플로우입니다. 명령어는 사용자가 실행하기를 기다리지만, Skills는 대화를 관찰하다가 적절한 순간에 자동으로 실행됩니다.
+
+각 skill은 자체 하위 디렉토리에 SKILL.md 파일과 함께 위치합니다:
+
+```markdown
+.claude/skills/
+├── security-review/
+│   ├── SKILL.md
+│   └── DETAILED_GUIDE.md
+└── deploy/
+    ├── SKILL.md
+    └── templates/
+        └── release-notes.md
+```
+
+SKILL.md는 YAML frontmatter를 사용하여 언제 사용할지 설명합니다:
+
+```markdown
+---
+name: security-review
+description: 포괄적인 보안 감사. 코드의 취약점을 검토할 때, 배포 전,
+  또는 사용자가 보안을 언급할 때 사용합니다.
+allowed-tools: Read, Grep, Glob
+---
+코드베이스의 보안 취약점을 분석합니다:
+
+1. SQL 인젝션 및 XSS 위험
+2. 노출된 자격 증명 또는 비밀
+3. 안전하지 않은 설정
+4. 인증 및 권한 부여 격차
+
+심각도 등급과 구체적인 수정 단계를 포함한 결과를 보고합니다.
+보안 표준은 @DETAILED_GUIDE.md를 참조하세요.
+```
+
+"이 PR의 보안 문제를 검토해줘"라고 말하면, Claude가 설명을 읽고 일치하는지 인식한 후 자동으로 skill을 호출합니다. `/security-review`로 명시적으로 호출할 수도 있습니다.
+
+명령어와의 주요 차이점: skills는 함께 지원 파일을 번들로 포함할 수 있습니다. 위의 `@DETAILED_GUIDE.md` 참조는 SKILL.md 바로 옆에 있는 상세 문서를 가져옵니다. 명령어는 단일 파일이지만, Skills는 패키지입니다.
+
+개인 skills는 `~/.claude/skills/`에 저장되며 모든 프로젝트에서 사용할 수 있습니다.
+
+# agents/ 폴더: 전문화된 하위 에이전트 역할
+
+작업이 전담 전문가의 도움을 받을 만큼 복잡할 때, `.claude/agents/`에 하위 에이전트 역할을 정의할 수 있습니다. 각 에이전트는 자체 시스템 프롬프트, 도구 접근 권한, 모델 선호도를 가진 마크다운 파일입니다:
+
+```plaintext
+.claude/agents/
+├── code-reviewer.md
+└── security-auditor.md
+```
+
+`code-reviewer.md`의 예시입니다:
+
+```markdown
+---
+name: code-reviewer
+description: 전문 코드 리뷰어. PR을 검토하거나, 버그를 확인하거나,
+  병합 전 구현을 검증할 때 적극적으로 사용합니다.
+model: sonnet
+tools: Read, Grep, Glob
+---
+당신은 정확성과 유지보수성에 중점을 둔 시니어 코드 리뷰어입니다.
+
+코드를 검토할 때:
+- 스타일 문제뿐만 아니라 버그도 지적하세요
+- 모호한 개선 사항 대신 구체적인 수정을 제안하세요
+- 엣지 케이스와 오류 처리 누락을 확인하세요
+- 대규모 환경에서만 중요한 성능 문제에 주목하세요
+```
+
+Claude가 코드 리뷰가 필요하다고 판단하면, 이 에이전트를 자체 격리된 컨텍스트 창에서 실행합니다. 에이전트는 작업을 수행하고, 결과를 요약한 후 보고합니다. 메인 세션은 수천 개의 토큰으로 구성된 중간 탐색 결과로 복잡해지지 않습니다.
+
+`tools` 필드는 에이전트가 할 수 있는 작업을 제한합니다. 보안 감사자는 Read, Grep, Glob만 있으면 됩니다. 파일을 쓸 필요가 전혀 없습니다. 이러한 제한은 의도적이며 명시적으로 지정하는 것이 좋습니다.
+
+`model` 필드를 사용하면 집중된 작업에 더 저렴하고 빠른 모델을 사용할 수 있습니다. Haiku는 대부분의 읽기 전용 탐색에 적합합니다. Sonnet과 Opus는 실제로 필요한 작업에 사용하세요.
+
+개인 에이전트는 `~/.claude/agents/`에 저장되며 모든 프로젝트에서 사용할 수 있습니다.
+
+![](https://pbs.twimg.com/media/HD76U4QbAAAt7X5.jpg)
+
+# settings.json: 권한 및 프로젝트 설정
+
+`.claude/` 내부의 `settings.json` 파일은 Claude가 수행할 수 있는 작업과 수행할 수 없는 작업을 제어합니다. Claude가 실행할 수 있는 도구, 읽을 수 있는 파일, 특정 명령어를 실행하기 전에 허가를 받아야 하는지 여부를 정의하는 곳입니다.
+
+전체 파일은 다음과 같습니다:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Read",
+      "Write",
+      "Edit"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
+}
+```
+
+## 각 부분의 역할
+
+`$schema` 줄은 VS Code 또는 Cursor에서 자동 완성 및 인라인 유효성 검사를 활성화합니다. 항상 포함시키세요.
+
+`allow` 목록에는 Claude가 확인을 요청하지 않고 실행할 수 있는 명령어가 포함됩니다. 대부분의 프로젝트에서 좋은 allow 목록은 다음을 포함합니다:
+
+- `Bash(npm run *)` 또는 `Bash(make *)` - Claude가 스크립트를 자유롭게 실행할 수 있도록 함
+- `Bash(git *)` - 읽기 전용 git 명령어
+- `Read`, `Write`, `Edit`, `Glob`, `Grep` - 파일 작업
+
+`deny` 목록에는 상황에 관계없이 완전히 차단된 명령어가 포함됩니다. 합리적인 deny 목록은 다음을 차단합니다:
+
+- `rm -rf`와 같은 파괴적인 셸 명령어
+- `curl`과 같은 직접 네트워크 명령어
+- `.env` 및 `secrets/` 내의 모든 파일과 같은 민감한 파일
+
+어느 목록에도 없는 경우, Claude는 진행하기 전에 물어봅니다. 이 중간 지점은 의도적입니다. 모든 가능한 명령어를 미리 예측할 필요 없이 안전망을 제공합니다.
+
+## 개인 재정의를 위한 settings.local.json
+
+`CLAUDE.local.md`와 동일한 개념입니다. 커밋하고 싶지 않은 권한 변경 사항을 위해 `.claude/settings.local.json`을 만드세요. 자동으로 gitignore에 추가됩니다.
+
+# 전역 ~/.claude/ 폴더
+
+이 폴더를 자주 사용하지는 않지만, 무엇이 있는지 아는 것이 유용합니다.
+
+`~/.claude/CLAUDE.md`는 모든 Claude Code 세션에 로드되어 모든 프로젝트에 적용됩니다. 개인 코딩 원칙, 선호하는 스타일, 또는 어떤 저장소에 있든 Claude가 기억해야 할 모든 것을 넣기에 좋은 곳입니다.
+
+`~/.claude/projects/`는 세션 기록과 프로젝트별 자동 메모리를 저장합니다. Claude Code는 작업하면서 발견한 명령어, 관찰한 패턴, 아키텍처 인사이트 등을 자동으로 저장합니다. 이러한 정보는 세션 간에 유지됩니다. `/memory`로 탐색하고 편집할 수 있습니다.
+
+`~/.claude/commands/`와 `~/.claude/skills/`는 모든 프로젝트에서 사용할 수 있는 개인 명령어와 skills를 보관합니다.
+
+일반적으로 수동으로 관리할 필요는 없습니다. 하지만 Claude가 알려준 적 없는 내용을 "기억"하는 것처럼 보이거나, 프로젝트의 자동 메모리를 지우고 새로 시작하고 싶을 때 이 폴더들이 존재한다는 것을 알면 유용합니다.
+
+## 전체 그림
+
+모든 것이 어떻게 조화를 이루는지 보여드리겠습니다:
+
+```plaintext
+your-project/
+├── CLAUDE.md                  # 팀 지침 (커밋됨)
+├── CLAUDE.local.md            # 개인 재정의 (gitignore 처리됨)
+│
+└── .claude/
+    ├── settings.json          # 권한 + 설정 (커밋됨)
+    ├── settings.local.json    # 개인 권한 재정의 (gitignore 처리됨)
+    │
+    ├── commands/              # 사용자 정의 슬래시 명령어
+    │   ├── review.md          # → /project:review
+    │   ├── fix-issue.md       # → /project:fix-issue
+    │   └── deploy.md          # → /project:deploy
+    │
+    ├── rules/                 # 모듈식 지침 파일
+    │   ├── code-style.md
+    │   ├── testing.md
+    │   └── api-conventions.md
+    │
+    ├── skills/                # 자동 호출 워크플로우
+    │   ├── security-review/
+    │   │   └── SKILL.md
+    │   └── deploy/
+    │       └── SKILL.md
+    │
+    └── agents/                # 특화된 하위 에이전트 페르소나
+        ├── code-reviewer.md
+        └── security-auditor.md
+
+~/.claude/
+├── CLAUDE.md                  # 전역 지침
+├── settings.json              # 전역 설정
+├── commands/                  # 개인 명령어 (모든 프로젝트)
+├── skills/                    # 개인 스킬 (모든 프로젝트)
+├── agents/                    # 개인 에이전트 (모든 프로젝트)
+└── projects/                  # 세션 기록 + 자동 메모리
+```
+
+# 실용적인 시작 설정
+
+처음부터 시작한다면, 다음 순서가 잘 작동합니다.
+
+**1단계.** Claude Code에서 `/init`을 실행합니다. 프로젝트를 읽어서 기본 `CLAUDE.md`를 생성합니다. 필수 항목만 남기고 편집하세요.
+
+**2단계.** 스택에 적합한 allow/deny 규칙이 포함된 `.claude/settings.json`을 추가합니다. 최소한 실행 명령어는 허용하고 `.env` 읽기는 차단하세요.
+
+**3단계.** 가장 자주 수행하는 워크플로우에 대한 명령어를 한두 개 만듭니다. 코드 리뷰와 이슈 수정이 좋은 시작점입니다.
+
+**4단계.** 프로젝트가 성장하고 `CLAUDE.md`가 복잡해지면 지침을 `.claude/rules/` 파일로 분할하기 시작합니다. 적절한 경우 경로별로 범위를 지정하세요.
+
+**5단계.** 개인 선호도가 담긴 `~/.claude/CLAUDE.md`를 추가합니다. 예를 들어 "항상 구현보다 타입을 먼저 작성할 것" 또는 "클래스 기반보다 함수형 패턴을 선호할 것"과 같은 내용일 수 있습니다.
+
+이 정도면 프로젝트의 95%에 충분합니다. 스킬과 에이전트는 반복되는 복잡한 워크플로우를 패키징할 가치가 있을 때 사용하세요.
+
+## 핵심 인사이트
+
+`.claude` 폴더는 사실 Claude에게 당신이 누구인지, 프로젝트가 무엇을 하는지, 따라야 할 규칙이 무엇인지 알려주는 프로토콜입니다. 이를 명확하게 정의할수록 Claude를 수정하는 데 시간을 덜 쓰고 유용한 작업을 수행하는 데 더 많은 시간을 할애할 수 있습니다.
+
+`CLAUDE.md`는 가장 영향력이 큰 파일입니다. 이것부터 제대로 만드세요. 나머지는 최적화에 불과합니다.
+
+작게 시작하고, 점진적으로 개선하며, 프로젝트의 다른 인프라와 마찬가지로 취급하세요. 한번 제대로 설정되면 매일 이익을 가져다줄 것입니다.
+
+여기까지입니다!
+
+이 글을 재미있게 읽으셨다면.
+
+저를 찾아보세요 → @akshay_pachaar ✔️
+
+매일 AI, 머신러닝 및 바이브 코딩 모범 사례에 대한 튜토리얼과 인사이트를 공유합니다.
