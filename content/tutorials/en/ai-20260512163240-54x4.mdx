@@ -1,0 +1,224 @@
+---
+title: "How to Manage an Engineering Team in the AI Era"
+slug: "ai-20260512163240-54x4"
+locale: "en"
+description: "How to Manage an Engineering Team in the AI Era"
+category: "LLM Models"
+tags: ["OpenAI", "Claude", "Planning"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HIGRrjhWYAA1kVW.jpg"
+featured: false
+date: 2026-05-12
+---
+
+# How to Manage an Engineering Team in the AI Era
+
+Fiona Fung spoke for 28 minutes at the Anthropic conference about how to manage an engineering team in the AI era.
+
+![](https://pbs.twimg.com/media/HIGRub8WcAEDWfI.jpg)
+
+When she created this slide deck, Anthropic had not yet launched the Routines feature.
+
+Three weeks later, Routines went live. It's a feature that lets Claude Code automatically run tasks on a schedule in the cloud, without needing a terminal open locally. By the time she actually took the stage at the Code with Claude 2026 conference, several slides were already outdated.
+
+Fiona Fung is the engineering and product lead for both Claude Code and Cowork product lines at Anthropic. She previously spent twelve years at Microsoft (starting with Visual Studio), then led engineering teams for Facebook Marketplace and Instagram at Meta, before joining Anthropic in September 2025. This talk was under thirty minutes, and the topic sounded ordinary: "How to Manage an Engineering Team in the AI Era." But she shared nothing but the real pitfalls her team at Claude Code encountered over the past year, the old rules they shattered, and the practical challenges they still haven't figured out — no abstract platitudes at all.
+
+![](https://pbs.twimg.com/media/HIGRxWJWkAAMR5D.jpg)
+
+Original video link: [https://www.youtube.com/watch?v=igO8iyca2_g](https://www.youtube.com/watch?v=igO8iyca2_g)
+
+![](https://pbs.twimg.com/media/HIGR0OEXoAAKzcd.jpg)
+
+## Key Takeaways
+
+- The bottleneck in software engineering used to be "writing code is slow," but has now shifted to verification, review, cross-functional collaboration, and security. Past processes were designed around the assumption that "writing code is expensive." Since "writing code is now nearly free," all processes must be rebuilt.
+- Processes rarely die naturally; organizations just keep layering on more SLAs, regulations, and reviews. The first step in transforming an engineering team with AI is explicitly allowing people to cut outdated processes.
+- The way technical debates happen has changed. Instead of pulling people into a whiteboard room to draw architecture diagrams, you can now have Claude spin up three PRs simultaneously and discuss the code alongside the actual API impact scope.
+- On the Claude Code team, every PR has Claude's involvement. The question "Who actually wrote this code?" is gradually losing its meaning.
+- Managers must come from being individual contributors (ICs). Fiona insists on this when hiring, and her recruiting colleagues initially couldn't understand: "What manager would be willing to go back to writing code first?" Her response was blunt: "If they're not interested, it's better to part ways early."
+- Keep the organization as flat as possible, with all teams sharing a single team mission. The reasoning is simple: when the mission changes, more layers mean more alignment friction. Flat means flexible.
+- Code is the single source of truth, not design documents. If you must keep a spec, commit it into the codebase and let Claude verify consistency between code and documentation.
+- Measure effectiveness with three metrics: time to ramp up new hires, PR lifecycle, and the proportion of Claude-assisted submissions. But she also warns: don't obsess over "how much code was written by AI" — that's just a vanity metric. Focus on product quality and reliability.
+
+## [1] The Industry Has Been Reshaped Twice in Twenty Years
+
+![](https://pbs.twimg.com/media/HIGR22lWEAAwx2V.jpg)
+
+At the start of her talk, Fiona took the timeline back to the early 2000s. She was working on Visual Studio 2005 at Microsoft — one of the world's leading development tools. Back then, software was still distributed on CDs (and earlier, floppy disks). Because software had to be sent to assembly lines for pressing, packaging, and shipping to stores, every version had an unbreakable release schedule.
+
+Then the internet came, shifting distribution from CDs to online delivery, and engineering rhythms were upended. Now it's AI's turn, but this time it's not just the release cadence that's changing — it's the very act of "writing code" itself.
+
+> "What served you prior may not serve you any longer."
+
+She returned to this line repeatedly throughout the talk. For years, engineering rhythms were built around one assumption: writing code is expensive, writing tests is expensive, refactoring is expensive. From waterfall to agile, every methodology was about allocating this scarce resource.
+
+![](https://pbs.twimg.com/media/HIGR5b6WAAEHarn.jpg)
+
+Last year, she was still complaining about "vibe coding" (a term coined by OpenAI co-founder Andrej Karpathy in early 2025): "Why are there constants everywhere? Bad engineering practice." A year later, the models have become vastly more capable. This breakthrough goes far beyond simple "speedup" — it's a direct order-of-magnitude leap in overall throughput.
+
+![](https://pbs.twimg.com/media/HIGR8DfW0AAgdzO.jpg)
+
+## [2] When Coding Is No Longer the Bottleneck, Where Do New Blockers Appear?
+
+The Claude Code team's current bottlenecks are verification, review, cross-functional collaboration, and security.
+
+![](https://pbs.twimg.com/media/HIGR_SrWwAA-Oe_.jpg)
+
+After the code volume increased, the question she got most from other engineering leads was: "How can humans possibly review all this code?" She also wanted to know how to calculate maintenance costs. The cost of generating code is nearly zero, but maintenance costs won't follow suit.
+
+![](https://pbs.twimg.com/media/HIGSCJgWwAEAca-.jpg)
+
+> Note: The talk's mention of "building Claude Code with Claude Code" is a public practice at Anthropic. Boris Cherny has mentioned in multiple interviews that he built Cowork — a desktop agent for non-technical users — in 10 days using Claude Code. This is engineering reality, not rhetoric.
+
+She listed a set of "quietly failing" old processes: six-month product roadmaps, cumbersome scheduling meetings, code ownership divisions, marathon code review sessions, step-by-step traditional team structures, knowledge base sharing, and lengthy new hire onboarding. All of these are historical artifacts forced into existence by the original assumption that "development costs are too high."
+
+![](https://pbs.twimg.com/media/HIGSFEaWIAAvylW.jpg)
+
+> "Rarely do processes kill themselves, we tend to just layer more and more and more processes on."
+
+She gave a painful example: at a previous team, SLAs (service-level agreements) were so numerous that they needed a large spreadsheet to force-rank them, just so engineers could figure out which one to prioritize. She had long felt this over-accumulation needed cleaning up, but it wasn't until she joined Anthropic that she actually took action.
+
+![](https://pbs.twimg.com/media/HIGSH4WWgAA9RH1.jpg)
+![](https://pbs.twimg.com/media/HIGSKw3WIAABifO.jpg)
+
+## [3] What to Do Less Of: Six-Month Roadmaps, Design Docs, Product Reviews
+
+When she first joined Claude Code, she asked: "Don't we need a six-month roadmap?"
+
+![](https://pbs.twimg.com/media/HIGSN59XEAA7xkR.jpg)
+
+She wrote one, and it was usable for the first three months. After the New Year, most of it had already changed. She now uses one word: "jit planning" (just-in-time planning), borrowing the concept of just-in-time compilation from programming. It means planning only when needed, because the cost of prototyping has approached zero, and the leverage of "planning ahead" has disappeared.
+
+Design documents have also been drastically reduced. The default discussion medium for the Claude Code team shifted from "write a doc first" to "send a PR first" — build it directly if you have an idea. Product review meetings are also held less frequently, because the product changes too fast. Instead of reviewing mockups, they push internal versions to all of Anthropic (she calls this "ant-fooding," since the company name Anthropic contains "ant"), then to external users, and listen to how they use it.
+
+![](https://pbs.twimg.com/media/HIGSQzyXgAAVZGg.jpg)
+
+## [4] What to Do More Of: Verification, Shifting Quality Assurance Upstream
+
+She wants the team to double down on verification, calling it "shift left." In a traditional software pipeline, left is the source and right is delivery. Shift left means moving quality assurance from manual testing near the delivery end toward automated checks near the source.
+
+Why has this become important? Because role boundaries are blurring. Her designer colleagues are now submitting code. Fiona shared a real, small anxiety: she once fixed a bug related to job applications, and the next day, scanning Boris's message feed, she saw someone @-ing him about a new bug. She described her feeling as "my heart skipped a beat," terrified it was something she had broken.
+
+No one wants to take down the service with their own commit. In this high-throughput environment, this is a very real psychological burden. Traditional manual QA simply cannot keep up with such high code output rates, so quality assurance must rely more heavily on automated mechanisms earlier in the process.
+
+## [5] The Way Technical Debates Happen Has Changed: From Whiteboards to Three PRs
+
+When she first joined the Claude Code team, she wanted to do a refactor to get familiar with the codebase. She had a disagreement with Boris on the technical approach, and almost instinctively said, "Let's go to the whiteboard room and sketch it out."
+
+The next second, she realized she could just have Claude spin up three different versions of the PR simultaneously, directly comparing the complete code implementations, and even pulling in the impact on all callers. You can't get such an intuitive, global perspective on a whiteboard, but code can deliver it.
+
+![](https://pbs.twimg.com/media/HIGSTa8XkAAupfd.jpg)
+
+> "When building is cheap, arguing is expensive."
+
+Her tone was particularly serious when she made this point. She immediately reminded the audience: precisely because the cost of generating code is approaching zero, team culture and baseline consensus become even more critical.
+
+You must never let it become "whoever commits last wins." For example, someone staying up until 3 AM to sneak in a commit, or setting a scheduled task to squeeze in a change right before deployment — that's absolutely not allowed. Precisely because code is no longer valuable, horizontal alignment across the team requires even clearer baselines.
+
+## [6] Code Review: What Claude Handles, What Humans Keep
+
+Cat Wu had already covered Claude's automated PR review capabilities in the morning keynote. Fiona's perspective here is more specific: what to hand over to Claude, and what to keep for humans.
+
+![](https://pbs.twimg.com/media/HIGSWZwWsAAxrKR.jpg)
+
+> Note: Cat Wu is the product lead for Claude Code, co-steering the product direction with Boris Cherny.
+
+What to hand over to Claude: style checks, lint deduplication, responding to code review comments, catching common bugs, and filling in unit tests. She says Claude is now very good at "grooming" PRs, usually handling most of the dirty work before a human even touches them.
+
+Three categories still require human intervention: legal and compliance reviews (because of risk exposure), security-sensitive code boundary confirmation (because the cost of a vulnerability is too high), and product sense and taste (which remains a significant hurdle for current large models).
+
+![](https://pbs.twimg.com/media/HIGSZBLWIAA1j_x.jpg)
+![](https://pbs.twimg.com/media/HIGScSFWMAAhTDJ.jpg)
+
+For the third category, she gave a lighthearted example. She has a small hobby: decorating Claude's terminal icon for holidays. For Christmas, she wanted to turn Claude into a snowman and asked Claude to draw it in ASCII art. She sent the result to her designer colleague for feedback, who replied: "You turned it into Mr. Peanut."
+
+> Note: Mr. Peanut is the mascot for Planters, a well-known US snack brand. He wears a top hat and monocle, and his silhouette vaguely resembles a snowman.
+
+She ended up going with a simple approach: ice blue + snowflakes. She used this story to illustrate the importance of product sense: abstract judgment is very hard to automate.
+
+## [7] Code Boundaries Are Blurring, and Role Division Is Being Redrawn
+
+On the Claude Code team, almost every PR has Claude's involvement. The question "Who actually wrote this code?" is becoming absurd and even meaningless.
+
+![](https://pbs.twimg.com/media/HIGSe2aXEAAcdoF.jpg)
+
+Fiona advises not to get hung up on this surface-level question. Instead, dig into what you really want to understand: Whose change triggered the bug? Who has enough context to explain the technical details to a customer? Who is most familiar with the history of this code module? If you ask these more specific sub-questions, you'll often find there's a better automated path to the answer. For example, she used to have a habit: every morning, brew a cup of coffee, then use Claude Code to connect to the customer feedback channel and run a summary. Now, that action has been orchestrated into a Routines automated task, saving even the manual command typing.
+
+![](https://pbs.twimg.com/media/HIGShrXWUAApFML.jpg)
+
+> Note: Routines is a feature of Claude Code that allows setting up scheduled or trigger-based automated tasks. During the month Fiona was preparing this talk, the feature had just launched, and even her own slide content needed updating as a result.
+
+This role blurring happens in both directions. On one side, non-technical people are rolling up their sleeves and writing code — the PM on the Claude Code team is actively submitting PRs. On the other side, engineers are stepping outside their silos to take on work traditionally belonging to other roles. Fiona used herself as an example: she wanted to improve the user survey for Claude Code but couldn't find a content designer. In the past, she might have had to repeatedly nitpick wording with the content team. Now, she uses Claude as a copywriting partner. She joked that, as a typical engineer, "I'm absolutely terrible at making copy concise."
+
+![](https://pbs.twimg.com/media/HIGSlFfWIAAa3hK.jpg)
+
+In hiring, the Claude Code team focuses on two types of people. One is creative builders with product sense: curious, seeing a problem and wanting to build a product to solve it, iterating on the experience. The other is deep systems experts: when building Claude Code Remote, they realized they lacked people with distributed systems experience. What she no longer values is raw coding throughput — the models have already leveled that playing field.
+
+![](https://pbs.twimg.com/media/HIGSoJgWUAAd-zN.jpg)
+![](https://pbs.twimg.com/media/HIGSrQgXUAAvFDM.jpg)
+
+## [8] Organizational Structure: Keep It Flat, Managers Start as ICs
+
+When Anthropic recruited her for Claude Code, they defaulted to a structure of "10 ICs to 1 manager, then nested downwards." Fiona didn't want that.
+
+She wanted it as flat as possible. The Claude Code and Cowork lines share a single team mission, not letting each subgroup define its own. The reasoning is practical: when the mission changes, multiple layers require a lot of time for downward alignment. Flat equals flexibility.
+
+She also insisted: all managers on the Claude Code team must first work as ICs (individual contributors, front-line engineers).
+
+![](https://pbs.twimg.com/media/HIGSuCzXIAAcbxQ.jpg)
+
+The recruiter's initial reaction was "you're crazy," meaning no manager would be willing to be an IC first.
+
+> "This is what dogfooding on the Claude Code team's about, this is what I expect and if someone's not interested it's better for us to do earlier separation."
+
+This rule applies to herself as well. Her last push to production was in 2017. She only started writing code again after joining Anthropic. She said at Meta she tried to submit one PR a year, but internal tools changed so fast that learning one command one year meant it was obsolete the next.
+
+> "Nowadays I don't even remember git commands, I just always ask Claude to help me out with all of that."
+
+## [9] Retire Documentation, Make Code the "Single Source of Truth"
+
+![](https://pbs.twimg.com/media/HIGSw4TW4AAPvhg.jpg)
+
+The Claude Code team now treats code as the ultimate source of truth. For example, how does Fiona currently handle technical support inquiries? She directly launches the desktop version of Claude Code, mounts the local repo, and lets the LLM find the logic directly from the code to answer the question. This approach effectively eliminates a millennium-old problem in the software industry: development documentation always falling out of sync with the code.
+
+![](https://pbs.twimg.com/media/HIGS0CrWkAAf4Zu.jpg)
+
+However, she specifically added a caveat: this experience is not a universal rule. If your team's business requires comprehensive requirements documentation, then it makes sense to also include the spec in the code repository, letting Claude cross-validate whether the final code aligns with what the documentation specifies.
+
+When implementing these changes, Fiona distinguished between two layers: "must be unified" and "delegate to the team." The core principles that must be unified are: every team member must use Claude Code (including cross-functional partners, Cowork is also included); automate as much work as possible with Claude (internally called "claudify everything"); and explicitly allow killing off old processes that no longer serve people.
+
+For the last point, she gave a concrete example. The Claude Code team used to have stand-up meetings, but as the team grew, they switched to filling out weekly progress in a shared spreadsheet. One day, looking at this massive table, she found it utterly pointless: the information was clearly available where Claude could read it. In reality, having Claude write a summary script and drop it there, allowing anyone to pull a status summary of others at any time, is infinitely better than nagging people to fill out forms.
+
+However, the space for teams to decide for themselves is also very clear: things like bug triage mechanisms, scheduling rhythms, who is on call and how, and even which workflows have higher priority and should be migrated to Claude first — all of these are delegated to the teams to decide for themselves.
+
+## [10] Three Observable Metrics, and One Warning
+
+She didn't disclose specific numbers, but pointed out three directions:
+
+- **New hire ramp-up time has significantly decreased.** Engineers, designers, and PMs become productive in a new team much faster.
+- **PR cycle time has noticeably shortened.** She mentioned in passing that this is actually a metric worth digging into, because its changes reflect not only the team's acceptance of AI tools, but can also expose weaknesses in downstream infrastructure, such as CI pipelines or product infrastructure environments that simply can't handle the engineers' dramatically increased commit rate.
+- **The coverage ratio of Claude-assisted commits is increasing.** In the Claude Code team's culture, every commit involving Claude is the default normal operation:
+
+> "I don't think I've seen a non-Claude assisted commit probably in the last four months or so."
+
+But she explicitly added a warning in this metrics section: don't just look at "how much code is generated by AI." The percentages in various company press releases keep getting higher, but throughput itself is not the goal. You need to look back at what problems you are actually solving and whether product quality and reliability are still being maintained.
+
+## [11] Three Things She Hasn't Figured Out Yet
+
+Fiona admitted at the end of her talk that there are three questions she doesn't have answers for yet:
+
+First, after engineers can work across platforms, does the traditional "iOS team + Android team" division still make sense?
+
+Second, how far should automated review be pushed? The boundary of "trust but verify" will shift again as models improve. She mentioned an earlier talk that day about model capabilities, implying that how much review to delegate to Claude is not a one-time decision.
+
+Third, after roles become blurred, how do you make everyone feel equally productive? When engineers can create content, PMs can write code, and designers can fix bugs, traditional ownership of output becomes fuzzy. Designing for a sense of fairness is a new challenge.
+
+Her final advice to the audience was actually very straightforward:
+
+> "Pick your noisiest workflow … is it still really serving, what's the purpose of there?"
+
+She used her own experience as a counterexample. When leading a certain team in the past, there was an unshakable weekly meeting with over fifty people crammed into a large room. But upon closer inspection, Fiona found that aside from the person called upon to report status who would pretend to look up, everyone else was unanimously typing away on their keyboards. Later, she simply asked, "What exactly are we still having this damn meeting for?" It was immediately passed unanimously and disbanded on the spot.
+
+Original video link: [https://www.youtube.com/watch?v=igO8iyca2_g](https://www.youtube.com/watch?v=igO8iyca2_g)
