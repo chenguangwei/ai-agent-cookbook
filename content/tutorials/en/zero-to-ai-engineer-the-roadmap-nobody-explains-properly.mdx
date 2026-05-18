@@ -1,0 +1,174 @@
+---
+title: "Zero to AI Engineer — The Roadmap Nobody Explains Properly"
+slug: "zero-to-ai-engineer-the-roadmap-nobody-explains-properly"
+locale: "en"
+description: "Zero to AI Engineer — The Roadmap Nobody Explains Properly"
+category: "Real-world Cases"
+tags: ["LangChain", "OpenAI", "Llama", "RAG", "Embeddings", "Multi-Agent", "Tool Use", "Python"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HIc5Ue3akAAOP81.jpg"
+featured: false
+date: 2026-05-18
+updatedAt: 2026-05-18
+---
+
+# Zero to AI Engineer — The Roadmap Nobody Explains Properly
+
+
+Most people trying to learn AI in 2026 are stuck in the same loop: buying expensive courses, collecting certificates, watching endless tutorials, and still having no idea how to actually build something real.
+
+The truth is weirdly simple.
+
+The best AI education on the internet is already free.
+
+Not beginner fluff. Not “What is ChatGPT?” videos. Actual engineering knowledge from the companies building modern AI systems — OpenAI, Anthropic, Google, NVIDIA, Microsoft  combined with open-source repositories that teach better than most paid bootcamps.
+
+And almost nobody follows the resources in the correct order.
+
+That’s why people jump into agents before understanding transformers, try building RAG apps without understanding embeddings, or copy-paste LangChain tutorials without knowing what’s happening underneath.
+
+This roadmap fixes that.
+
+Not with “50 resources you’ll never open,” but with a practical system designed to take someone from absolute beginner to building production-grade AI systems in around 14 weeks.
+
+The goal isn’t to become someone who simply uses AI tools. The goal is to understand how modern AI actually works, how to build with it, and how to deploy systems that solve real problems.
+
+The first step is setting up a proper environment. Install Python 3.11+, VS Code, GitHub, Obsidian, and Ollama. Ollama is especially important because it lets you run powerful language models locally, which becomes incredibly valuable later when working with LLMs, embeddings, quantization, and agents.
+
+Tools:
+
+- Python → [https://python.org/downloads](https://python.org/downloads)
+- VS Code → [https://code.visualstudio.com](https://code.visualstudio.com/)
+- GitHub → [https://github.com](https://github.com/)
+- Obsidian → [https://obsidian.md](https://obsidian.md/)
+- Ollama → [https://ollama.com](https://ollama.com/)
+
+After setup, create free accounts on:
+
+- Anthropic Academy → [https://anthropic.skilljar.com](https://anthropic.skilljar.com/)
+- OpenAI Academy → [https://academy.openai.com](https://academy.openai.com/)
+- Google AI → [https://grow.google/ai](https://grow.google/ai)
+- Coursera → [https://coursera.org](https://coursera.org/)
+
+One important trick: on Coursera, always use “Audit this course.” Most people don’t realize the full learning material is usually free.
+
+The roadmap starts with AI fundamentals because understanding the vocabulary of AI changes everything. Google’s AI Professional Certificate is one of the best starting points because it explains AI workflows, prompting, and practical use cases without overwhelming beginners with math immediately.
+
+After that, Anthropic Academy’s “AI Fluency” course provides one of the cleanest explanations of modern AI systems available online right now. Short, practical, and surprisingly high quality for a completely free program.
+
+Then comes the first major GitHub repository:
+[https://github.com/microsoft/generative-ai-for-beginners](https://github.com/microsoft/generative-ai-for-beginners)
+
+This repo alone is better than many paid AI programs. It covers prompts, transformers, embeddings, chat applications, and how large language models actually behave in production systems.
+
+At this stage, the goal is simple: understand tokens, embeddings, transformers, and context windows well enough to explain them in plain English.
+
+The next phase is machine learning foundations, which is where most people quit because the tutorials stop feeling magical and the real engineering starts.
+
+This is also the point where beginners separate from future AI engineers.
+
+The best free resource here is:
+[https://github.com/microsoft/ML-For-Beginners](https://github.com/microsoft/ML-For-Beginners)
+
+It teaches regression, classification, clustering, model evaluation, overfitting, and gradient descent in a very practical way.
+
+Alongside it, IBM’s Machine Learning Professional Certificate on Coursera is excellent when used in audit mode:
+[https://coursera.org/professional-certificates/ibm-machine-learning](https://coursera.org/professional-certificates/ibm-machine-learning)
+
+For math foundations specifically related to AI, this repository is incredibly valuable:
+[https://github.com/mlabonne/llm-course](https://github.com/mlabonne/llm-course)
+
+Instead of forcing unnecessary academic theory, it focuses on the exact linear algebra, calculus, and probability concepts needed for modern ML and LLM work.
+
+By the end of this phase, at least one machine learning project should be pushed to GitHub. Not because recruiters care about toy projects, but because building things is the fastest way to understand why models fail.
+
+Then comes the stage that changes how people think about AI completely: deep learning.
+
+Andrej Karpathy’s “Neural Networks: Zero to Hero” remains one of the greatest AI learning resources ever created:
+[https://karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
+
+Instead of hiding behind frameworks, it teaches neural networks from scratch using raw Python and math. Backpropagation, activations, tokenization, transformers, attention mechanisms — everything becomes understandable because the systems are built piece by piece.
+
+The accompanying GitHub repo:
+[https://github.com/karpathy/nn-zero-to-hero](https://github.com/karpathy/nn-zero-to-hero)
+
+During this stage, it’s incredibly useful to run local models with Ollama:
+
+ollama run llama3
+
+Watching a locally running LLM while simultaneously building smaller transformer systems creates a bridge between theory and real-world AI systems that most courses never provide.
+
+Once deep learning fundamentals are clear, the roadmap shifts into modern LLM engineering.
+
+This is where concepts like RAG, fine-tuning, LoRA, QLoRA, quantization, vector databases, and evaluation start making sense.
+
+Again, one of the best free resources available is:
+[https://github.com/mlabonne/llm-course](https://github.com/mlabonne/llm-course)
+
+It’s arguably the closest thing the AI world currently has to a complete open-source LLM engineering curriculum.
+
+At the same time, prompt engineering should be studied directly from the companies building frontier models:
+
+OpenAI Academy:
+[https://academy.openai.com](https://academy.openai.com/)
+
+Anthropic Prompt Engineering:
+[https://docs.anthropic.com](https://docs.anthropic.com/)
+
+Anthropic’s documentation is especially valuable because it explains prompting like an engineering discipline rather than “magic words.”
+
+A strong project during this phase is building a RAG system over personal notes using ChromaDB or LanceDB. This creates a searchable second brain powered by local AI models and embeddings.
+
+After that comes AI agents — the area currently changing the industry fastest.
+
+Microsoft’s free course:
+[https://github.com/microsoft/ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners)
+
+covers tool use, orchestration, memory systems, workflows, and multi-agent architectures.
+
+Anthropic’s MCP (Model Context Protocol) courses are equally important because MCP is rapidly becoming the standard way AI systems connect to tools, APIs, and external environments:
+[https://anthropic.skilljar.com](https://anthropic.skilljar.com/)
+
+This is the stage where projects become genuinely impressive:
+
+- autonomous research agents
+- AI file systems
+- browser agents
+- workflow automations
+- local assistants
+- memory-enabled AI systems
+
+Finally comes deployment, evaluation, and portfolio building — the area most tutorials completely ignore.
+
+A deployed AI system without evaluation is basically a hallucination machine waiting to fail.
+
+That’s why tools like DeepEval, RAGAS, and LLM-as-a-Judge matter so much.
+
+Projects should eventually be deployed using:
+
+- Hugging Face Spaces
+- Gradio
+- Streamlit
+- Vercel
+
+And every serious project should include:
+
+- evaluation
+- safety checks
+- architecture diagrams
+- GitHub documentation
+- public demos
+
+Because in modern AI hiring, GitHub often matters more than résumés.
+
+The most important part of this roadmap is that it avoids the biggest mistake beginners make: consuming endlessly without building.
+
+The people who actually become AI engineers aren’t the ones bookmarking 200 tutorials.
+
+They’re the ones opening a terminal, breaking things, fixing them, deploying projects, and repeating that process until the systems finally make sense.
+
+Right now, the greatest free AI education in history is available online.
+
+The only real question is who’s willing to go deep enough to use it.
