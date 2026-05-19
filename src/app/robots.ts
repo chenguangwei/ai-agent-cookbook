@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://agent-cookbook.com';
+import { getSiteUrl } from '@/lib/utils';
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl();
+
   return {
     rules: [
       {
@@ -11,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/keystatic/', '/_next/'],
       },
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
-    host: BASE_URL,
+    sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   };
 }

@@ -3,6 +3,7 @@
 import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { locales, localeNames, type Locale } from '@/i18n/config';
+import { getLocalizedPath } from '@/lib/utils';
 import { Globe } from 'lucide-react';
 
 export function LanguageSwitcher() {
@@ -11,19 +12,9 @@ export function LanguageSwitcher() {
   const pathname = usePathname();
 
   const handleChange = (newLocale: Locale) => {
-    // Replace current locale in pathname with new locale
-    const segments = pathname.split('/');
-
-    // Check if first segment is a locale
-    if (locales.includes(segments[1] as Locale)) {
-      segments[1] = newLocale;
-    } else {
-      // No locale in path, add it
-      segments.splice(1, 0, newLocale);
-    }
-
-    const newPath = segments.join('/') || '/';
-    router.push(newPath);
+    const localePattern = new RegExp(`^/(${locales.join('|')})(?=/|$)`);
+    const pathWithoutLocale = pathname.replace(localePattern, '') || '/';
+    router.push(getLocalizedPath(newLocale, pathWithoutLocale));
   };
 
   return (

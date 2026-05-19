@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
+import { hasThinSlug, resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 const LOCALE_MAP: Record<string, string> = {
   'English (US)': 'en',
@@ -73,11 +73,15 @@ export async function POST(request: Request) {
     }
 
     const locale = LOCALE_MAP[language] || 'en';
-    const baseSlug = slugify(title);
     const date = new Date().toISOString().split('T')[0];
 
     // Format the markdown content
     const formattedMarkdown = formatMarkdownContent(markdown);
+    const titleSlug = slugify(title, 80, `tutorial ${date}`);
+    const fallbackSlugText = `${title} ${formattedMarkdown}`;
+    const baseSlug = hasThinSlug(titleSlug)
+      ? slugify(fallbackSlugText, 80, `tutorial ${date}`)
+      : titleSlug;
 
     // Extract description from content (first ~200 chars of first paragraph)
     const contentForDesc = formattedMarkdown.split('\n').find(line => line.trim().length > 0) || '';

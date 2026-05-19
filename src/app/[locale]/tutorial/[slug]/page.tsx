@@ -19,6 +19,7 @@ interface TutorialPageProps {
 export async function generateStaticParams() {
   const tutorials = await getAllTutorials();
   return tutorials.map((tutorial) => ({
+    locale: tutorial?.locale,
     slug: tutorial?.slug,
   }));
 }

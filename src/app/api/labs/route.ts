@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
+import { hasThinSlug, resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 export async function POST(request: Request) {
   try {
@@ -42,7 +42,10 @@ export async function POST(request: Request) {
     const contentDir = path.join(process.cwd(), 'content', 'labs', locale);
     await fs.mkdir(contentDir, { recursive: true });
 
-    const baseSlug = slugify(title);
+    const titleSlug = slugify(title, 80, 'practice lab');
+    const baseSlug = hasThinSlug(titleSlug)
+      ? slugify(`${title} ${description} ${environment || ''}`, 80, 'practice lab')
+      : titleSlug;
     const { slug, filePath, relativePath } = await resolveUniqueContentFile(contentDir, baseSlug, '.json');
     await fs.writeFile(filePath, JSON.stringify(labData, null, 2), 'utf-8');
 

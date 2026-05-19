@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
-import { getAllTools, getAllTutorials, getTutorialUpdatedAt } from '@/lib/content';
+import { getAllTools, getAllTutorials, getToolLocalesBySlug, getTutorialLocalesBySlug, getTutorialUpdatedAt } from '@/lib/content';
 import { locales } from '@/i18n/config';
-import { getCanonicalUrl } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -23,26 +23,45 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency,
       priority,
+      alternates: {
+        languages: buildLocaleAlternates(path, locales),
+      },
     }))
   );
 
   // Tutorial pages
   const tutorials = getAllTutorials();
-  const tutorialPages: MetadataRoute.Sitemap = tutorials.map((tutorial) => ({
-    url: getCanonicalUrl(tutorial?.locale || 'en', `tutorial/${tutorial?.slug}`),
-    lastModified: tutorial ? new Date(getTutorialUpdatedAt(tutorial)) : now,
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }));
+  const tutorialPages: MetadataRoute.Sitemap = tutorials.map((tutorial) => {
+    const path = `tutorial/${tutorial.slug}`;
+    const availableLocales = getTutorialLocalesBySlug(tutorial.slug);
+
+    return {
+      url: getCanonicalUrl(tutorial.locale || 'en', path),
+      lastModified: new Date(getTutorialUpdatedAt(tutorial)),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      alternates: {
+        languages: buildLocaleAlternates(path, availableLocales),
+      },
+    };
+  });
 
   // Tool pages
   const tools = getAllTools();
-  const toolPages: MetadataRoute.Sitemap = tools.map((tool) => ({
-    url: getCanonicalUrl(tool?.locale || 'en', `tools/${tool?.slug}`),
-    lastModified: tool?.date ? new Date(tool.date) : now,
-    changeFrequency: 'monthly' as const,
-    priority: 0.65,
-  }));
+  const toolPages: MetadataRoute.Sitemap = tools.map((tool) => {
+    const path = `tools/${tool.slug}`;
+    const availableLocales = getToolLocalesBySlug(tool.slug);
+
+    return {
+      url: getCanonicalUrl(tool.locale || 'en', path),
+      lastModified: tool.date ? new Date(tool.date) : now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.65,
+      alternates: {
+        languages: buildLocaleAlternates(path, availableLocales),
+      },
+    };
+  });
 
   return [...staticPages, ...tutorialPages, ...toolPages];
 }

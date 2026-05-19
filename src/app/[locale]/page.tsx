@@ -546,7 +546,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 GitHub AI Agents <ArrowUpRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/news"
+                href={getLocalizedPath(locale, 'news')}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-bold text-sm rounded-xl hover:bg-white/20 transition-colors"
               >
                 {t('hotNews')} <ArrowUpRight className="w-4 h-4" />

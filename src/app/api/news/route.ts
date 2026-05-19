@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
+import { hasThinSlug, resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 const LOCALE_MAP: Record<string, string> = {
   'English (US)': 'en',
@@ -73,7 +73,10 @@ export async function POST(request: Request) {
     }
 
     const locale = rawLocale || LOCALE_MAP[language] || 'en';
-    const baseSlug = slugify(title);
+    const titleSlug = slugify(title, 80, 'news article');
+    const baseSlug = hasThinSlug(titleSlug)
+      ? slugify(`${title} ${summary} ${content || ''}`, 80, 'news article')
+      : titleSlug;
     const contentDir = path.join(process.cwd(), 'content', 'news', locale);
     await fs.mkdir(contentDir, { recursive: true });
 

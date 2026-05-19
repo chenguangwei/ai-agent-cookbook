@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { MDXRenderer } from '@/components/markdown';
 import { getAllDocs } from '@/lib/content';
 import { getTranslations } from 'next-intl/server';
-import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat } from '@/lib/utils';
+import { buildLocaleAlternates, getCanonicalUrl, getLocaleDateFormat, getLocalizedPath } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -80,11 +80,11 @@ export default async function DocsPage({ params, searchParams }: DocsPageProps) 
                 <>
                   {/* Breadcrumb */}
                   <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    <Link href="/" className="hover:text-primary-600 dark:hover:text-primary-400">
+                    <Link href={getLocalizedPath(locale)} className="hover:text-primary-600 dark:hover:text-primary-400">
                       {t('home')}
                     </Link>
                     <ChevronRight className="w-4 h-4" />
-                    <Link href="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
+                    <Link href={getLocalizedPath(locale, 'docs')} className="hover:text-primary-600 dark:hover:text-primary-400">
                       {t('docs')}
                     </Link>
                     <ChevronRight className="w-4 h-4" />

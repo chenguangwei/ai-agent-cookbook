@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import Script from "next/script";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
 import { getSiteUrl, SITE_NAME } from "@/lib/utils";
@@ -47,15 +48,12 @@ export const metadata: Metadata = {
 
 interface RootLayoutProps {
   children: React.ReactNode;
-  params: Promise<{ locale?: string }>;
 }
 
 export default async function RootLayout({
   children,
-  params,
 }: RootLayoutProps) {
-  const resolvedParams = await params;
-  const locale = resolvedParams?.locale || 'en';
+  const locale = await getLocale();
 
   return (
     <html lang={locale} suppressHydrationWarning>

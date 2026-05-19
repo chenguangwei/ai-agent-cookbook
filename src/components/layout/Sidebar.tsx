@@ -13,6 +13,7 @@ import { TUTORIAL_CATEGORIES, categoryValueToId } from '@/lib/categories';
 import { TOOL_CATEGORIES, toolCategoryValueToId } from '@/lib/tool-categories';
 import { LAB_ENVIRONMENTS, LAB_DIFFICULTIES } from '@/lib/practice-filters';
 import { locales, defaultLocale } from '@/i18n/config';
+import { getLocalizedPath } from '@/lib/utils';
 
 // --- Icon maps ---
 
@@ -93,13 +94,13 @@ export function Sidebar() {
     <aside className="w-64 flex-shrink-0 hidden lg:block">
       <div className="sticky top-24 flex flex-col gap-8">
         {pageContext === 'explore' && (
-          <ExploreSidebar docs={localeDocs} searchParams={searchParams} />
+          <ExploreSidebar docs={localeDocs} searchParams={searchParams} locale={locale} />
         )}
         {pageContext === 'practice' && (
           <PracticeSidebar docs={localeDocs} searchParams={searchParams} />
         )}
         {pageContext === 'showcase' && (
-          <ShowcaseSidebar docs={localeDocs} searchParams={searchParams} />
+          <ShowcaseSidebar docs={localeDocs} searchParams={searchParams} locale={locale} />
         )}
         {pageContext === 'tools' && (
           <ToolsSidebar docs={localeDocs} searchParams={searchParams} />
@@ -116,9 +117,11 @@ export function Sidebar() {
 function ExploreSidebar({
   docs,
   searchParams,
+  locale,
 }: {
   docs: SearchDoc[];
   searchParams: ReturnType<typeof useSearchParams>;
+  locale: string;
 }) {
   const tCat = useTranslations('Categories');
   const tSidebar = useTranslations('Sidebar');
@@ -154,7 +157,7 @@ function ExploreSidebar({
             return (
               <Link
                 key={category.id}
-                href={`/tutorials?cat=${category.id}`}
+                href={getLocalizedPath(locale, `tutorials?cat=${category.id}`)}
                 className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${isActive ? ACTIVE_CLASS : DEFAULT_CLASS}`}
               >
                 <div className="flex items-center gap-3">
@@ -171,7 +174,7 @@ function ExploreSidebar({
       </div>
 
       <div className="flex flex-col gap-4">
-        <Link href="/request">
+        <Link href={getLocalizedPath(locale, 'request')}>
           <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold">
             <span className="text-lg mr-1">+</span>
             {tSidebar('requestTutorial')}
@@ -309,9 +312,11 @@ function PracticeSidebar({
 function ShowcaseSidebar({
   docs,
   searchParams,
+  locale,
 }: {
   docs: SearchDoc[];
   searchParams: ReturnType<typeof useSearchParams>;
+  locale: string;
 }) {
   const tSidebar = useTranslations('Sidebar');
 
@@ -346,7 +351,7 @@ function ShowcaseSidebar({
           return (
             <Link
               key={tag}
-              href={`/showcase?tag=${encodeURIComponent(tag)}`}
+              href={getLocalizedPath(locale, `showcase?tag=${encodeURIComponent(tag)}`)}
               className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${isActive ? ACTIVE_CLASS : DEFAULT_CLASS}`}
             >
               <div className="flex items-center gap-3">

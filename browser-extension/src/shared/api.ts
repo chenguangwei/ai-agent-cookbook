@@ -7,7 +7,7 @@ import type {
   Locale,
 } from './types';
 import { getSettings } from './storage';
-import { createUniqueSlug, slugify, sanitizeMdxContent } from './utils';
+import { createSeoSlug, sanitizeMdxContent } from './utils';
 
 // ============================================================
 // API response type
@@ -184,7 +184,7 @@ export function generateFileContent(
 }
 
 function generateTutorialFile(data: TutorialData) {
-  const slug = createUniqueSlug(data.slug || slugify(data.title));
+  const slug = createSeoSlug(data.slug || data.title, `${data.title} ${data.description || ''} ${data.content || ''}`);
   // Format content and truncate description
   const formattedContent = formatContent(data.content);
   const cleanDescription = truncateDescription(data.description || '', 200);
@@ -216,7 +216,7 @@ function generateTutorialFile(data: TutorialData) {
 }
 
 function generateNewsFile(data: NewsData) {
-  const slug = createUniqueSlug(data.slug || slugify(data.title));
+  const slug = createSeoSlug(data.slug || data.title, `${data.title} ${data.summary || ''} ${data.content || ''}`);
   // Format content
   const formattedContent = formatContent(data.content);
   const cleanSummary = truncateDescription(data.summary || '', 200);
@@ -246,7 +246,7 @@ function generateNewsFile(data: NewsData) {
 }
 
 function generateShowcaseFile(data: ShowcaseData) {
-  const slug = createUniqueSlug(slugify(data.title));
+  const slug = createSeoSlug(data.title, `${data.title} ${data.description || ''}`);
   return {
     filename: `content/showcase/${data.locale}/${slug}.json`,
     content: JSON.stringify(data, null, 2),
@@ -255,7 +255,7 @@ function generateShowcaseFile(data: ShowcaseData) {
 }
 
 function generateLabFile(data: LabData) {
-  const slug = createUniqueSlug(slugify(data.title));
+  const slug = createSeoSlug(data.title, `${data.title} ${data.description || ''}`);
   return {
     filename: `content/labs/${data.locale}/${slug}.json`,
     content: JSON.stringify(data, null, 2),

@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { Zap, Globe, Layout } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { SITE_NAME } from '@/lib/utils';
+import { useLocale, useTranslations } from 'next-intl';
+import { getLocalizedPath, SITE_NAME } from '@/lib/utils';
 
 export function Footer() {
+  const locale = useLocale();
   const t = useTranslations('Footer');
   const tNav = useTranslations('Navigation');
 
@@ -24,13 +27,13 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <span className="text-slate-900 dark:text-slate-200">{t('platform')}</span>
             <Link
-              href="/tutorials"
+              href={getLocalizedPath(locale, 'tutorials')}
               className="hover:text-primary-600 dark:hover:text-primary-400"
             >
               {tNav('tutorials')}
             </Link>
             <Link
-              href="/practice"
+              href={getLocalizedPath(locale, 'practice')}
               className="hover:text-primary-600 dark:hover:text-primary-400"
             >
               {t('practice')}

@@ -8,16 +8,18 @@ import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/features/LanguageSwitcher';
 import { useSearch } from '@/components/features/SearchProvider';
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { locales } from '@/i18n/config';
-import { SITE_NAME } from '@/lib/utils';
+import { getLocalizedPath, SITE_NAME } from '@/lib/utils';
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const { openSearch } = useSearch();
   const [mounted, setMounted] = useState(false);
   const t = useTranslations('Navigation');
+  const locale = useLocale();
   const pathname = usePathname();
+  const localizedHref = (path = '') => getLocalizedPath(locale, path);
 
   const isActive = (href: string) => {
     const localePattern = new RegExp(`^/(${locales.join('|')})(?=/|$)`);
@@ -32,13 +34,14 @@ export function Header() {
       : 'text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors';
 
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 py-3 lg:px-10 transition-colors">
       <div className="flex items-center gap-8">
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href={localizedHref()} className="flex items-center gap-3 group">
           <div className="size-8 text-primary-600 transition-transform group-hover:scale-110">
             <Zap className="w-full h-full" />
           </div>
@@ -48,27 +51,27 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="/tutorials" className={navLinkClass('/tutorials')}>
+          <Link href={localizedHref('tutorials')} className={navLinkClass('/tutorials')}>
             {t('tutorials')}
           </Link>
-          <Link href="/showcase" className={navLinkClass('/showcase')}>
+          <Link href={localizedHref('showcase')} className={navLinkClass('/showcase')}>
             {t('showcase')}
           </Link>
-          <Link href="/tools" className={navLinkClass('/tools')}>
+          <Link href={localizedHref('tools')} className={navLinkClass('/tools')}>
             {t('tools')}
           </Link>
           <Link
-            href="/news"
+            href={localizedHref('news')}
             className={`${navLinkClass('/news')} flex items-center gap-2`}
           >
             {t('news')}
             <div className="size-1.5 rounded-full bg-red-500 animate-pulse"></div>
           </Link>
-          <Link href="/docs" className={navLinkClass('/docs')}>
+          <Link href={localizedHref('docs')} className={navLinkClass('/docs')}>
             {t('docs')}
           </Link>
           <Link
-            href="/request"
+            href={localizedHref('request')}
             className="text-primary-600 dark:text-primary-400 text-sm font-bold hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
           >
             {t('requestTutorial')}

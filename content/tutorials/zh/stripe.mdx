@@ -1,0 +1,239 @@
+---
+title: "第一个 Stripe 账号被封了，重新注册前我才明白这些坑 | 教程"
+slug: "stripe"
+locale: "zh"
+description: "第一个 Stripe 账号被封了，重新注册前我才明白这些坑 | 教程"
+category: "Frameworks"
+tags: []
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HISENb_bQAAmptX.jpg"
+featured: false
+date: 2026-05-18
+updatedAt: 2026-05-18
+---
+
+# 第一个 Stripe 账号被封了，重新注册前我才明白这些坑 | 教程
+
+
+我的第一个 Stripe 公司账号被封了。
+
+后台给我的提示很简单：我们无法继续支持您的业务。然后支付功能暂停，提现暂停，账户里的余额被保留一段时间，后续才会打到银行账户。
+
+最难受的是，后台页面并不会把原因写得特别清楚。你只能看到一个结果，但看不出到底是哪句话、哪个页面、哪个业务描述触发了风控。
+
+![](https://pbs.twimg.com/media/HIR6YnsakAE97uH.jpg)
+
+这也是我后来重新梳理 Stripe 注册流程时，最大的一个感受：Stripe 不是一个填完资料就能收钱的工具。
+
+所以这篇不是单纯教大家怎么点下一步，而是结合我自己的踩坑经历，整理一版更适合美国 LLC、软件工具站、SaaS 项目的 Stripe 注册教程。
+
+如果你也准备做海外工具站、AI 软件、SaaS 订阅、数字产品收款，这篇可以先看完，再去填资料。
+
+## 一、为什么第一个 Stripe 账号会被封？
+
+
+先说我的判断。
+
+我第一个账号被封，不一定是某一个资料填错了，更像是 Stripe 对业务模型、网站内容、收款风险做了综合判断。
+
+尤其是 Stripe，它不是只看你有没有公司、有没有 EIN、有没有银行账户。你有这些，只能说明你是一个公司主体，不代表你的业务一定能被支持。
+
+## 二、注册 Stripe 前，先准备好这些东西
+
+
+如果你是美国 LLC，注册 Stripe 前建议先准备好公司法定名称、EIN、公司注册地址或运营地址、公司注册文件、Operating Agreement、公司负责人信息、公司邮箱、公司网站和银行账户信息。
+
+这样填写的时候不会一边填一边找资料，也能避免前后信息不一致。
+
+银行账户方面，我用的是 Mercury。这里最好使用公司名下的银行账户，不要用个人账户。后面 Stripe 提现、银行账户验证、税务信息匹配，都可能用到这些信息。
+
+网站方面尤其重要，我简单做了一个网站，买了域名。网站不是一个空壳，至少有首页、产品介绍页、定价页、服务条款、隐私政策、退款政策、联系我们、客户支持邮箱和产品交付说明。
+
+这一步很多人会忽略。其实Stripe 审核网站时，本质上是在判断：你到底卖什么，客户为什么付款，客户付款后能得到什么，出了问题怎么退款，客户怎么联系你，以及你是不是在卖受限制的东西。
+
+如果这些问题在网站上看不清楚，后面就容易出问题。
+
+## 三、商家类型怎么选？
+
+
+如果你是美国 LLC，这一步不要选错。
+
+业务所在地选择美国，商家类型选择 Registered business，是否有 EIN 选择 Yes。
+
+![](https://pbs.twimg.com/media/HISAr6ya0AEYUgh.jpg)
+
+这里不要选 Unregistered business，也不要选 Nonprofit organization。Unregistered business 更适合个人、自由职业者、个体户这种没有注册公司的情况；Nonprofit organization 则是非营利组织，比如 501(c)(3) 这类。
+
+你如果已经有美国 LLC，就应该选 Registered business。
+
+这一步不要为了省事乱填。Stripe 后面会把公司名称、EIN、公司地址、银行账户等信息放在一起核验，前后信息越一致，后续越少麻烦。
+
+## 四、公司名称怎么填？
+
+
+公司名称建议填你的公司法定名称。
+
+比如你的公司叫 XXX LLC，那 Stripe 里就填 XXX LLC。
+
+不要一会儿填品牌名，一会儿填网站名，一会儿填项目名。最好保持公司文件上的名称、IRS 文件上的名称、Mercury 银行里的名称、Stripe 里的名称，以及网站页脚或隐私政策里的公司名称尽量一致。
+
+如果你的品牌名和公司名不一样，可以在网站上写清楚这个品牌由哪个公司运营。比如某某产品由 XXX LLC 运营。这样 Stripe 审核时也更容易理解。
+
+## 五、商家地址怎么填？
+
+
+商家地址这里，优先填你能证明的地址。
+
+![](https://pbs.twimg.com/media/HISA2FBbEAAUpMe.jpg)
+
+比如公司注册文件里的地址、IRS 文件里的地址、Mercury 账户里的公司地址、注册代理提供的公司通信地址，。
+
+不要随便找一个美国地址填。
+
+Stripe 这个页面一般会提示，商家地址是运营业务的实际地点，和注册营业地址相同
+
+如果你是 Wyoming LLC，并且你的公司文件和银行资料都是 Wyoming 地址，那就按这个地址填。
+
+## 六、公司网站怎么填？
+
+
+这个很关键。
+
+不要填老业务网站，不要填还没做好的网站，不要填只有登录页的网站，也不要填内容和 Stripe 描述对不上的网站。
+
+如果你现在是新业务，比如做软件工具站、AI 自动化 SaaS、内容工作流工具，那么网站内容也要围绕这个方向来写。
+
+网站上可以出现 AI automation software、workflow tools、SaaS platform、software subscription、technical support、content workflow automation、productivity tools 这些表达。
+
+我第一个账号被封之后，最大的教训就是：不要让 Stripe 猜你的业务是什么。
+
+你要在网站上主动说清楚你是谁、你卖什么、你怎么收费、你怎么交付、客户怎么退款、客户怎么联系你，以及你不做哪些高风险业务。
+
+## 七、产品或服务怎么填？
+
+
+如果你是做软件、工具站、SaaS，这里类别就选 Software。
+
+![](https://pbs.twimg.com/media/HISBM_KbYAEJlxt.jpg)
+
+不要选金融、投资、虚拟货币，也不要选和你业务不匹配的类别。
+
+描述建议用英文，越清楚越好。
+
+如果你做的是 AI 内容工作流工具，可以这样填：
+
+> We provide a web-based SaaS platform for AI-powered workflow automation. The software helps users manage content topics, generate drafts, organize assets, create images, and streamline publishing workflows.
+
+如果你做的是通用工具站，可以这样填：
+
+> We provide web-based software tools for businesses, creators, and small teams. Our products help users automate workflows, manage projects, organize digital assets, and improve productivity.
+
+这段话的重点写得清楚：我们卖的是软件，用户付费买的是订阅和技术支持的服务。
+
+这些边界要主动写清楚。
+
+## 八、公司代表怎么填？
+
+
+Stripe 会要求填写公司代表信息，如果你是单人 LLC，一般就是填你自己。
+
+![](https://pbs.twimg.com/media/HISCOkcaEAAI6ow.jpg)
+
+通常需要填写姓名、生日、职位、家庭地址、邮箱、电话、身份信息、是否为公司所有人，以及持股比例或控制关系。
+
+这里不要填虚假信息。Stripe 的 KYC 审核会看实际控制人，也就是谁真正控制这家公司、谁负责这个账户、谁对业务负责。
+
+## 九、银行账户怎么选？
+
+
+![](https://pbs.twimg.com/media/HISCZJbbAAAMKSj.png)
+
+我用的是 Mercury。
+
+如果你有多个 Mercury 账户，建议选公司主运营账户。
+
+![](https://pbs.twimg.com/media/HISBcKNaAAAQ7xq.jpg)
+
+不要选个人账户、旧业务专用账户、不确定用途的子账户，或者和公司名称不一致的账户。
+
+提现计划我建议选手动，不要让钱长时间堆在 Stripe 余额里。新账号最好保持正常、规律的提现节奏。
+
+## 十、账户安全怎么设置？
+
+
+Stripe 会要求设置两步验证。
+
+![](https://pbs.twimg.com/media/HISBn9maoAANQA7.jpg)
+
+这里建议选添加验证器应用。我用 Google Authenticator 扫码，自带验证码。
+
+![](https://pbs.twimg.com/media/HISB5mvbUAA6nwu.png)
+
+设置完成后，一定要保存恢复码。
+
+后面账号稳定了，也可以再添加 Passkey 或硬件安全密钥作为备用。Stripe 账户后面涉及收款、提现、申诉和客户数据，不要只绑定一种登录方式。
+
+## 十一、Stripe Climate 捐款要不要开？
+
+
+注册过程中可能会看到 Stripe Climate 捐款选项，比如每笔收入捐 1%。
+
+![](https://pbs.twimg.com/media/HISBs9fa0AAr0Qx.jpg)
+
+我建议新账号先选不，谢谢。
+
+不是说这个功能不好，而是新账号刚注册，最重要的是完成审核、跑通收款、正常提现。不要一开始增加不必要的变量。
+
+等账号稳定后，想开再开。
+
+## 十二、提交前一定要检查这些地方
+
+
+![](https://pbs.twimg.com/media/HISFGplaoAAC2wW.jpg)
+
+在最后提交之前，逐项检查：公司名称和 EIN 是否一致，公司地址是否能解释清楚，银行账户是否是公司账户，网站是否可以正常打开，网站是否有产品介绍、定价页、服务条款、隐私政策、退款政策和客服邮箱。
+
+这一步不要嫌麻烦。
+
+## 关键一、注册成功后，不要马上猛收款
+
+
+Stripe 注册成功，不代表万事大吉。
+
+新账号刚开始不要马上大额收款、不要短时间跑大量订单、不要突然收很多国际卡付款、不要一上来就做高客单价订阅，也不要在没有清楚交付。。
+
+建议先小流量测试。
+
+## 关键二、如果之前 Stripe 账号被封过，尤其要谨慎
+
+
+这一点是我自己的亲身经历。
+
+如果你的第一个 Stripe 账号已经被关闭，不建议直接用同一个公司主体去开一个新账号，然后继续做原来的业务。
+
+这样很容易被认为是在规避原来的关闭决定。
+
+必要时，可以先联系 Stripe 说明情况，确认是否可以用同一个公司主体申请新的账号。
+
+核心不是换个名字重新来，而是业务本身要干净。
+
+如果只是换皮，本质还是原来的业务，后面大概率还会出问题。
+
+## 十五、我的最终建议
+
+
+如果你是做正规的软件工具站，Stripe 注册的核心不是技巧，而是四个字：清楚、真实、一致、可证明。
+
+清楚，就是网站要说明你卖什么、怎么收费、怎么交付、怎么退款；真实，就是公司、地址、负责人、银行账户不要乱填；一致，就是 Stripe 里的描述，要和网站、公司资料、银行账户一致；可证明，就是公司文件、银行资料、交付记录、客户订单都能拿出来解释。
+
+更重要的是，你要先把自己的业务变成一个支付机构看得懂、客户看得懂、资料能证明、交付能闭环的正规软件服务。
+
+这才是工具站长期收款的基础。
+
+🙋‍♂️ 我是 饭团，专注跨境出海赚美刀，有收获欢迎扫码加好友。
+
+扫描下方二维码回复【出海】即可免费领取《AI编程出海蓝皮书》，一个普通人也能读懂的出海指南书。
+
+![](https://pbs.twimg.com/media/HISEa88aMAAoOAz.jpg)

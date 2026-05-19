@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
+import { hasThinSlug, resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +29,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const baseSlug = slugify(title);
+    const titleSlug = slugify(title, 80, 'ai tool');
+    const baseSlug = hasThinSlug(titleSlug)
+      ? slugify(`${title} ${description} ${category} ${(tags || []).join(' ')}`, 80, 'ai tool')
+      : titleSlug;
     const date = new Date().toISOString().split('T')[0];
 
     const contentDir = path.join(process.cwd(), 'content', 'tools', locale);
