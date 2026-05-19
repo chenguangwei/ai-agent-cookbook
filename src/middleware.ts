@@ -7,6 +7,10 @@ const intlMiddleware = createMiddleware({
   locales,
   defaultLocale,
   localePrefix: 'as-needed', // Only show locale prefix for non-default locale
+  // Page metadata and sitemap already emit content-aware hreflang links.
+  // The middleware only knows route patterns, so it can advertise localized
+  // alternates that do not exist for content-driven pages.
+  alternateLinks: false,
 });
 
 function getCleanDuplicateHostPath(pathname: string): string | null {
