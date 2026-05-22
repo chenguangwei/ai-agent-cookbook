@@ -1,0 +1,388 @@
+---
+title: "OpenClaw + Obsidian으로 개인 디지털 자산 생산 라인 구축하기"
+slug: "huangyun-122-on-x"
+locale: "ko"
+description: "OpenClaw + Obsidian으로 개인 디지털 자산 생산 라인 구축하기"
+category: "실제 사례"
+tags: ["Claude"]
+techStack: []
+difficulty: "초급"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HCQvt6GaoAAnlLz.jpg"
+featured: false
+date: 2026-03-01
+---
+
+# OpenClaw + Obsidian으로 개인 디지털 자산 생산 라인 구축하기
+
+# 이 부분만 읽어보세요:
+
+우리는 매일 많은 시간을 대규모 언어 모델과 대화하며 보냅니다. 오늘 뭐 먹을지, 어떤 작업을 할지, 그리고 바오위 선생님, 양 이모, 톄추이가 올린 재미있는 게 뭔지 물어보죠.
+
+하지만 대부분 거기서 멈춥니다. 그 사이에 떠오른 엉뚱하고 분산된 생각들은 지나가는 구름이 되어 사라집니다.
+
+유용한 아이디어, 처리되지 않은 지식, 제대로 이해하지 못한 농담—채팅 창을 닫는 순간, 이 모든 것은 ChatBox에서 잠들어 버립니다. 어쩌면 양 이모의 아이디어 하나가 몇 백 달러를 더 벌게 해줄 수도 있었고, 바오위의 기술 하나가 효율을 100배 높여줄 수도 있었으며, 톄추이의 코칭 아이디어 하나가 수만 명의 팔로워를 얻게 해줄 수도 있었을 텐데요...
+
+그리고 이런 것들은, 분명 LLM이 보았을 텐데, 검토 명령을 받지 않았기 때문에 실시간으로 저에게 피드백해 주지 않았습니다. 검토 모드가 활성화되면, 어느 오후에 이런 메시지를 받을 수도 있습니다: "어이, 황윤, 지난주에 바이럴 콘텐츠를 마이그레이션하자는 그 아이디어 괜찮았어. 사실 바오위 선생님 위챗 공식 계정 스킬이 자동 게시를 도와줄 수 있는데, 한번 해볼까?"
+
+OpenClaw를 2주간 사용해 본 결과, 대화 내용을 Obsidian에 덤프하여 RAW 문서를 만들고 즉시 Agent를 할당해 검토하는 것은 지식 사각지대—내가 모르는 것을 내가 모른다는 사실—를 발견하는 데 매우 도움이 된다는 것을 알게 되었습니다.
+
+기껏해야 이 작은 추가 부분—사용 설정—을 읽어보세요:
+
+- 원격 VPS(OpenCloudOS)에 OpenClaw 설치
+- OpenClaw 대화 내용으로 Obsidian Vault 디렉토리 생성
+- 원격 VPS와 로컬 Mac에 Syncthing 설치하여 VPS Vault의 파일 변경 사항을 실시간 동기화
+- 로컬 Mac에 Obsidian 설치하여 본격적인 편집
+- 보안 통신: TailScale(선택 사항)
+
+X의 Fan Zong @fankaishuoai 님께 TailScale을 사용하여 양쪽 끝의 Obsidian 파일을 동기화하고 보안을 유지하라는 조언에 감사드립니다.
+
+감사 인사는 글 앞부분에 넣었습니다. 이 부분까지 읽은 실천적인 분들은 바로 실행에 옮길 테니까요. 이후 설정은 글을 읽는 것보다 Claude/GPT에게 묻는 것이 더 유용합니다. 그런데 왜 이 글을 계속 쓰고 있을까요? DDDD, 아시겠죠.
+
+글자 수를 좀 더 채워 보겠습니다—필요한 소프트웨어:
+
+- OpenClaw / Syncthing (원격 VPS)
+- Visual Studio Code + Remote-SSH 플러그인 (로컬 Mac)
+- Obsidian / Telegram / Syncthing (로컬 Mac)
+- TailScale (원격 VPS, 로컬 Mac)
+
+## 긴 글을 읽어도 괜찮다면, 본론으로 들어가 보겠습니다—
+
+OpenClaw 설치, SSH를 통한 원격 VPS 연결, Telegram 연결하여 명령 전송—이에 대한 문서는 많으므로 자세히 설명하지 않겠습니다.
+
+뭐? OpenClaw가 Obsidian 문서를 만들도록 프롬프트를 작성하는 방법을 알고 싶다고요? 이렇게 시켜보세요:
+
+![](https://pbs.twimg.com/media/HCQxGbDbMAA-dTN.png)
+
+이 글은 OpenClaw가 원격 VPS에 Obsidian Vault를 생성한 후, 오픈 소스 소프트웨어 Syncthing을 사용하여 안전하게 동기화하고 로컬에서 편집하는 방법을 공유하는 데 중점을 둡니다.
+
+오픈 소스 소프트웨어 Syncthing에 대해서는 이전 트윗에서 언급한 바 있습니다:
+
+> 인용 트윗
+> 여러분, "파일이 여러 기기 간에 동기화되지 않는" 고통을 완전히 해결해 주는 마법 같은 도구를 방금 발견했습니다. 이전에는: 클라우드 스토리지 속도 제한, SFTP 사용은 원시인 같았죠. 이제 Syncthing이 한 번에 처리합니다. 세 가지 시나리오를 다룹니다: 1/ Win - Win LAN 즉시 동기화 2/ Win - Mac 크로스 플랫폼 3/ VPS 작업 디렉토리를 로컬에 실시간 동기화하여 직접 편집 https://t.co/u1m8ks2Iby 현재 어떤 솔루션을 사용하고 계신가요?
+> https://x.com/i/web/status/2025182109653238114
+
+아래는 제 배포 환경입니다. 원격 VPS는 Tencent 해외 서버로, 연간 199위안입니다. 로컬에서는 Mac을 사용합니다.
+
+| 환경 구성 | VPS 시스템 | OpenCloudOS (RHEL/CentOS 계열) |
+| :--- | :--- | :--- |
+| VPS 로그인 방식 | SSH 키 로그인 |
+| 로컬 시스템 | macOS |
+| 로컬에 설치된 소프트웨어 | Obsidian, VS Code + Remote SSH 플러그인 |
+
+## 1단계: VPS에 Syncthing 설치
+
+SSH로 VPS에 접속하여 다음 명령어를 실행하세요:
+
+```bash
+# 최신 버전의 Syncthing 다운로드 (Linux amd64)
+wget https://github.com/syncthing/syncthing/releases/download/v2.0.14/syncthing-linux-amd64-v2.0.14.tar.gz
+
+# 압축 해제
+tar -xzf syncthing-linux-amd64-v2.0.14.tar.gz
+
+# 시스템 경로로 복사하고 실행 권한 부여
+cp syncthing-linux-amd64-v2.0.14/syncthing /usr/local/bin/
+chmod +x /usr/local/bin/syncthing
+
+# 설치 성공 확인
+/usr/local/bin/syncthing --version
+```
+
+> [!tip] 설치 경로 참고
+> 설치 경로는 `/usr/local/bin/syncthing`입니다. 이 경로는 나중에 서비스 파일을 구성할 때 필요합니다.
+
+## 2단계: systemd 서비스 파일 생성
+
+> [!warning] 수동 설치는 수동 서비스 파일 생성 필요
+> 바이너리 패키지로 설치된 Syncthing은 자동으로 systemd 서비스 파일을 생성하지 않습니다. 수동으로 생성해야 합니다. 그렇지 않으면 `systemctl` 명령어가 서비스를 찾을 수 없습니다.
+
+서비스 파일 생성:
+
+```bash
+nano /etc/systemd/system/syncthing@.service
+```
+
+다음 내용을 붙여넣으세요:
+
+```ini
+[Unit]
+Description=Syncthing - %I를 위한 오픈 소스 지속적 파일 동기화
+Documentation=man:syncthing(1)
+After=network.target
+
+[Service]
+User=%i
+ExecStart=/usr/local/bin/syncthing serve --no-browser --no-restart --logflags=0
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=3 4
+RestartForceExitStatus=3 4
+
+[Install]
+WantedBy=multi-user.target
+```
+
+명령어 매개변수 설명:
+
+| 매개변수 | 의미 |
+| :--- | :--- |
+| `/usr/local/bin/syncthing` | syncthing 실행 파일의 전체 경로 |
+| `serve` | syncthing 동기화 서비스 시작 |
+| `--no-browser` | 시작 시 브라우저를 자동으로 열지 않음 (서버에 데스크톱 환경이 없으므로 필수) |
+| `--no-restart` | 프로세스 종료 후 자동 재시작하지 않음 (systemd가 관리하도록 하여 충돌 방지) |
+| `--logflags=0` | 로그 형식 단순화 |
+
+저장 및 종료: `Ctrl+X` → `Y` → `Enter`
+
+## 3단계: 서비스 시작 및 확인
+
+```bash
+# systemd 구성 다시 로드
+systemctl daemon-reload
+
+# 부팅 시 자동 시작 설정 + 즉시 시작
+systemctl enable syncthing@root.service
+systemctl start syncthing@root.service
+
+# 실행 상태 확인
+systemctl status syncthing@root.service
+```
+
+`Active: active (running)`이 표시되면 성공입니다.
+
+## 4단계: Mac에 Syncthing 설치
+
+```bash
+# 설치
+brew install syncthing
+
+# 부팅 시 자동 시작 설정 및 시작
+brew services start syncthing
+```
+
+Mac 측 관리 인터페이스: 브라우저를 열고 `http://localhost:8384`에 접속하세요.
+
+## 5단계: SSH 터널을 통해 VPS 관리 인터페이스 접속
+
+VPS의 Syncthing은 기본적으로 로컬 `127.0.0.1:8384`만 수신 대기하므로 외부에서 직접 접속할 수 없습니다. SSH 터널을 통해 포워딩해야 합니다:
+
+```bash
+# 로컬 Mac의 새 터미널에서 실행 (VPS 정보로 대체)
+ssh -L 9384:127.0.0.1:8384 your_name@your_vps_ip -N
+```
+
+그런 다음 브라우저에서 `http://localhost:9384`를 열면 VPS 측 Syncthing 관리 인터페이스가 표시됩니다.
+
+> [!note] `-N` 매개변수 정보
+> `-N`은 터널만 설정하고 원격 명령어를 실행하지 않음을 의미합니다. 터미널은 대기 상태가 되며, 열어두기만 하면 됩니다. 터미널을 닫으면 터널이 끊어집니다.
+
+## 6단계: 양쪽 끝에서 서로 기기 추가하기
+
+기기 ID 확인:
+
+-   Mac 측: `http://localhost:8384` 열기 → 오른쪽 상단 `작업` → `ID 표시`
+-   VPS 측: `http://localhost:9384` 열기 → 동일한 작업 수행
+
+Mac에서 VPS 추가하기:
+
+1.  `http://localhost:8384` 열기
+2.  오른쪽 하단 `원격 기기 추가` 클릭
+3.  VPS의 기기 ID 붙여넣기
+4.  기기 이름을 `vps`로 입력하고 저장
+
+VPS에서 연결 요청 확인하기:
+
+1.  `http://localhost:9384` 열기
+2.  Mac으로부터의 연결 요청 확인 후 `기기 추가` 클릭, 확인 후 저장
+
+양쪽 끝에서 상대방의 기기가 보이고 상태가 `연결됨`으로 표시되면 페어링 성공입니다.
+
+## 7단계: 동기화 폴더 설정
+
+VPS 측에서 보관함 디렉토리 공유하기:
+
+1.  `http://localhost:9384` 열기
+2.  `폴더 추가` 클릭
+3.  다음 항목 입력:
+    -   폴더 레이블: `obsidian-vault`
+    -   폴더 경로: `/your_path_to/vault` (실제 경로 입력)
+4.  `공유` 탭으로 전환하여 Mac 기기 체크
+5.  저장
+
+Mac에서 동기화 수락하기:
+
+1.  `http://localhost:8384` 열기
+2.  VPS로부터의 폴더 공유 요청 확인 후 `추가` 클릭
+3.  로컬 경로에 `/Users/your_username/obsidian-vault` 입력
+4.  저장하면 초기 동기화 시작
+
+## 8단계: Obsidian에서 동기화된 디렉토리 열기
+
+1.  Obsidian 열기
+2.  왼쪽 하단 `다른 보관함 열기` 클릭
+3.  `폴더를 보관함으로 열기` 선택
+4.  `/Users/your_username/obsidian-vault` 선택
+
+## 선택 사항: Obsidian 충돌 파일 무시하기
+
+`obsidian-vault` 디렉토리에 `.stignore` 파일을 생성하여 동기화가 필요 없는 파일을 무시합니다:
+
+```txt
+// Obsidian 작업 공간 상태, 기기별로 별도 유지
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+// Mac 시스템 파일
+.DS_Store
+```
+
+## 선택 사항: TailScale로 보안 강화하기
+
+위의 Syncthing 설정에는 보안상 위험이 있습니다:
+
+-   Syncthing의 22000 포트가 공개 인터넷에 노출됨
+-   트래픽이 타사 릴레이 서버를 통과할 수 있음
+-   기기 IP가 글로벌 디스커버리 서버에 보고됨
+
+Tailscale의 역할: VPS와 Mac 사이에 WireGuard 기반의 암호화된 사설 네트워크를 구축합니다. 모든 Syncthing 트래픽은 이 내부 네트워크를 통과하므로 공개 인터넷에 완전히 노출되지 않습니다.
+
+## 아키텍처 비교
+
+보강 전:
+
+```
+Mac ──── 공개 인터넷 ──── VPS:22000 (포트 노출)
+          타사 릴레이 서버를 통해 전송될 가능성 있음
+```
+
+보강 후:
+
+```
+Mac ──── Tailscale 사설 네트워크 (WireGuard 암호화) ──── VPS
+         100.x.x.x 사설 IP, 공개 인터넷에서 완전히 보이지 않음
+         Syncthing은 내부 네트워크 내에서만 통신
+```
+
+## 1단계: VPS에 Tailscale 설치
+
+SSH로 VPS에 접속하여 실행:
+
+```bash
+# 공식 원클릭 설치 스크립트 (OpenCloudOS 지원)
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# 데몬 시작 및 부팅 시 자동 시작 설정
+systemctl enable --now tailscaled
+
+# 로그인 (인증 URL이 출력되면 복사하여 브라우저에서 열기)
+tailscale up
+```
+
+로그인 후 할당된 Tailscale IP 확인:
+
+```bash
+tailscale ip -4
+# 100.x.x.x 형태의 주소 반환, 기록해 둡니다
+```
+
+## 2단계: Mac에 Tailscale 설치
+
+> [!warning] Mac은 반드시 GUI 버전을 설치해야 합니다
+> CLI 버전만 설치하면 안 됩니다. Mac의 Tailscale은 VPN 구성을 관리하기 위해 메뉴 막대 앱이 필요합니다.
+
+```bash
+# GUI 버전 설치 (메뉴 막대 앱 포함)
+brew install --cask tailscale
+```
+
+또는 공식 웹사이트(tailscale.com/download)에서 직접 다운로드합니다.
+
+설치 후 단계:
+
+1.  Launchpad 열기 → Tailscale 클릭
+2.  메뉴 막대 아이콘이 나타나지 않는 경우: `시스템 설정` → `개인정보 보호 및 보안` 열기
+    하단으로 스크롤하여 `Tailscale 시스템 확장이 차단되었습니다` 찾기
+    `허용` 클릭
+    VPN 구성 요청 팝업이 나타나면 `허용` 클릭
+    앱 다시 열기: `pkill -f Tailscale && open /Applications/Tailscale.app`
+3.  메뉴 막대 아이콘 클릭 → `로그인` → 동일한 계정으로 로그인
+
+양쪽 끝 간 연결 확인:
+
+```bash
+# Mac에서 VPS의 Tailscale IP로 ping 보내기
+ping 100.x.x.x
+
+# VPS에서 모든 기기 보기
+tailscale status
+```
+
+ping이 성공하면 사설 네트워크가 설정된 것입니다.
+
+## 3단계: Syncthing이 Tailscale만 사용하도록 설정
+
+VPS 측
+
+SSH 터널을 통해 VPS의 Syncthing 관리 인터페이스 열기:
+
+```bash
+# Mac에서 로컬로 실행, SSH 터널 설정
+ssh -L 9384:127.0.0.1:8384 your_vps_name@your_vps_ip -N
+```
+
+브라우저에서 `http://localhost:9384` 열기.
+
+수신 주소 수정: `설정` → `연결` → `동기화 프로토콜 수신 주소`를 다음으로 변경:
+
+```
+tcp://100.x.x.x:22000
+```
+
+(VPS의 Tailscale IP로 바꾸고, `tcp://`를 반드시 포함)
+
+글로벌 디스커버리 및 릴레이 비활성화: 동일 페이지에서:
+
+-   `글로벌 디스커버리` 체크 해제
+-   `릴레이 활성화` 체크 해제
+
+Mac 측
+
+`http://localhost:8384` 열기.
+
+VPS 기기의 연결 주소 수정: VPS 기기 찾기 → `편집` → 주소를 다음으로 변경:
+
+```
+tcp://100.x.x.x:22000
+```
+
+글로벌 디스커버리 및 릴레이도 비활성화합니다.
+
+## 4단계: VPS에서 22000 포트의 공개 인터넷 접근 차단
+
+```bash
+# 22000 포트에 대한 공개 인터넷 접근 규칙 제거
+firewall-cmd --permanent --remove-port=22000/tcp
+firewall-cmd --reload
+
+# 차단 확인
+firewall-cmd --list-ports
+```
+
+## 5단계: Tailscale IP를 통해 VPS 관리 인터페이스에 직접 접근 (선택 사항)
+
+Tailscale 사설 네트워크를 사용하면 더 이상 SSH 터널이 필요하지 않습니다:
+
+VPS 측 Syncthing → `설정` → `GUI` → `GUI 수신 주소`를 다음으로 변경:
+
+```
+100.x.x.x:8384
+```
+
+(VPS의 Tailscale IP로 바꾸기)
+
+이제 Mac 브라우저에서 `http://100.x.x.x:8384`로 직접 접속할 수 있습니다.
+
+> 안전합니다. Tailscale 계정의 기기만 이 Tailscale IP에 접근할 수 있으며, 공개 인터넷에서는 완전히 보이지 않습니다.
+
+휴, 드디어 다 썼네요~

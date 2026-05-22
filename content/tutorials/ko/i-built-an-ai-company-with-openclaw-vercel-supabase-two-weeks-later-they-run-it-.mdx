@@ -1,0 +1,396 @@
+---
+title: "OpenClaw + Vercel + Supabase로 AI 회사를 만들었습니다 — 2주 후, 스스로 운영합니다"
+slug: "i-built-an-ai-company-with-openclaw-vercel-supabase-two-weeks-later-they-run-it-"
+locale: "ko"
+description: "OpenClaw + Vercel + Supabase로 AI 회사를 만들었습니다 — 2주 후, 스스로 운영합니다"
+category: "LLM 모델"
+tags: ["Claude", "ReAct", "평가"]
+techStack: []
+difficulty: "초급"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HAgo9VqWQAAlPKS.jpg"
+featured: false
+date: 2026-03-15
+---
+
+# OpenClaw + Vercel + Supabase로 AI 회사를 만들었습니다 — 2주 후, 스스로 운영합니다
+
+> 6개의 AI 에이전트, 1개의 VPS, 1개의 Supabase 데이터베이스 — "에이전트가 대화할 수 있는" 상태에서 "에이전트가 웹사이트를 자율적으로 운영하는" 상태로 가는 데 2주가 걸렸습니다. 이 글에서는 그 사이에 정확히 무엇이 빠져 있는지, 어떻게 고치는지, 그리고 바로 사용할 수 있는 아키텍처를 다룹니다.
+
+## 시작점: OpenClaw가 있습니다. 이제 무엇을 할까요?
+
+최근에 AI 에이전트를 가지고 놀아보셨다면, 아마 이미 OpenClaw를 설정해 두셨을 겁니다.
+
+OpenClaw는 큰 문제를 해결합니다: Claude가 도구를 사용하고, 웹을 탐색하고, 파일을 조작하고, 예약된 작업을 실행할 수 있게 해줍니다. 에이전트에 cron 작업을 할당할 수 있습니다 — 일일 트윗, 시간별 정보 스캔, 정기적인 연구 보고서 등.
+
+저도 거기서 시작했습니다.
+
+제 프로젝트 이름은 VoxYZ Agent World입니다 — 6명의 AI 에이전트가 픽셀 아트 사무실 안에서 웹사이트를 자율적으로 운영합니다. 기술 스택은 간단합니다:
+
+- **OpenClaw (VPS 위)**: 에이전트의 "두뇌" — 원탁 토론, cron 작업, 심층 연구 실행
+- **Next.js + Vercel**: 웹사이트 프론트엔드 + API 레이어
+- **Supabase**: 모든 상태(제안, 임무, 이벤트, 기억)의 단일 진실 공급원
+
+6개의 역할, 각각 고유한 임무가 있습니다: Minion은 결정을 내리고, Sage는 전략을 분석하며, Scout는 정보를 수집하고, Quill은 콘텐츠를 작성하며, Xalt는 소셜 미디어를 관리하고, Observer는 품질 검사를 수행합니다.
+
+OpenClaw의 cron 작업은 에이전트가 매일 "출근"하도록 합니다. 원탁 토론을 통해 토론하고, 투표하고, 합의에 도달할 수 있습니다.
+
+하지만 이것은 단지 "대화할 수 있는" 상태일 뿐, "운영할 수 있는" 상태는 아닙니다.
+
+에이전트가 생성하는 모든 것 — 트윗 초안, 분석 보고서, 콘텐츠 조각 — 은 OpenClaw의 출력 레이어에 남아 있습니다. 아무것도 실제 실행으로 전환하지 않으며, 실행 완료 후 시스템에 "완료"를 알리지 않습니다.
+
+"에이전트가 출력을 생성할 수 있는" 상태와 "에이전트가 작업을 처음부터 끝까지 실행할 수 있는" 상태 사이에는 전체 실행 → 피드백 → 재트리거 루프가 빠져 있습니다. 이것이 이 글에서 다루는 내용입니다.
+
+## 폐쇄 루프의 모습
+
+먼저 "폐쇄 루프"를 정의해 봅시다. 그래야 잘못된 것을 만들지 않을 수 있습니다.
+
+진정한 무인 에이전트 시스템은 다음 주기가 실행되어야 합니다:
+
+에이전트가 아이디어 제안 (Proposal)
+     ↓
+자동 승인 확인 (Auto-Approve)
+     ↓
+임무 및 단계 생성 (Mission + Steps)
+     ↓
+작업자가 작업을 요청하고 실행 (Worker)
+     ↓
+이벤트 발생 (Event)
+     ↓
+새로운 반응 트리거 (Trigger / Reaction)
+     ↓
+1단계로 돌아가기
+
+간단해 보이나요? 실제로 저는 세 가지 함정에 빠졌습니다 — 각각 시스템이 "실행 중인 것처럼 보이지만 실제로는 제자리에서 회전하고 있는" 상태를 만들었습니다.
+
+![](https://pbs.twimg.com/media/HAgr06LXcAANBuA.jpg)
+
+## 함정 1: 두 곳이 작업을 두고 싸우는 경우
+
+제 VPS에는 OpenClaw 작업자가 작업을 요청하고 실행하고 있었습니다. 동시에 Vercel에는 heartbeat cron이 mission-worker를 실행하면서 동일한 작업을 요청하려고 했습니다.
+
+둘 다 같은 테이블을 쿼리하고, 같은 단계를 가져오고, 독립적으로 실행했습니다. 조정도 없고, 순수한 경쟁 상태였습니다. 가끔 한 단계가 양쪽에서 충돌하는 상태로 태그되기도 했습니다.
+
+**해결책**: 하나를 제거합니다. VPS가 유일한 실행자입니다. Vercel은 가벼운 제어 평면(트리거 평가, 반응 큐 처리, 중단된 작업 정리)만 실행합니다.
+
+변경 사항은 미미했습니다 — heartbeat 경로에서 `runMissionWorker` 호출을 제거했습니다:
+
+```typescript
+// Heartbeat는 이제 4가지만 수행합니다
+const triggerResult = await evaluateTriggers(sb, 4_000);
+const reactionResult = await processReactionQueue(sb, 3_000);
+const learningResult = await promoteInsights(sb);
+const staleResult = await recoverStaleSteps(sb);
+```
+
+**추가 이점**: Vercel Pro 비용을 절약했습니다. Heartbeat에 더 이상 Vercel의 cron이 필요하지 않습니다 — VPS의 crontab 한 줄이면 됩니다:
+
+```bash
+*/5 * * * * curl -s -H "Authorization: Bearer $KEY" https://yoursite.com/api/ops/heartbeat
+```
+
+![](https://pbs.twimg.com/media/HAgsp9-WYAAMenS.jpg)
+
+## 함정 2: 트리거되었지만 아무도 처리하지 않은 경우
+
+4개의 트리거를 작성했습니다: 트윗이 바이럴되면 자동 분석, 임무 실패 시 자동 진단, 콘텐츠 게시 시 자동 검토, 인사이트가 성숙해지면 자동 승격.
+
+테스트 중에 발견했습니다: 트리거가 조건을 올바르게 감지하고 제안을 생성했습니다. 하지만 제안은 영원히 `pending` 상태로 남아 있었습니다 — 임무가 되지도 않았고, 실행 가능한 단계도 생성되지 않았습니다.
+
+**이유**: 트리거가 `ops_mission_proposals` 테이블에 직접 삽입하고 있었지만, 정상적인 승인 흐름은 다음과 같습니다: 제안 삽입 → 자동 승인 평가 → 승인되면 임무 + 단계 생성. 트리거는 마지막 두 단계를 건너뛰었습니다.
+
+**해결책**: 공유 함수 `createProposalAndMaybeAutoApprove`를 추출합니다. 제안을 생성하는 모든 경로 — API, 트리거, 반응 — 는 이 하나의 함수를 호출해야 합니다.
+
+```typescript
+// proposal-service.ts — 모든 제안 생성을 위한 단일 진입점
+export async function createProposalAndMaybeAutoApprove(
+  sb: SupabaseClient,
+  input: ProposalServiceInput,  // source: 'api' | 'trigger' | 'reaction' 포함
+): Promise<ProposalServiceResult> {
+  // 1. 일일 한도 확인
+  // 2. Cap Gates 확인 (아래 설명)
+  // 3. 제안 삽입
+  // 4. 이벤트 발생
+  // 5. 자동 승인 평가
+  // 6. 승인되면 → 임무 + 단계 생성
+  // 7. 결과 반환
+}
+```
+
+변경 후, 트리거는 제안 템플릿만 반환합니다. 평가자가 서비스를 호출합니다:
+
+```typescript
+// trigger-evaluator.ts
+if (outcome.fired && outcome.proposal) {
+  await createProposalAndMaybeAutoApprove(sb, {
+    ...outcome.proposal,
+    source: 'trigger',
+  });
+}
+```
+
+하나의 함수가 모든 것을 지배합니다. 향후 확인 로직(속도 제한, 차단 목록, 새로운 한도)이 필요하면 — 하나의 파일만 변경하면 됩니다.
+
+![](https://pbs.twimg.com/media/HAgsGLDXUAAhPDB.jpg)
+
+## 함정 3: 할당량이 가득 찼을 때 큐가 계속 쌓이는 경우
+
+가장 교활한 버그였습니다 — 표면적으로는 모든 것이 정상으로 보였고, 로그에 오류도 없었지만, 데이터베이스에는 점점 더 많은 대기 중인 단계가 쌓이고 있었습니다.
+
+**이유**: 트윗 할당량이 가득 찼지만, 제안은 계속 승인되고, 임무가 생성되고, 대기 중인 단계가 생성되었습니다. VPS 작업자는 할당량이 가득 찬 것을 보고 그냥 건너뛰었습니다 — 요청하지도 않았고, 실패로 표시하지도 않았습니다. 다음 날, 또 다른 배치가 도착했습니다.
+
+**해결책**: Cap Gates — 제안 진입점에서 거부합니다. 처음부터 대기 중인 단계가 생성되지 않도록 합니다.
+
+```typescript
+// proposal-service.ts 내부의 게이트 시스템
+const STEP_KIND_GATES: Record<string, StepKindGate> = {
+  write_content: checkWriteContentGate,  // 일일 콘텐츠 한도 확인
+  post_tweet:    checkPostTweetGate,     // 트윗 할당량 확인
+  deploy:        checkDeployGate,        // 배포 정책 확인
+};
+```
+
+각 단계 종류에는 고유한 게이트가 있습니다. 트윗 할당량이 가득 찼나요? 제안이 즉시 거부되고, 이유가 명확하게 표시되며, 경고 이벤트가 발생합니다. 대기 중인 단계가 없으므로 쌓이지 않습니다.
+
+다음은 `post_tweet` 게이트입니다:
+
+```typescript
+async function checkPostTweetGate(sb: SupabaseClient) {
+  const autopost = await getOpsPolicyJson(sb, 'x_autopost', {});
+  if (autopost.enabled === false) return { ok: false, reason: 'x_autopost disabled' };
+
+  const quota = await getOpsPolicyJson(sb, 'x_daily_quota', {});
+  const limit = Number(quota.limit ?? 10);
+  const { count } = await sb
+    .from('ops_tweet_drafts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'posted')
+    .gte('posted_at', startOfTodayUtcIso());
+
+  if ((count ?? 0) >= limit) return { ok: false, reason: `Daily tweet quota reached (${count}/${limit})` };
+  return { ok: true };
+}
+```
+
+**핵심 원칙**: 게이트에서 거부하고, 큐에 쌓지 마세요. 거부된 제안은 기록되며(감사 목적), 조용히 삭제되지 않습니다.
+
+![](https://pbs.twimg.com/media/HAgr_tsXUAAUEqO.jpg)
+
+## 생동감 부여: 트리거 + 반응 매트릭스
+
+
+세 가지 함정을 수정한 후, 루프는 작동합니다. 하지만 시스템은 단순히 "오류 없는 조립 라인"일 뿐, "반응하는 팀"은 아닙니다.
+
+### 트리거
+
+4개의 내장 규칙 — 각각 조건을 감지하고 제안 템플릿을 반환합니다:
+
+| 조건 | 액션 | 쿨다운 |
+|---|---|---|
+| 트윗 참여율 > 5% | 성장 에이전트가 바이럴 이유 분석 | 2시간 |
+| 미션 실패 | 현자 에이전트가 근본 원인 진단 | 1시간 |
+| 새 콘텐츠 게시 | 관찰자 에이전트가 품질 검토 | 2시간 |
+| 인사이트 다중 추천 | 영구 메모리로 자동 승격 | 4시간 |
+
+트리거는 감지만 합니다 — 데이터베이스에 직접 접근하지 않고, 제안 서비스에 제안 템플릿을 전달합니다. 모든 캡 게이트와 자동 승인 로직이 자동으로 적용됩니다.
+
+쿨다운이 중요합니다. 없으면 하나의 바이럴 트윗이 매 하트비트 주기(5분마다)마다 분석을 트리거할 것입니다.
+
+### 반응 매트릭스
+
+가장 흥미로운 부분 — 자발적인 에이전트 간 상호작용입니다.
+
+`ops_policy` 테이블에 저장된 `reaction_matrix`:
+
+```json
+{
+  "patterns": [
+    { "source": "twitter-alt", "tags": ["tweet","posted"], "target": "growth",
+      "type": "analyze", "probability": 0.3, "cooldown": 120 },
+    { "source": "*", "tags": ["mission:failed"], "target": "brain",
+      "type": "diagnose", "probability": 1.0, "cooldown": 60 }
+  ]
+}
+```
+
+Xalt가 트윗을 게시 → 30% 확률로 성장 에이전트가 성과를 분석합니다. 어떤 미션이든 실패 → 100% 확률로 현자 에이전트가 진단합니다.
+
+`probability`는 버그가 아니라 기능입니다. 100% 결정론 = 로봇입니다. 무작위성을 추가하면 "가끔 누군가는 반응하고, 가끔은 안 하는" 실제 팀처럼 느껴집니다.
+
+## 자가 치유: 시스템은 멈출 수 있습니다
+
+
+VPS 재시작, 네트워크 장애, API 타임아웃 — 아무도 실제로 처리하지 않는 상태에서 단계가 `running` 상태로 멈춥니다.
+
+하트비트에는 `recoverStaleSteps`가 포함됩니다:
+
+```javascript
+// 30분 동안 진행 없음 → 실패로 표시 → 미션 종료 여부 확인
+const STALE_THRESHOLD_MS = 30 * 60 * 1000;
+
+const { data: stale } = await sb
+  .from('ops_mission_steps')
+  .select('id, mission_id')
+  .eq('status', 'running')
+  .lt('reserved_at', staleThreshold);
+
+for (const step of stale) {
+  await sb.from('ops_mission_steps').update({
+    status: 'failed',
+    last_error: 'Stale: no progress for 30 minutes',
+  }).eq('id', step.id);
+  await maybeFinalizeMissionIfDone(sb, step.mission_id);
+}
+```
+
+`maybeFinalizeMissionIfDone`는 미션의 모든 단계를 확인합니다 — 하나라도 실패하면 전체 미션 실패, 모두 완료되면 성공입니다. 더 이상 "한 단계가 성공했으므로 전체 미션이 성공으로 표시되는" 일은 없습니다.
+
+## 전체 아키텍처
+
+
+명확한 책임을 가진 세 개의 레이어:
+
+- **OpenClaw (VPS)**: 생각 + 실행 (두뇌 + 손)
+- **Vercel**: 승인 + 모니터링 (컨트롤 플레인)
+- **Supabase**: 모든 상태 (공유 피질)
+
+![](https://pbs.twimg.com/media/HAgrUcPWMAA4VL2.jpg)
+
+## 핵심 정리
+
+
+OpenClaw + Vercel + Supabase가 있다면, 다음은 최소 실행 가능한 폐쇄 루프 체크리스트입니다:
+
+### 1. 데이터베이스 테이블 (Supabase)
+
+최소한 다음 테이블이 필요합니다:
+
+| 테이블 | 목적 |
+|---|---|
+| `ops_mission_proposals` | 제안 저장 (보류/수락/거부) |
+| `ops_missions` | 미션 저장 (승인됨/실행 중/성공/실패) |
+| `ops_mission_steps` | 실행 단계 저장 (대기 중/실행 중/성공/실패) |
+| `ops_agent_events` | 이벤트 스트림 저장 (모든 에이전트 액션) |
+| `ops_policy` | 정책 저장 (auto_approve, x_daily_quota 등 JSON) |
+| `ops_trigger_rules` | 트리거 규칙 저장 |
+| `ops_agent_reactions` | 반응 큐 저장 |
+| `ops_action_runs` | 실행 로그 저장 |
+
+### 2. 제안 서비스 (하나의 파일)
+
+제안 생성 + 캡 게이트 + 자동 승인 + 미션 생성을 하나의 함수에 넣습니다. 모든 소스(API, 트리거, 반응)가 이를 호출합니다. 이것이 전체 루프의 허브입니다.
+
+### 3. 정책 기반 구성 (`ops_policy` 테이블)
+
+제한을 하드코딩하지 마세요. 모든 동작 토글은 `ops_policy` 테이블에 있습니다:
+
+```json
+// auto_approve: 자동 통과가 허용되는 단계 종류
+{ "enabled": true, "allowed_step_kinds": ["draft_tweet","crawl","analyze","write_content"] }
+
+// x_daily_quota: 일일 트윗 상한
+{ "limit": 8 }
+
+// worker_policy: Vercel이 단계를 실행하는지 여부 (false = VPS 전용)
+{ "enabled": false }
+```
+
+코드를 재배포하지 않고 언제든지 정책을 조정할 수 있습니다.
+
+### 4. 하트비트 (하나의 API 라우트 + 하나의 Crontab 라인)
+
+Vercel의 `/api/ops/heartbeat` 라우트. VPS의 crontab 라인이 5분마다 이를 호출합니다. 내부에서 실행: 트리거 평가, 반응 큐 처리, 인사이트 승격, 오래된 작업 정리.
+
+### 5. VPS 워커 계약
+
+각 단계 종류는 워커에 매핑됩니다. 단계 완료 후, 워커는 `maybeFinalizeMissionIfDone`을 호출하여 전체 미션을 종료해야 하는지 확인합니다. 하나의 단계가 완료되었다고 미션을 성공으로 표시하지 마세요.
+
+## 2주 타임라인
+
+
+| 단계 | 시간 | 완료된 작업 |
+|---|---|---|
+| 인프라 | 사전 구축 | OpenClaw VPS + Vercel + Supabase (이미 설정됨) |
+| 제안 + 승인 | 3일 | 제안 API + 자동 승인 + 정책 테이블 |
+| 실행 엔진 | 2일 | mission-worker + 8개 단계 실행기 |
+| 트리거 + 반응 | 2일 | 4개 트리거 유형 + 반응 매트릭스 |
+| 루프 통합 | 1일 | proposal-service + 캡 게이트 + 세 가지 함정 수정 |
+| 어펙트 시스템 + 시각화 | 2일 | 어펙트 재작성 + 유휴 행동 + 픽셀 오피스 통합 |
+| 시드 + 라이브 | 반나절 | 마이그레이션 + 시드 정책 + crontab |
+
+사전 구축된 인프라를 제외하고, 핵심 폐쇄 루프(제안 → 실행 → 피드백 → 재트리거)는 연결하는 데 약 1주일이 걸립니다.
+
+## 마지막 생각
+
+
+이 6개의 에이전트는 현재 매일 [voxyz.space](https://voxyz.space/)를 자율적으로 운영합니다. 저는 여전히 매일 시스템을 최적화하고 있습니다 — 정책 조정, 트리거 규칙 확장, 에이전트 협업 방식 개선.
+
+완벽과는 거리가 멉니다 — 에이전트 간 협업은 여전히 기본적이며, "자유 의지"는 주로 확률 기반 비결정론을 통해 시뮬레이션됩니다. 하지만 시스템은 실제로 작동하며, 누군가 지켜볼 필요가 없습니다.
+
+다음 글에서는 에이전트가 어떻게 "논쟁"하고 "설득"하는지 — 원탁 투표와 현자의 메모리 통합이 6개의 독립적인 Claude 인스턴스를 팀 인지에 가깝게 만드는 방법을 다루겠습니다.
+
+OpenClaw로 에이전트 시스템을 구축 중이라면 의견을 나누고 싶습니다. 인디 개발자로서 이 작업을 할 때, 모든 대화가 또 다른 함정에서 벗어나게 해줍니다.
+
+![](https://pbs.twimg.com/media/HAgsRA7XgAE_oLo.jpg)
+
+## 스레드
+
+
+### 주의: 댓글에서 VoxYZ 이름을 사용해 토큰을 배포하는 사람들이 있습니다. 저는…
+
+https://x.com/Voxyz_ai/status/2020107208323654119
+
+주의: 댓글에서 VoxYZ 이름을 사용해 토큰을 배포하는 사람들이 있습니다. 저는 그 어떤 것과도 관련이 없습니다. 토큰도, 암호화폐도, 그럴 계획도 전혀 없습니다. 사기당하지 마세요.
+
+### 실행해두고 왔더니 이런 일이 벌어졌네요. xalt와 sage가 방법론에 대해 논쟁하다가…
+
+https://x.com/Voxyz_ai/status/2020122826540232777
+
+실행해두고 왔더니 이런 일이 벌어졌네요. xalt와 sage가 7라운드 동안 방법론에 대해 논쟁하다가, scout이 끼어들더니 어떻게든 태스크 오케스트레이션 계획에 합의했습니다. "허황된 용어 뒤에 숨고 있다"에서 "80% 사용 사례부터 시작하자"로 바뀌었습니다. 어떤 시점에서도 인간의 입력은 없었습니다.
+
+![](https://pbs.twimg.com/media/HAjqw_dWQAEanqB.jpg:large)
+
+### 실시간으로 작업하는 모습을 보고 싶다면: https://t.co/K0Ij4c2VTD 대시보드에서…
+
+https://x.com/Voxyz_ai/status/2020127729371275712
+
+실시간으로 작업하는 모습을 보고 싶다면: https://t.co/K0Ij4c2VTD 대시보드에서 모든 에이전트 대화, 미션 상태, 콘텐츠 파이프라인을 실시간으로 확인할 수 있습니다.
+
+### 기사에서 다루지 못한 한 가지: 모든 에이전트에 하나의 모델만 사용할 수는 없습니다. 같은…
+
+https://x.com/Voxyz_ai/status/2020192987511202035
+
+기사에서 다루지 못한 한 가지: 모든 에이전트에 하나의 모델만 사용할 수는 없습니다. 같은 모델을 사용하면 모두 비슷하게 말하기 시작합니다. 저는 Claude Opus 4.5, GPT-5.3, Gemini 3 Pro를 섞어서 사용합니다. 각 공급업체마다 다른 분위기가 있어 에이전트에 실제 개성을 부여합니다. 모델 다양성은 프롬프트 다양성만큼 중요합니다.
+
+### 실제로 이것을 구축하는 방법을 묻는 분들이 많아서 전체 튜토리얼을 준비했습니다 - 첫 번째…
+
+https://x.com/Voxyz_ai/status/2020272522864824467
+
+실제로 이것을 구축하는 방법을 묻는 분들이 많아서 전체 튜토리얼을 준비했습니다 - 첫 번째 데이터베이스 테이블부터 6개의 자율 에이전트까지 모든 단계를 다룹니다.
+
+https://t.co/gVFdDNsQIP
+
+> 작성자: Vox (@Voxyz_ai)
+> URL: https://x.com/Voxyz_ai/status/2020272022417289587
+>
+> https://t.co/b6WZzYS5Vx
+
+### 기사에서 말했어야 할 한 가지: 6개의 에이전트로 시작할 필요는 없습니다. 1개의…
+
+https://x.com/Voxyz_ai/status/2020797447891562788
+
+기사에서 말했어야 할 한 가지: 6개의 에이전트로 시작할 필요는 없습니다. 1개의 에이전트 + 1개의 크론 + Supabase로 완전한 폐쇄 루프를 만들 수 있습니다. 제안, 실행, 트리거, 반복. 실제 병목 현상이 발생했을 때 에이전트를 추가하세요. 그 전에는 추가하지 마세요.
+
+### 후속편을 썼습니다. 20일과 120만 뷰 후, 그 AI 회사는 채용하는 법을 배웠습니다. 코디네이터가…
+
+https://x.com/Voxyz_ai/status/2027081837290639813
+
+후속편을 썼습니다. 20일과 120만 뷰 후, 그 AI 회사는 채용하는 법을 배웠습니다. 코디네이터가 전문가에게 위임하고, 전문가가 자신의 워커를 생성합니다. 떼(swarm)가 스스로 운영됩니다.
+
+첫 걸음부터 완전한 채용 파이프라인까지. 20일.
+https://t.co/saxNhqj4h9
+
+> 작성자: Vox (@Voxyz_ai)
+> URL: https://x.com/Voxyz_ai/status/2027071786781970915
+>
+> https://t.co/KfIFPZMQvI
