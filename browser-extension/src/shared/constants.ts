@@ -133,7 +133,7 @@ export const DEFAULT_LLM_SETTINGS = {
 };
 
 export const DEFAULT_SETTINGS = {
-  apiUrl: 'http://localhost:3000',
+  apiUrl: 'http://localhost:3001',
   defaultLocale: 'en' as Locale,
   autoExtract: true,
   defaultContentType: 'tutorial' as ContentType,

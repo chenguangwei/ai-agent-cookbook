@@ -171,7 +171,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // --- Start Server ---
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🤖 AI Agent Chatbot running at http://localhost:${PORT}`);
   console.log(`📝 Open the browser to start chatting!`);
