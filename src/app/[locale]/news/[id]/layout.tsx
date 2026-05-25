@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
 import { getNewsItemById } from '@/lib/db/news';
+import { getNewsPathSegment } from '@/lib/news-url';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }): Promise<Metadata> {
   const { locale, id } = await params;
-  const canonicalUrl = getCanonicalUrl(locale, `news/${id}`);
 
   // Fetch article for rich metadata
   let article = null;
@@ -15,6 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   }
 
   const title = article?.title ?? 'AI News & Updates';
+  const canonicalPath = `news/${article ? getNewsPathSegment(article) : id}`;
+  const canonicalUrl = getCanonicalUrl(locale, canonicalPath);
   const description = article?.summary
     ? article.summary.replace(/<[^>]*>/g, '').slice(0, 160)
     : 'Stay up to date with the latest developments in AI agents, LLMs, and autonomous systems.';
@@ -25,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     description,
     alternates: {
       canonical: canonicalUrl,
-      languages: buildLocaleAlternates(`news/${id}`, availableLocales),
+      languages: buildLocaleAlternates(canonicalPath, availableLocales),
     },
     openGraph: {
       title,

@@ -10,6 +10,7 @@ import DOMPurify from 'dompurify';
 
 interface NewsDetail {
     id: string;
+    slug?: string;
     source_name?: string;
     title: string;
     content?: string;

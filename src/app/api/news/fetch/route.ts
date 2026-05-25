@@ -3,6 +3,7 @@ import { parseRssFeed, parseRssFeedViaProxy } from '@/lib/rss-parser';
 import { addNewsItem, updateNewsStatus, getAllRssSources, getRssSourceById } from '@/lib/db/news';
 import { v4 as uuidv4 } from 'uuid';
 import { getTranslateConfig } from '@/lib/translate.config';
+import { resolveSeoTitle } from '@/lib/seo-title';
 import * as cheerio from 'cheerio';
 
 export const maxDuration = 60; // 60 seconds (Pro plan limit)
@@ -173,11 +174,20 @@ export async function POST(request: Request) {
         qualityScore += Math.min(10, codeCount * 3); // 3 points per code block
         qualityScore = Math.min(98, qualityScore); // Cap at 98 for realism
 
+        const seoTitle = await resolveSeoTitle({
+          title: item.title || '',
+          summary: item.summary || item.contentSnippet || '',
+          content: item.content || '',
+          sourceUrl: item.link,
+          contentType: 'news',
+          locale: source.language,
+        });
+
         const newsItem = {
           id: uuidv4(),
           source_id: source.id,
           source_name: source.name,
-          title: item.title,
+          title: seoTitle.title,
           summary: item.summary || item.contentSnippet,
           content: item.content,
           url: item.link,
@@ -188,7 +198,7 @@ export async function POST(request: Request) {
           word_count: wordCount,
           read_time_minutes: readTime,
           quality_score: qualityScore,
-          ai_tag: await classifyArticleWithAI(item.title || '', item.summary || item.contentSnippet || ''),
+          ai_tag: await classifyArticleWithAI(seoTitle.title, item.summary || item.contentSnippet || ''),
         };
 
         const result = await addNewsItem(newsItem);
@@ -279,11 +289,20 @@ export async function POST(request: Request) {
           qualityScore += Math.min(10, codeCount * 3); // 3 points per code block
           qualityScore = Math.min(98, qualityScore); // Cap at 98 for realism
 
+          const seoTitle = await resolveSeoTitle({
+            title: item.title || '',
+            summary: item.summary || item.contentSnippet || '',
+            content: item.content || '',
+            sourceUrl: item.link,
+            contentType: 'news',
+            locale: source.language,
+          });
+
           const newsItem = {
             id: uuidv4(),
             source_id: source.id,
             source_name: source.name,
-            title: item.title,
+            title: seoTitle.title,
             summary: item.summary || item.contentSnippet,
             content: item.content,
             url: item.link,
@@ -294,7 +313,7 @@ export async function POST(request: Request) {
             word_count: wordCount,
             read_time_minutes: readTime,
             quality_score: qualityScore,
-            ai_tag: await classifyArticleWithAI(item.title || '', item.summary || item.contentSnippet || ''),
+            ai_tag: await classifyArticleWithAI(seoTitle.title, item.summary || item.contentSnippet || ''),
           };
 
           const result = await addNewsItem(newsItem);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getNewsItemById } from '@/lib/db/news';
 
 export async function GET(
     request: NextRequest,
@@ -15,13 +15,9 @@ export async function GET(
             );
         }
 
-        const { data: article, error } = await supabase
-            .from('news_items')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const article = await getNewsItemById(id);
 
-        if (error || !article) {
+        if (!article) {
             return NextResponse.json(
                 { error: 'Article not found' },
                 { status: 404 }

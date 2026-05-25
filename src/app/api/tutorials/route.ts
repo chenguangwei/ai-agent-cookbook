@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { hasThinSlug, resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
+import { hasThinReadableSlug, resolveUniqueContentFile, slugifyReadablePath } from '@/lib/content-filenames';
+import { resolveSeoTitle } from '@/lib/seo-title';
 
 const LOCALE_MAP: Record<string, string> = {
   'English (US)': 'en',
@@ -64,9 +65,9 @@ export async function POST(request: Request) {
     }
 
     if (action === 'publish') {
-      if (!title || !markdown) {
+      if ((!title && !markdown) || !markdown) {
         return NextResponse.json(
-          { error: 'Title and content are required for publishing' },
+          { error: 'Content is required for publishing' },
           { status: 400 }
         );
       }
@@ -76,11 +77,19 @@ export async function POST(request: Request) {
     const date = new Date().toISOString().split('T')[0];
 
     // Format the markdown content
-    const formattedMarkdown = formatMarkdownContent(markdown);
-    const titleSlug = slugify(title, 80, `tutorial ${date}`);
-    const fallbackSlugText = `${title} ${formattedMarkdown}`;
-    const baseSlug = hasThinSlug(titleSlug)
-      ? slugify(fallbackSlugText, 80, `tutorial ${date}`)
+    const formattedMarkdown = formatMarkdownContent(markdown || '');
+    const seoTitle = await resolveSeoTitle({
+      title,
+      summary: '',
+      content: formattedMarkdown,
+      contentType: 'tutorial',
+      locale,
+    });
+    const finalTitle = seoTitle.title;
+    const titleSlug = slugifyReadablePath(seoTitle.slugSource, 90, `tutorial ${date}`);
+    const fallbackSlugText = `${seoTitle.slugSource} ${formattedMarkdown}`;
+    const baseSlug = hasThinReadableSlug(titleSlug)
+      ? slugifyReadablePath(fallbackSlugText, 90, `tutorial ${date}`)
       : titleSlug;
 
     // Extract description from content (first ~200 chars of first paragraph)
@@ -95,7 +104,7 @@ export async function POST(request: Request) {
     // Build MDX frontmatter after the final slug is known.
     const frontmatter = [
       '---',
-      `title: "${title.replace(/"/g, '\\"')}"`,
+      `title: "${finalTitle.replace(/"/g, '\\"')}"`,
       `slug: "${slug}"`,
       `locale: "${locale}"`,
       `description: "${description.replace(/"/g, '\\"')}"`,
@@ -120,6 +129,9 @@ export async function POST(request: Request) {
         message: action === 'saveDraft' ? 'Draft saved successfully' : 'Tutorial published successfully',
         action,
         slug,
+        title: finalTitle,
+        generatedTitle: seoTitle.generatedTitle,
+        generatedSlugSource: seoTitle.generatedSlugSource,
         filePath: relativePath,
         savedAt: new Date().toISOString(),
       },

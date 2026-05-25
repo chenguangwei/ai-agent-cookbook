@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "velite dev & next dev",
+    "dev": "velite dev & next dev  -p 3001",
     "prebuild": "velite build",
     "build": "next build",
     "build:tina": "next build",

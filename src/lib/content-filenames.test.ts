@@ -2,7 +2,13 @@ import { mkdtemp, rm, writeFile } from 'fs/promises'
 import path from 'path'
 import { tmpdir } from 'os'
 import { describe, expect, it } from 'vitest'
-import { hasThinSlug, resolveUniqueContentFile, slugify } from './content-filenames'
+import {
+  hasThinReadableSlug,
+  hasThinSlug,
+  resolveUniqueContentFile,
+  slugify,
+  slugifyReadablePath,
+} from './content-filenames'
 
 describe('content filename helpers', () => {
   it('keeps useful ASCII terms and maps common Japanese SEO terms', () => {
@@ -18,6 +24,13 @@ describe('content filename helpers', () => {
     expect(hasThinSlug('3')).toBe(true)
     expect(hasThinSlug('ai')).toBe(true)
     expect(hasThinSlug('claude-code-best-practices')).toBe(false)
+  })
+
+  it('can keep CJK titles readable for public article paths', () => {
+    expect(slugifyReadablePath('用了 3 个月 Claude Code，这 9 条最佳实践')).toBe(
+      '用了-3-months-claude-code-这-9-条最佳实践'
+    )
+    expect(hasThinReadableSlug('用了-3-months-claude-code-这-9-条最佳实践')).toBe(false)
   })
 
   it('uses readable numeric collision suffixes', async () => {

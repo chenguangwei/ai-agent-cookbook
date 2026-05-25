@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { hasThinSlug, resolveUniqueContentFile, slugify } from '@/lib/content-filenames';
+import { hasThinReadableSlug, resolveUniqueContentFile, slugifyReadablePath } from '@/lib/content-filenames';
+import { resolveSeoTitle } from '@/lib/seo-title';
 
 const LOCALE_MAP: Record<string, string> = {
   'English (US)': 'en',
@@ -65,17 +66,26 @@ export async function POST(request: Request) {
       content,
     } = body;
 
-    if (!title || !summary) {
+    if ((!title && !content) || !summary) {
       return NextResponse.json(
-        { error: 'Title and summary are required' },
+        { error: 'Title or content, and summary are required' },
         { status: 400 }
       );
     }
 
     const locale = rawLocale || LOCALE_MAP[language] || 'en';
-    const titleSlug = slugify(title, 80, 'news article');
-    const baseSlug = hasThinSlug(titleSlug)
-      ? slugify(`${title} ${summary} ${content || ''}`, 80, 'news article')
+    const seoTitle = await resolveSeoTitle({
+      title,
+      summary,
+      content,
+      sourceUrl,
+      contentType: 'news',
+      locale,
+    });
+    const finalTitle = seoTitle.title;
+    const titleSlug = slugifyReadablePath(seoTitle.slugSource, 90, 'news article');
+    const baseSlug = hasThinReadableSlug(titleSlug)
+      ? slugifyReadablePath(`${seoTitle.slugSource} ${summary} ${content || ''}`, 90, 'news article')
       : titleSlug;
     const contentDir = path.join(process.cwd(), 'content', 'news', locale);
     await fs.mkdir(contentDir, { recursive: true });
@@ -87,7 +97,7 @@ export async function POST(request: Request) {
 
     const frontmatter = [
       '---',
-      `title: '${title.replace(/'/g, "''")}'`,
+      `title: '${finalTitle.replace(/'/g, "''")}'`,
       `slug: '${slug}'`,
       `locale: '${locale}'`,
       `summary: '${(summary || '').replace(/'/g, "''")}'`,
@@ -107,6 +117,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: 'News article created successfully',
       slug,
+      title: finalTitle,
+      generatedTitle: seoTitle.generatedTitle,
+      generatedSlugSource: seoTitle.generatedSlugSource,
       filePath: relativePath,
       savedAt: new Date().toISOString(),
     });

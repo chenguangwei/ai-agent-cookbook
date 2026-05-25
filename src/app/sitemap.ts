@@ -1,7 +1,9 @@
 import { MetadataRoute } from 'next';
 import { getAllTools, getAllTutorials, getToolLocalesBySlug, getTutorialLocalesBySlug, getTutorialUpdatedAt } from '@/lib/content';
+import { getApprovedNews } from '@/lib/db/news';
 import { locales } from '@/i18n/config';
 import { buildLocaleAlternates, getCanonicalUrl } from '@/lib/utils';
+import { getNewsPathSegment } from '@/lib/news-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -63,5 +65,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticPages, ...tutorialPages, ...toolPages];
+  let newsPages: MetadataRoute.Sitemap = [];
+  try {
+    const newsItems = await getApprovedNews(undefined, 1000, 0, 'all', 'all');
+    newsPages = newsItems
+      .filter((item) => item.id)
+      .map((item) => {
+        const locale = item.language || 'en';
+        const path = `news/${getNewsPathSegment(item)}`;
+
+        return {
+          url: getCanonicalUrl(locale, path),
+          lastModified: item.published_at ? new Date(item.published_at) : now,
+          changeFrequency: 'weekly' as const,
+          priority: 0.6,
+          alternates: {
+            languages: buildLocaleAlternates(path, [locale]),
+          },
+        };
+      });
+  } catch (error) {
+    console.warn('Failed to include news items in sitemap:', error);
+  }
+
+  return [...staticPages, ...tutorialPages, ...toolPages, ...newsPages];
 }

@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import { appendSlugSuffix, hasThinReadableSlug, slugifyReadablePath } from '@/lib/content-filenames';
+import { extractNewsIdFromPathSegment } from '@/lib/news-url';
 
 // Types
 export type RssSource = {
@@ -13,6 +15,7 @@ export type RssSource = {
 
 export type NewsItem = {
   id: string;
+  slug?: string;
   source_id: string;
   source_name?: string;
   title: string;
@@ -32,6 +35,40 @@ export type NewsItem = {
   approved_at?: string;
   created_at: string;
 };
+
+async function resolveUniqueNewsSlug(item: {
+  title?: string;
+  summary?: string;
+  content?: string;
+  source_name?: string;
+}): Promise<string | undefined> {
+  const titleSlug = slugifyReadablePath(item.title || '', 90, 'news article');
+  const baseSlug = hasThinReadableSlug(titleSlug)
+    ? slugifyReadablePath(
+        `${item.title || ''} ${item.summary || ''} ${item.content || ''} ${item.source_name || ''}`,
+        90,
+        'news article'
+      )
+    : titleSlug;
+
+  for (let attempt = 1; attempt <= 50; attempt += 1) {
+    const slug = attempt === 1 ? baseSlug : appendSlugSuffix(baseSlug, attempt);
+    const { data, error } = await supabase
+      .from('news_items')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('News slug lookup failed; continuing without slug:', error.message);
+      return undefined;
+    }
+
+    if (!data) return slug;
+  }
+
+  return appendSlugSuffix(baseSlug, Date.now().toString(36));
+}
 
 // RSS Sources CRUD operations
 export async function getAllRssSources(): Promise<RssSource[]> {
@@ -208,15 +245,24 @@ export async function getApprovedNews(
 }
 
 export async function getNewsItemById(id: string): Promise<NewsItem | null> {
+  const idCandidate = extractNewsIdFromPathSegment(id);
   const { data, error } = await supabase
     .from('news_items')
     .select('*')
-    .eq('id', id)
-    .single();
+    .eq('id', idCandidate)
+    .maybeSingle();
 
-  if (error || !data) return null;
+  if (!error && data) return mapNewsItem(data);
 
-  return mapNewsItem(data);
+  const { data: slugData, error: slugError } = await supabase
+    .from('news_items')
+    .select('*')
+    .eq('slug', id)
+    .maybeSingle();
+
+  if (slugError || !slugData) return null;
+
+  return mapNewsItem(slugData);
 }
 
 export async function addNewsItem(item: Omit<NewsItem, 'created_at' | 'status' | 'is_featured'>): Promise<NewsItem | null> {
@@ -232,8 +278,10 @@ export async function addNewsItem(item: Omit<NewsItem, 'created_at' | 'status' |
   }
 
   // Set defaults for sqlite compatibility
+  const slug = item.slug || await resolveUniqueNewsSlug(item);
   const insertData = {
     ...item,
+    ...(slug ? { slug } : {}),
     status: 'pending',
     is_featured: 0, // Use integer 0 for false in sqlite
     word_count: item.word_count || 0,
@@ -241,11 +289,24 @@ export async function addNewsItem(item: Omit<NewsItem, 'created_at' | 'status' |
     quality_score: item.quality_score || 0,
   };
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('news_items')
     .insert(insertData)
     .select()
     .single();
+
+  if (error && slug && error.message?.toLowerCase().includes('slug')) {
+    const insertDataWithoutSlug: Record<string, unknown> = { ...insertData };
+    delete insertDataWithoutSlug.slug;
+    const retry = await supabase
+      .from('news_items')
+      .insert(insertDataWithoutSlug)
+      .select()
+      .single();
+
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.error('Error adding news item:', error);
@@ -630,6 +691,7 @@ export async function getFeaturedNews(
 function mapNewsItem(row: any): NewsItem {
   return {
     id: row.id,
+    slug: row.slug || undefined,
     source_id: row.source_id,
     source_name: row.source_name || undefined,
     title: row.title,
@@ -642,6 +704,10 @@ function mapNewsItem(row: any): NewsItem {
     status: row.status,
     is_featured: row.is_featured === 1,
     language: row.language || undefined,
+    word_count: row.word_count || undefined,
+    read_time_minutes: row.read_time_minutes || undefined,
+    quality_score: row.quality_score || undefined,
+    ai_tag: row.ai_tag || undefined,
     approved_at: row.approved_at || undefined,
     created_at: row.created_at
   };

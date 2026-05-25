@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS rss_sources (
 -- Create news_items table
 CREATE TABLE IF NOT EXISTS news_items (
   id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE,
   source_id TEXT NOT NULL,
   source_name TEXT,
   title TEXT NOT NULL,
@@ -40,6 +41,11 @@ CREATE TABLE IF NOT EXISTS news_items (
 CREATE INDEX IF NOT EXISTS idx_news_status ON news_items(status);
 CREATE INDEX IF NOT EXISTS idx_news_source ON news_items(source_id);
 CREATE INDEX IF NOT EXISTS idx_news_category ON news_items(source_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_news_slug ON news_items(slug) WHERE slug IS NOT NULL;
+
+-- Existing installations created before SEO slugs can be migrated with:
+ALTER TABLE news_items ADD COLUMN IF NOT EXISTS slug TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_news_slug ON news_items(slug) WHERE slug IS NOT NULL;
 
 -- Enable RLS (Row Level Security)
 ALTER TABLE rss_sources ENABLE ROW LEVEL SECURITY;

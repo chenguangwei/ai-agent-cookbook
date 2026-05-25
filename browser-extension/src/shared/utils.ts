@@ -30,7 +30,7 @@ const SEO_TERM_REPLACEMENTS: Array<[RegExp, string]> = [
   [/ベストプラクティス/g, ' best practices '],
   [/コツ|技巧/g, ' tips '],
   [/日間/g, ' days '],
-  [/ヶ月|か月|月/g, ' months '],
+  [/个月|ヶ月|か月|月/g, ' months '],
   [/使い方|用法/g, ' guide '],
 ];
 
@@ -64,12 +64,35 @@ export function slugify(text: string, maxLength = 80, fallbackText = 'article'):
   return trimSlug(slug || fallbackSlug || 'article', maxLength);
 }
 
+function normalizeReadableSlugText(text: string): string {
+  return SEO_TERM_REPLACEMENTS.reduce(
+    (result, [pattern, replacement]) => result.replace(pattern, replacement),
+    text
+  )
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[''"]/g, '');
+}
+
+export function slugifyReadablePath(text: string, maxLength = 90, fallbackText = 'article'): string {
+  const slug = normalizeReadableSlugText(text)
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/(^-|-$)/g, '');
+
+  const fallbackSlug = normalizeReadableSlugText(fallbackText)
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/(^-|-$)/g, '');
+
+  return trimSlug(slug || fallbackSlug || 'article', maxLength);
+}
+
 /**
  * Keep local generated filenames clean. Browser downloads already handle
  * filename collisions, so adding timestamps here hurts URL quality.
  */
 export function createUniqueSlug(baseSlug: string): string {
-  return slugify(baseSlug);
+  return slugifyReadablePath(baseSlug);
 }
 
 export function hasThinSlug(slug: string): boolean {
@@ -79,8 +102,8 @@ export function hasThinSlug(slug: string): boolean {
 }
 
 export function createSeoSlug(text: string, fallbackText = 'article'): string {
-  const titleSlug = slugify(text, 80, fallbackText);
-  return hasThinSlug(titleSlug) ? slugify(`${text} ${fallbackText}`, 80, fallbackText) : titleSlug;
+  const titleSlug = slugifyReadablePath(text, 90, fallbackText);
+  return hasThinSlug(titleSlug) ? slugifyReadablePath(`${text} ${fallbackText}`, 90, fallbackText) : titleSlug;
 }
 
 /**

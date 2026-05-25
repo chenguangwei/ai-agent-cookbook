@@ -9,10 +9,12 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { getLocaleDateFormat, getLocalizedPath } from '@/lib/utils';
+import { getNewsPathSegment } from '@/lib/news-url';
 
 // Types
 interface NewsItem {
   id: string;
+  slug?: string;
   source_id: string;
   source_name?: string;
   title: string;
@@ -405,13 +407,14 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
                   // Deterministic fallback score based on article id to avoid hydration mismatch
                   const fallbackScore = 80 + (article.id.charCodeAt(0) % 15);
                   const score = article.quality_score || fallbackScore;
+                  const articlePath = getLocalizedPath(locale, `news/${getNewsPathSegment(article)}`);
 
                   return (
                     <article key={article.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-lg transition-all flex flex-col sm:flex-row gap-5">
 
                       {/* Image - Left Side */}
                       <div className="flex-shrink-0 relative group">
-                        <a href={getLocalizedPath(locale, `news/${article.id}`)} className="block overflow-hidden rounded-lg">
+                        <a href={articlePath} className="block overflow-hidden rounded-lg">
                           {renderImage(article, 'small')}
                         </a>
                         {article.is_featured && (
@@ -423,7 +426,7 @@ export default function NewsPage({ params }: { params: Promise<{ locale: string 
 
                       {/* Content - Right Side */}
                       <div className="flex flex-col flex-1 min-w-0">
-                        <a href={getLocalizedPath(locale, `news/${article.id}`)} className="group">
+                        <a href={articlePath} className="group">
                           <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {article.title}
                           </h2>
