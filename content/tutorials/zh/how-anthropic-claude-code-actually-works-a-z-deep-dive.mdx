@@ -1,0 +1,614 @@
+---
+title: "Anthropic Claude Code 实际工作原理：A-Z 深度解析"
+slug: "how-anthropic-claude-code-actually-works-a-z-deep-dive"
+locale: "zh"
+description: "Anthropic Claude Code 实际工作原理（A-Z 深度解析）"
+category: "Agentic 工作流"
+tags: ["Claude", "多智能体", "ReAct", "规划"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HJPPUAHaQAAzw3x.jpg"
+featured: false
+date: 2026-05-26
+updatedAt: 2026-05-26
+---
+
+# Anthropic Claude Code 实际工作原理（A-Z 深度解析）
+
+大多数人认为 Claude Code 只是“又一个 AI 编码助手”。
+
+但事实并非如此。
+
+在底层，Claude Code 更像是一个运行在终端中的自主软件工程师，而不是一个聊天机器人。
+
+它不仅仅是建议代码。
+
+它可以：
+
+- 读取你的整个代码库
+- 运行终端命令
+- 直接编辑文件
+- 调试错误
+- 执行测试
+- 重构系统
+- 使用子智能体
+- 迭代直到任务完成
+
+更疯狂的是？
+
+这一切背后的核心架构出奇地简单。
+
+这是关于 Claude Code 实际工作原理的完整 A-Z 解析。
+
+# 1. Claude Code 究竟是什么
+
+Anthropic Claude Code 是一个围绕 Claude 模型构建的智能编码系统。
+
+它不像 ChatGPT 那样在浏览器中运行，而是直接在你的本地开发环境中运行。
+
+这意味着 Claude 可以访问：
+
+- 你的文件
+- 你的文件夹结构
+- 你的终端
+- 你的 Git 仓库
+- 你的测试环境
+- 你的构建工具
+
+官方上，Anthropic 将其描述为“一个智能编码工具，可以读取你的代码库、编辑文件、运行命令并与开发工具集成”。（[Claude Code](https://code.claude.com/docs/en/overview?utm_source=chatgpt.com)）
+
+关键词是：
+
+## 智能（Agentic）
+
+意思是：
+
+👉 模型可以自主采取行动。
+
+而不仅仅是生成文本。
+
+# 2. Claude Code 背后的核心理念
+
+关于 AI 智能体最大的误解是，它们依赖于极其复杂的编排系统。
+
+但 Claude Code 的架构却出奇地简约。
+
+对该系统的多项独立分析发现，其强大之处源于：
+
+- 强大的推理模型
+- 简单的执行循环
+- 良好的工具访问权限
+- 可靠的上下文处理
+
+而不是庞大的多智能体框架。（[PromptLayer](https://blog.promptlayer.com/claude-code-behind-the-scenes-of-the-master-agent-loop/?utm_source=chatgpt.com)）
+
+其理念基本上是：
+
+> “给模型工具，然后别挡道。”
+
+这与严重依赖以下内容的旧式 AI 系统截然不同：
+
+- 规则引擎
+- 硬编码工作流
+- 决策树
+- 复杂的编排图
+
+Claude Code 转而信任模型进行动态规划。
+
+# 3. “主智能体循环”——真正的大脑
+
+Claude Code 的核心是一个被称为：
+
+## 主智能体循环
+
+这是需要理解的最重要概念。
+
+整个系统基本上运行在这样的循环上：
+
+```python
+while task_not_finished:
+    observe_environment()
+    think_and_plan()
+    choose_tool()
+    execute_action()
+    inspect_result()
+    update_context()
+```
+
+就是这样。
+
+说真的。
+
+多个架构分析将 Claude Code 描述为一个“单线程主循环”系统。（[PromptLayer](https://blog.promptlayer.com/claude-code-behind-the-scenes-of-the-master-agent-loop/?utm_source=chatgpt.com)）
+
+没有预编程的工作流：
+
+模型本身决定：
+
+- 下一步做什么
+- 调用哪个工具
+- 检查哪些文件
+- 运行哪些命令
+- 结果是否成功
+- 是否需要再次迭代
+
+这创造了一个极其强大的东西：
+
+## 自适应执行
+
+AI 动态地对现实做出反应。
+
+# 4. 循环实际工作的逐步解析
+
+当你输入类似这样的内容时，会发生什么：
+
+> “修复这个应用中的认证错误。”
+
+## 步骤 1：Claude 读取环境
+
+首先，Claude 收集上下文。
+
+它可能会：
+
+- 扫描目录
+- 读取包文件
+- 打开 README 文件
+- 检查配置
+- 分析架构
+- 搜索与认证相关的文件
+
+涉及的工具：
+
+- `Read`
+- `Grep`
+- `Glob`
+- `Bash`
+
+Claude 本质上是在构建你代码库的心理地图。
+
+## 步骤 2：模型内部规划
+
+现在 Claude 推理：
+
+- 可能的原因
+- 依赖关系
+- 相关系统
+- 所需文件
+- 风险区域
+- 测试策略
+
+这个规划发生在模型内部。
+
+不需要外部规划器。
+
+## 步骤 3：工具选择
+
+Claude 决定下一步使用哪个工具。
+
+这很关键。
+
+Claude Code 之所以有效，是因为模型可以与工具交互。
+
+Anthropic 官方将系统描述为：
+
+> “推理模型 + 行动工具。”（[Claude Code](https://code.claude.com/docs/en/how-claude-code-works?utm_source=chatgpt.com)）
+
+这些工具基本上就是 AI 的双手。
+
+# 5. Claude Code 内部的核心工具
+
+大多数分析显示，Claude Code 依赖于一个出奇小的工具集。（[GitHub](https://github.com/FlorianBruniaux/claude-code-ultimate-guide/blob/main/guide/core/architecture.md?utm_source=chatgpt.com)）
+
+典型的工具包括：
+
+| 工具    | 用途             |
+| :------ | :--------------- |
+| Bash    | 执行终端命令     |
+| Read    | 读取文件         |
+| Write   | 创建文件         |
+| Edit    | 修改现有文件     |
+| Grep    | 搜索文本模式     |
+| Glob    | 查找文件         |
+| TodoWrite | 维护任务状态   |
+| Task    | 启动子智能体     |
+
+这很重要。
+
+Claude Code 并不神奇。
+
+它只是：
+
+## 一个连接到执行工具的推理模型。
+
+# 6. Bash 是秘密武器
+
+最重要的工具可能是：
+
+## Bash
+
+为什么？
+
+因为 Bash 为 Claude 提供了对你环境的通用访问权限。
+
+有了 Bash，Claude 可以：
+
+- 运行测试
+- 安装依赖
+- 启动服务器
+- 使用 Git
+- 执行脚本
+- 编译代码
+- 查询 API
+- 使用 Docker
+- 调试日志
+
+这使 Claude 从：
+
+❌ 文本生成器
+转变为
+✅ 环境操作器
+
+这就是突破。
+
+# 7. Claude 持续验证自己的工作
+
+这是 Claude Code 与普通 AI 聊天截然不同的地方。
+
+它不会说：
+
+> “这是修复方法。”
+
+而是实际测试修复。
+
+示例工作流：
+
+1. 运行失败的测试
+2. 检查错误
+3. 编辑代码
+4. 重新运行测试
+5. 看到另一个失败
+6. 修复依赖问题
+7. 重新运行测试
+8. 确认成功
+
+这个反馈循环极大地提高了可靠性。（[Evalics](https://evalics.com/blog/introduction-to-claude-code-agentic-cli-tool?utm_source=chatgpt.com)）
+
+因为 AI 在不断检查现实。
+
+而不是盲目地产生幻觉。
+
+# 8. 上下文管理极其重要
+
+AI 智能体最困难的问题之一是：
+
+## 上下文溢出
+
+大型代码库很快就会超过令牌限制。
+
+Claude Code 使用分层上下文管理系统来解决这个问题。（[arXiv](https://arxiv.org/abs/2604.14228?utm_source=chatgpt.com)）
+
+系统持续决定：
+
+- 哪些上下文重要
+- 哪些可以压缩
+- 哪些应该被遗忘
+- 哪些必须保留在内存中
+
+这是架构中最不显眼但最重要的部分之一。
+
+没有它：
+
+模型会被无关信息淹没。
+
+# 9. Claude Code 使用“压缩”
+
+当对话变得过长时，Claude 会将之前的交互压缩成总结性的记忆。
+
+这个过程通常被称为：
+
+## 上下文压缩
+
+Claude 不会永远提供整个对话，而是创建简洁的表示，例如：
+
+- 当前目标
+- 已完成的任务
+- 重要的架构笔记
+- 未解决的问题
+- 约束条件
+
+这使得智能体能够在非常长的会话中保持运行。
+
+# 10. 权限系统
+
+Claude Code 很强大。
+
+这意味着它也很危险。
+
+想象一下给 AI 不受限制的 shell 访问权限。
+
+这就是为什么 Anthropic 围绕它构建了强大的权限系统。（[arXiv](https://arxiv.org/abs/2604.14228?utm_source=chatgpt.com)）
+
+Claude 经常在以下情况前询问：
+
+- 运行风险命令
+- 删除文件
+- 执行危险脚本
+- 访问敏感区域
+
+该架构平衡了：
+
+- 自主性
+- 人工控制
+
+这对于建立信任至关重要。
+
+# 11. 子智能体：Claude 可以生成专家
+
+最先进的功能之一是：
+
+# 子代理委派
+
+Claude 可以启动更小的专业化代理来处理子任务。（[Medium](https://medium.com/%40georgesung/tracing-claude-codes-llm-traffic-agentic-loop-sub-agents-tool-use-prompts-7796941806f5?utm_source=chatgpt.com)）
+
+例如：
+
+主代理：
+
+> "重构后端。"
+
+子代理：
+
+> "分析数据库迁移风险。"
+
+另一个：
+
+> "审查认证流程。"
+
+另一个：
+
+> "检查前端兼容性。"
+
+这实现了并行化推理。
+
+几乎就像一个 AI 工程团队。
+
+
+
+# 12. 工作树隔离
+
+
+一些分析表明，Claude 为子代理使用隔离的 Git 工作树。（[arXiv](https://arxiv.org/abs/2604.14228?utm_source=chatgpt.com)）
+
+这意味着：
+
+每个子代理可以安全地进行实验，而不会污染主分支。
+
+这对于以下方面极为重要：
+
+- 可靠性
+- 回滚
+- 隔离
+- 并行实验
+
+
+
+# 13. Claude Code 不仅仅是一个巨大的提示词
+
+
+许多人认为 Claude Code 是：
+
+> "一个巨大的系统提示词。"
+
+这是错误的。
+
+它实际上是一个运行时系统，涉及：
+
+- 工具 API
+- 执行循环
+- 状态管理
+- 上下文管道
+- 权限系统
+- 任务编排
+
+模型只是其中一部分。
+
+周围的基础设施至关重要。
+
+
+
+# 14. 为什么 Claude Code 感觉比许多 AI 工具更智能
+
+
+秘诀不一定是更高的智商。
+
+而是：
+
+
+
+# 闭环执行
+
+
+大多数聊天机器人的工作方式如下：
+
+输入 → 响应 → 完成
+
+Claude Code 的工作方式如下：
+
+输入
+→ 规划
+→ 行动
+→ 观察
+→ 验证
+→ 重试
+→ 改进
+→ 完成
+
+这种差异改变了一切。
+
+
+
+# 15. "现实反馈循环"
+
+
+这可以说是最大的突破。
+
+Claude 并不完全依赖内部推理。
+
+它不断检查外部现实。
+
+示例：
+
+- 终端输出
+- 编译器错误
+- 测试失败
+- 代码检查警告
+- 运行时日志
+- 文件差异
+
+现实成为推理过程的一部分。
+
+这极大地减少了幻觉。
+
+
+
+# 16. 为什么简洁取胜
+
+
+来自独立架构分析的一个迷人见解：
+
+Claude Code 内部出奇地简单。（[PromptLayer](https://blog.promptlayer.com/claude-code-behind-the-scenes-of-the-master-agent-loop/?utm_source=chatgpt.com)）
+
+没有疯狂的编排图。
+
+没有巨大的决策树。
+
+只有：
+
+- 强大的模型
+- 工具访问权限
+- 迭代循环
+- 良好的上下文管理
+
+这种简洁性提高了：
+
+- 可靠性
+- 可调试性
+- 适应性
+
+
+
+# 17. Claude Code 与传统 AI 编码助手
+
+
+传统副驾驶：
+
+- 建议代码
+- 自动补全函数
+- 回答问题
+
+Claude Code：
+
+- 执行工作流
+- 操作你的环境
+- 验证结果
+- 自主迭代
+
+这是一个重大转变：
+
+
+
+# 从 AI 助手 → AI 操作者
+
+
+
+
+# 18. 软件开发的未来
+
+
+Claude Code 暗示了工程领域的未来方向。
+
+未来的开发者可能会花更少的时间：
+
+- 编写样板代码
+- 修复重复性错误
+- 手动重构
+
+而花更多的时间：
+
+- 定义目标
+- 审查架构
+- 设置约束
+- 做出战略决策
+
+角色从：
+
+
+
+## 编写代码
+
+
+转变为
+
+
+
+## 指挥智能系统
+
+
+
+
+# 19. 最重要的见解
+
+
+Claude Code 最疯狂的部分是：
+
+它的智能并非来自一个巨大的突破。
+
+而是来自：
+
+- 持续迭代
+- 工具交互
+- 环境反馈
+- 递归改进
+
+换句话说：
+
+Claude Code 之所以有效，是因为它可以：
+
+
+
+# 思考 → 行动 → 观察 → 重复
+
+
+一遍又一遍。
+
+这个循环才是真正的创新。
+
+
+
+# 最终思考
+
+
+Claude Code 代表了真正的 AI 代理进入主流软件工程领域最清晰的例子之一。
+
+不是因为它华而不实。
+
+而是因为它弥合了：
+
+- 思考
+与
+- 执行
+
+之间的差距。
+
+它不仅仅产生想法。
+
+它执行它们。
+
+而这改变了人类与软件创造之间的整个关系。
+
+
+
+来源与技术参考
+
+本分析使用了官方 Anthropic 文档和独立的架构分析。（[Claude Code](https://code.claude.com/docs/en/how-claude-code-works?utm_source=chatgpt.com)）

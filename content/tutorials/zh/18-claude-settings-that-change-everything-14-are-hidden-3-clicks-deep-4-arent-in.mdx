@@ -1,0 +1,548 @@
+---
+title: "18个改变一切的Claude设置。14个藏在3层菜单深处。4个在任何文档中都找不到。"
+slug: "18-claude-settings-that-change-everything-14-are-hidden-3-clicks-deep-4-arent-in"
+locale: "zh"
+description: "18个改变一切的Claude设置。14个藏在3层菜单深处。4个在任何文档中都找不到。"
+category: "提示工程"
+tags: ["Claude", "RAG", "规划", "Python"]
+techStack: []
+difficulty: "初级"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HJBl88mXYAAQCgi.jpg"
+featured: false
+date: 2026-05-25
+updatedAt: 2026-05-25
+---
+
+# 18个改变一切的Claude设置。14个藏在3层菜单深处。4个在任何文档中都找不到。
+
+Anthropic 为 Claude Code 的 `settings.json` 提供了 125 多个配置项。官方文档只覆盖了大约 40 个。
+
+其中 14 个缺失项藏在 Claude.ai 界面 3 层菜单深处。4 个在任何文档中都找不到。你只能通过阅读 GitHub issues、在 Discord 上看工程师泄露、或者在凌晨 1 点 grep Claude Code 的二进制文件来发现它们。
+
+大多数 Claude 用户使用的是 Anthropic 六个月前发布的默认设置。他们的账单在悄悄上涨。输出质量在逐渐下降。他们把问题归咎于模型。
+
+下面：18 个真正掌控你 Claude 的设置。
+
+8 个在 Claude.ai 中。
+
+7 个在 Claude Code 中。
+
+3 个在 API 和控制台中。
+
+每个设置：它在哪里，它做什么，一行代码的修复方法。
+
+# 第一部分：Claude（8 个设置）
+
+## 1. 记忆：范围、排除列表和“忘记这个”命令
+
+**位置：** 设置 -> 能力 -> 记忆
+
+**功能：** 记忆功能于 2026 年 3 月向 Free 和 Pro 用户推出。默认情况下，它会存储 Claude 认为值得存储的所有内容。大多数人忽略了三个控制选项：按项目范围、排除列表和即时忘记命令。
+
+**为什么重要：** 默认记忆会漂移。4-6 周后，它会充满一次性修正（你曾对某个文件说过一次“我更喜欢 Python 里的 tab”）、会泄漏到无关聊天中的项目特定事实，以及过时的角色上下文。输出质量下降，因为 Claude 现在在为错误的“你”进行优化。
+
+**修复方法：**
+
+1.  开启项目范围记忆：设置 -> 能力 -> 记忆 -> 按项目范围。项目内部的记忆会保留在该项目中。仅此一项就能解决大部分漂移问题。
+2.  在排除列表中添加任何你不想在无关聊天中出现的主题。例如：离婚、医疗、薪资数字、客户名称。除非被排除，否则这些内容会无视上下文而持续存在。
+3.  在任何聊天中使用内联忘记命令：`forget what you remembered about [topic]`
+
+Claude 会将其与你的记忆存储进行解析，并确认它删除了什么。无需菜单，无需设置页面。
+
+## 2. 扩展思考：按聊天切换
+
+**位置：** 聊天输入框 -> 模型选择下拉菜单 -> 扩展思考：关闭 / 轻度 / 完整
+
+**功能：** 扩展思考会在回答之前添加一个 `<thinking>` 推理过程。Anthropic 在 Opus 上默认开启此功能。三态切换是按聊天进行的，并会覆盖全局设置。
+
+**为什么重要：** 扩展思考非常适合数学、调试、多步骤规划。但在总结、翻译、格式化、重写和快速查询上则是浪费。在这些任务上，它会增加 3-12 秒的延迟和 20-40% 的 token 消耗，却得到相同的答案。
+
+**修复方法：** 将默认设置为“轻度”（仅在模型认为有用时才使用思考），并在处理困难工作时显式切换到“完整”。我展示过此设置的大多数用户在第一周就将他们的 Opus token 花费降低了 18-25%。
+
+## 3. 自定义风格：不是“语气”，而是实际的输出契约
+
+**位置：** 聊天输入框 -> 风格选择器 -> 创建新风格
+
+**功能：** 风格最初是一个语气切换开关（“正式 / 简洁 / 解释性”）。自定义风格实际上是一个输出契约。你粘贴一个 200-1500 词的指令文件。在该风格下的每个响应都会在生成前应用它。
+
+**为什么重要：** 大多数人使用风格是为了“让它更短”。真正的用途是在不重复粘贴的情况下，强制每个响应都遵守结构规则。引用格式。禁用词。必需章节。代码围栏语言。长度限制。是否要问后续问题。
+
+**修复方法：** 为每个工作流创建一个风格。我的：
+
+```markdown
+# 风格：为 X 起草
+
+输出契约：
+- 以一个具体的数字或命名实体开头。不要用“我一直在想...”
+- 尽可能将句子控制在 18 个词以内。
+- 除非节奏需要，否则不要使用破折号。
+- 不要使用“深入”、“利用”、“健壮”、“解锁”、“颠覆性”。
+- 如果列出 3 项以上，使用连字符列表，不要用数字编号。
+- 以陈述句结尾，不要用问句。
+
+如果草稿超过 280 个字符且用户没有要求线程，
+在回答前先说明。
+```
+
+轮换使用其中三个（为 X 起草、代码审查、总结 PDF）取代了我 80% 的保存提示。
+
+## 4. 项目：大多数人留空的“指令”字段
+
+**位置：** 任何项目 -> 右上角 ⋯ -> 编辑项目指令
+
+**功能：** 项目是持久化工作区。指令字段是一个系统提示等效项，会注入到该项目的每个聊天中。Anthropic 通过知识上传功能引入项目，这是人们记住的。指令字段在同一页面上，我看到的 70% 的项目中它都是空白的。
+
+**为什么重要：** 项目中的每个聊天在没有它的情况下都是冷启动。有了它，你就不必再重新建立上下文。（“这是一个 Polymarket 研究工作流。默认持怀疑态度。始终显示概率计算。绝不推荐交易——只评估期望值。”）
+
+**修复方法：** 把它当作 Claude 的 `CLAUDE.md`。保持在 400 词以内。指定角色、默认怀疑程度、格式化规则、绝对不要做的事情。每月重读一次并精简。
+
+## 5. 搜索历史聊天（Pro+）以及如何真正搜索
+
+**位置：** 设置 -> 个人资料 -> 搜索历史聊天（必须启用）
+
+**功能：** 允许 Claude 在相关时搜索你的对话历史。仅限 Pro+。
+
+**为什么重要：** 即使是 Pro 用户，新账户默认也是关闭的。开启后，诀窍在于要知道它进行的是关键词匹配，而不是语义匹配。“我们昨天关于中国机器人讨论了什么”不会返回任何结果，除非你过去的聊天记录中确实包含了“中国机器人”或“中国”和“机器人”。
+
+**修复方法：** 开启它。然后学习实际的查询结构。使用内容名词，而不是元词汇。“Polymarket Iran”有效。“我们上周讨论的那个东西”无效。
+
+## 6. 网络搜索：按对话切换和引用行为
+
+**位置：** 聊天输入框 -> + -> 网络搜索：开启 / 关闭
+
+**功能：** 网络搜索切换是按对话进行的，但其行为会根据设置 -> 能力 -> 网络搜索引用中的一个不太为人知的设置而改变：内联 / 脚注 / 隐藏。
+
+**为什么重要：** 默认是内联。内联引用会破坏复制粘贴。当你把 Claude 的答案复制到别处时，你会复制指向虚无的标记。脚注模式保持答案整洁，并在末尾列出来源。
+
+**修复方法：** 如果你曾经将 Claude 的网络搜索答案复制到另一个文档、电子邮件或消息中，请切换到脚注。只有当你完全在 Claude 内部阅读时，才保留内联模式。
+
+## 7. 连接器：Cowork 中的“信任此文件夹”陷阱
+
+**位置：** 设置 -> 连接器 -> Cowork -> 受信任的文件夹
+
+**功能：** Cowork（2026 年 4 月 GA）允许 Claude 访问你机器上的一个文件夹。默认情况下，Anthropic 会在每次会话前询问是否信任该文件夹。受信任文件夹列表是绕过此询问的途径。
+
+**为什么重要：** 一旦文件夹被加入受信任列表，Claude 就会在每次 Cowork 会话中无需提示地读取它。如果你在三月份测试时添加了一个文件夹然后忘记了，Claude 此后一直在每次会话中静默地读取它。
+
+**修复方法：** 打开受信任文件夹。移除任何不是当前活跃项目的内容。这个列表增长得比你预期的要快。
+
+## 8. 隐身模式及其实际跳过的内容
+
+**位置：** 侧边栏 → 新建隐身对话（或 Cmd/Ctrl + Shift + N）
+
+**功能：** 隐身对话不会被保存、不会被记忆、不可搜索、不会用于模型改进。关闭对话时即被删除。
+
+**为何重要：** 人们以为隐身只是将对话隐藏于侧边栏。实际上它跳过了四个系统：记忆写入、对话历史、历史对话搜索索引、训练数据选择加入（如果你已开启）。
+
+**修复方案：** 在处理敏感数据时有意使用它：薪资、医疗、家庭、法律草案、客户名称。三次按键，无需思考。
+
+![](https://pbs.twimg.com/media/HJBniMlXcAAhrDF.png)
+
+---
+
+# 第二部分：Claude Code（7 项设置）
+
+这些设置位于 `~/.claude/settings.json`（用户级）或 `.claude/settings.json`（项目级）。后者优先级更高。
+
+v2.1.105 版本二进制文件中共有 125+ 个键。以下七项是真正能改变局面的。
+
+---
+
+## 9. enabledPlugins - 禁用而非卸载
+
+**位置：** `~/.claude/settings.json` → `enabledPlugins`
+
+**功能：** 设置会话启动时加载哪些已安装的插件。插件市场让安装变得简单。卸载则较困难，如果你只需将值设为 `false`，则无需卸载。
+
+**为何重要：** 每个活跃插件都会将其钩子、`SKILL.md` 内容和工具模式加载到你的上下文预算中。三个你忘记的插件 = 在你输入任何内容之前就已预占 3-8K 令牌。
+
+我在此次审计开始时启用了 14 个插件。现在只有 4 个处于活跃状态。
+
+**修复方案：**
+
+```json
+{
+  "enabledPlugins": {
+    "formatter@acme-tools": true,
+    "deployer@acme-tools": false,
+    "analyzer@security-plugins": false,
+    "old-experiment@personal": false
+  }
+}
+```
+
+`false` 保持插件已安装但未加载。当你实际需要时，可通过 `/plugin enable name@marketplace` 按会话重新启用。
+
+---
+
+## 10. permissions.deny - 关于该漏洞你需要了解的内容
+
+**位置：** `~/.claude/settings.json` → `permissions.deny`
+
+**功能：** 阻止 Claude 运行特定工具或访问特定文件。意图：防止 `rm -rf`、防止读取 `.env`、防止在项目外写入。
+
+**为何重要：** 存在一个已知漏洞。拒绝规则有时无法生效。已有多个 GitHub issue 提交。最常被引用的（`anthropics/claude-code#11544`）记录了钩子因配置有效却无法加载的情况；类似模式也影响拒绝规则的执行。规则在你的配置中。调试日志显示"找到 0 个匹配项"。Claude 仍然读取该文件。
+
+**修复方案：**
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/*secret*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ]
+  }
+}
+```
+
+在文件系统层面增加第二层防护。使用 `chmod 600 .env`，这样即使 Claude 尝试读取，操作系统也会拒绝。不要仅依赖拒绝列表。在 Claude Code 中使用 `/permissions` 进行验证。如果规则未显示，请重启会话。
+
+---
+
+## 11. hooks.SessionStart - 将我的上下文膨胀减少 30% 的 4 行代码
+
+**位置：** `~/.claude/settings.json` → `hooks.SessionStart`
+
+**功能：** 当你在目录中打开 Claude Code 时触发 SessionStart。你可以运行任何操作：打印环境信息、检查 git 状态、注入上下文文件、预热缓存。
+
+**为何重要：** 大多数人注入过多内容。`CLAUDE.md` 膨胀到 5K 令牌，因为所有项目规则都放入了其中。SessionStart 让你只加载与当前分支或目录相关的规则。
+
+**修复方案：**
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat .claude/context-$(git branch --show-current).md 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+你的主分支加载 `context-main.md`。你的 `feat/auth` 分支加载 `context-feat-auth.md`。每个文件保持小巧。上下文预算不再流失。
+
+---
+
+## 12. disableAllHooks - 紧急开关
+
+**位置：** `~/.claude/settings.json` → `disableAllHooks: true`
+
+**功能：** 通过一个开关禁用所有钩子。在 2026 年 3 月更新中推出。大多数人不知道它的存在。
+
+**为何重要：** 当 Claude Code 出现异常行为（幽灵命令运行、会话启动时挂起、神秘文件写入）时，80% 的情况是某个钩子误触发。逐个禁用钩子很慢。这个开关能一次性全部禁用，以便你隔离问题。
+
+**修复方案：** 保持为 `false`。当出现问题时，切换为 `true`，重启，查看问题是否消失。如果是，则逐个重新启用钩子。如果不是，则问题出在其他地方。
+
+---
+
+## 13. 按项目覆盖模型
+
+**位置：** `.claude/settings.json`（项目根目录）→ `model`
+
+**功能：** 设置该项目的默认模型。覆盖你的全局设置。
+
+**为何重要：** 大多数人全局设置 Opus，因为他们希望用于困难任务。然后他们打开一个主要是 Markdown 编辑或 shell 脚本的项目。他们以 Opus 的价格付费，而 Haiku 以 1/20 的成本完成这些任务。
+
+**修复方案：**
+
+```json
+// 在你的 /docs 项目中：
+{ "model": "claude-haiku-4-5-20251001" }
+
+// 在你的 /infra 项目中：
+{ "model": "claude-sonnet-4-6" }
+
+// 在你的 /core-engine 项目中：
+{ "model": "claude-opus-4-7" }
+```
+
+项目级覆盖优先。打开项目，获得正确的模型。继续工作。
+
+---
+
+## 14. 带 enabled 标志的 mcpServers
+
+**位置：** `~/.claude/settings.json` → `mcpServers`
+
+**功能：** MCP 服务器将 Claude 连接到外部工具。每个已连接的服务器都会将其完整的工具模式加载到你的上下文中。每个服务器占用 800 到 6,000 个令牌。
+
+**为何重要：** 人们连接 MCP 服务器进行测试，但从不断开。三个月后，你连接了 12 个，其中实际使用 3 个。9 个未使用的服务器每次会话启动时消耗约 25-40K 令牌的上下文模式。
+
+**修复方案：** 使用 `enabled` 标志保持连接已配置但未加载。
+
+```json
+{
+  "mcpServers": {
+    "github":   { "command": "...", "enabled": true },
+    "postgres": { "command": "...", "enabled": true },
+    "slack":    { "command": "...", "enabled": false },
+    "linear":   { "command": "...", "enabled": false }
+  }
+}
+```
+
+当你实际需要时，按会话切换为 `true`。大多数日子我保持 2-3 个活跃。在规划日，6 个。
+
+---
+
+## 15. cleanupPeriodDays - 无人提及的缓存
+
+**位置：** `~/.claude/settings.json` → `cleanupPeriodDays`
+
+**功能：** 设置 Claude Code 保留转录、调试日志和中间会话数据的天数。默认值为 30。
+
+**为何重要：** Dreaming 和历史对话搜索都依赖这些转录。在默认的 30 天窗口期内，Dreaming 只能从一个月的工作中学习。六个月则提供 6 倍的信号。磁盘成本：约 200MB。
+
+**修复方案：**
+
+```json
+{ "cleanupPeriodDays": 180 }
+```
+
+180 天的会话历史可供 Dreaming 使用、供记忆整合使用，也供你自己在搜索"我三月份告诉 Claude 关于那个认证漏洞的什么内容"时使用。
+
+## Claude Code 产物：一个包含全部7项设置的 settings.json
+
+将以下内容复制到 `~/.claude/settings.json`。根据你的实际情况调整路径和插件名称。重启 Claude Code。重新运行 `/permissions` 和 `/hooks` 以验证所有设置均已加载。
+
+```json
+{
+  "model": "claude-sonnet-4-6",
+
+  "enabledPlugins": {
+    "formatter@acme-tools": true,
+    "old-experiment@personal": false
+  },
+
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/*secret*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ]
+  },
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat .claude/context-$(git branch --show-current).md 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  },
+
+  "disableAllHooks": false,
+
+  "mcpServers": {
+    "github":    { "command": "npx", "args": ["@modelcontextprotocol/server-github"], "enabled": true },
+    "postgres":  { "command": "npx", "args": ["@modelcontextprotocol/server-postgres"], "enabled": false },
+    "slack":     { "command": "npx", "args": ["@modelcontextprotocol/server-slack"], "enabled": false }
+  },
+
+  "cleanupPeriodDays": 180
+}
+```
+
+项目级覆盖配置放在项目根目录下的 `.claude/settings.json` 中。最常用的设置如下：
+
+```json
+// .claude/settings.json (在文档项目中)
+{ "model": "claude-haiku-4-5-20251001" }
+```
+
+![](https://pbs.twimg.com/media/HJBsw8lXEAAxs9u.jpg)
+
+## 第三节：API 与控制台（3项设置）
+
+这些设置存在于代码或 Anthropic 控制台中。它们是本文中对成本影响最大的设置。每一项都可能使你的账单变化 30-90%。
+
+## 16. cache_control 断点：放在哪里
+
+**位置：** API 请求体，任意内容块上的 `cache_control` 字段
+
+**作用：** 将提示词的前缀标记为可缓存。后续使用相同前缀的请求将按输入费率的大约 10% 计费，而非全价。
+
+**重要性：** 这是 API 中最大的成本杠杆。人们知道它的存在。但大多数人放错了断点位置，只能获得部分节省而非全部。在我自己的配置中，修复断点位置后，每月账单从 340 美元降到了 87 美元。
+
+**修复方法：** 断点应放在静态内容和动态内容的分界处。断点之前的内容会被缓存，之后的内容会重新计算。
+
+```python
+# 错误 — 断点在用户消息之后，没有可重用的缓存内容
+messages = [
+    {"role": "system", "content": SYSTEM_PROMPT},
+    {"role": "user", "content": user_question,
+     "cache_control": {"type": "ephemeral"}}
+]
+
+# 正确 — 断点在稳定的系统提示词之后，下次调用可完全命中缓存
+messages = [
+    {"role": "system", "content": SYSTEM_PROMPT,
+     "cache_control": {"type": "ephemeral"}},
+    {"role": "user", "content": user_question}
+]
+```
+
+有两种 TTL 可用：5 分钟临时（默认）和 1 小时。对于会话间不变化的系统提示词，使用 1 小时：
+
+```python
+{"cache_control": {"type": "ephemeral", "ttl": "1h"}}
+```
+
+缓存写入比基础输入贵 25%。缓存读取为基础输入的 10%。临界点：如果在 TTL 窗口内读取 2 次以上，缓存前缀就值得使用。
+
+## 17. inference_geo 与数据驻留税
+
+**位置：** API 请求 -> `inference_geo` 参数
+
+**作用：** 将推理路由到特定地理区域。仅限美国驻留、仅限欧盟等。
+
+**重要性：** 仅限美国的数据驻留会使 Opus 4.7 及以上版本增加 10% 的溢价。这不在标准定价卡上，你会看到它在发票上。
+
+**修复方法：** 如果你的合规制度实际上并不要求区域驻留，就不要设置 `inference_geo`。大多数应用默认设置它"以确保安全"，因为法务部门有人说"确保数据留在美国"。请核实该要求是合同性的还是意向性的。如果是意向性的，省略该参数，每次 Opus 调用可节省 10%。
+
+如果你确实需要它，将 10% 的溢价纳入模型选择考量。Sonnet 基础价格 3 美元实际上变成 3.30 美元，这会改变 Opus 与 Sonnet 的盈亏平衡点。
+
+## 18. 工作区级速率限制（防止凌晨 3 点宕机的那一个）
+
+**位置：** 控制台 -> 设置 -> 工作区 -> [你的工作区] -> 按功能速率限制
+
+**作用：** 为每个工作区、每个功能设置速率限制，与账户级限制分开。
+
+**重要性：** 账户级限制保护你不会破产。工作区级限制保护你的交互式产品，防止失控的批处理作业消耗你全部的 ITPM 配额。你发布一个新功能，它出 bug 了，它循环了，它消耗了一切，你的面向客户的聊天开始返回 429 错误。工作区限制可以防止一个功能饿死另一个功能。
+
+**修复方法：** 为每个表面创建一个工作区（交互式聊天、批处理、内部工具、实验性）。将每个工作区的速率限制设置为账户层级的 60-70%。预留 30% 给需要突发的任意工作区。
+
+本文中第四个未记录在案的设置：每个工作区内有一个功能级上限，只有点击进入特定功能卡片才能看到，工作区概览页面不可见。默认 = 无限制。
+
+如果你在一个工作区中有三个功能，其中一个可能会饿死另外两个，而工作区级限制无法捕捉到这种情况。为任何执行批处理工作的功能设置按功能上限。
+
+![](https://pbs.twimg.com/media/HJBti6-W8AAKurM.jpg)
+
+## 第四节：18 项检查清单
+
+完整过一遍。20 分钟。任何你在 12 个月内没有碰过的项目，可能永远不会再碰了。
+
+```markdown
+## Claude.ai
+
+- [ ] #1  记忆：项目级记忆开启，排除列表已填充
+- [ ] #2  扩展思考：默认 = 轻度
+- [ ] #3  自定义风格：至少创建一个工作流风格
+- [ ] #4  项目指令：每个活跃项目都已填写
+- [ ] #5  历史聊天搜索：开启（Pro+）
+- [ ] #6  网络搜索引用：脚注模式
+- [ ] #7  协作者信任文件夹：已审查、已精简
+- [ ] #8  隐身模式：快捷键已记住
+
+## Claude Code
+
+- [ ] #9  enabledPlugins：仅活跃插件 = true
+- [ ] #10 permissions.deny：环境变量文件 + sudo + rm -rf 已阻止，操作系统级备份已就位
+- [ ] #11 hooks.SessionStart：分支感知上下文加载器
+- [ ] #12 disableAllHooks：false（知道开关在哪里）
+- [ ] #13 model：为文档/基础设施/核心项目设置了按项目覆盖
+- [ ] #14 mcpServers：使用 enabled 标志，而非完全删除
+- [ ] #15 cleanupPeriodDays：180
+
+## API / 控制台
+
+- [ ] #16 cache_control：断点在稳定系统提示词之后，每日稳定前缀使用 1 小时 TTL
+- [ ] #17 inference_geo：仅在合规确实需要时设置
+- [ ] #18 工作区速率限制：已设置按工作区 AND 按功能上限
+```
+
+## 第五节：审计脚本（每周运行）
+
+将以下内容放入 `~/bin/claude-audit.sh`。每周运行。它会标记 Claude Code 部分的检查清单以及 API 部分的 `cache_control` 方面。
+
+```bash
+#!/usr/bin/env bash
+
+# claude-audit.sh — 跨 7 项 Claude Code + 1 项 API 检查的标志设置漂移
+
+```bash
+CLAUDE_DIR="$HOME/.claude"
+SETTINGS="$CLAUDE_DIR/settings.json"
+
+echo "=== 已启用的插件 ==="
+jq '.enabledPlugins // {} | to_entries | map(select(.value==true)) | length' "$SETTINGS" 2>/dev/null
+echo "目标：3-5 个活跃。其余按会话重新启用。"
+
+echo
+echo "=== 已启用的 MCP 服务器 ==="
+jq '.mcpServers // {} | to_entries | map(select(.value.enabled==true)) | length' "$SETTINGS" 2>/dev/null
+echo "目标：3 个始终开启。其余按会话启用。"
+
+echo
+echo "=== permissions.deny 规则数量 ==="
+jq '.permissions.deny // [] | length' "$SETTINGS" 2>/dev/null
+echo "目标：>=5 条规则。至少包含 .env / sudo / rm -rf。"
+
+echo
+echo "=== SessionStart 钩子已配置 ==="
+jq '.hooks.SessionStart // [] | length' "$SETTINGS" 2>/dev/null
+echo "目标：>=1 条记录。"
+
+echo
+echo "=== cleanupPeriodDays ==="
+jq '.cleanupPeriodDays // 30' "$SETTINGS" 2>/dev/null
+echo "目标：180。"
+
+echo
+echo "=== 按项目的模型覆盖 ==="
+find . -maxdepth 3 -name "settings.json" -path "*/.claude/*" 2>/dev/null | while read f; do
+  model=$(jq -r '.model // "—"' "$f")
+  echo "  $f → $model"
+done
+echo "目标：docs → haiku, infra → sonnet, core → opus。"
+
+echo
+echo "=== API cache_control 检查（设置 API_KEY 后运行）==="
+if [ -n "$ANTHROPIC_API_KEY" ]; then
+  echo "手动检查：每个超过 1K 令牌的 system_prompt 应包含 cache_control，TTL 为 1 小时。"
+else
+  echo "已跳过 — 请设置 ANTHROPIC_API_KEY 以启用。"
+fi
+```
+
+保存，`chmod +x ~/bin/claude-audit.sh`，每周运行一次，直到每项指标都达到目标。
+
+# 第 6 节：未入选的内容
+
+在发布前，我移除了四个候选项目。值得提一下，以免你浪费时间研究它们。
+
+**自适应推理开关。** Anthropic 默认启用了此功能。覆盖选项位于“设置 → 功能 → 推理模式”。经过 30 天的对比，我找不到任何工作流中覆盖它会显著改变结果。相信默认设置，继续前进。
+
+**技能自动激活。** 你可以切换 Claude 是根据相关性检测自动加载技能，还是需要显式调用。我原以为这很重要，但事实并非如此。带有渐进式披露（仅在需要时加载 SKILL.md 元数据）的自动激活已经调优得很好。保持开启。
+
+**Dispatch 移动端到桌面端控制。** 这是一个有用的功能，但不是设置审计项。要么你有适合的工作流，要么没有。没有隐藏的开关能改变结果。
+
+**每个工作区的 max_tokens 上限。** 你可以强制每个响应截断为 800、2000 或 4000 个令牌。对于对话密集型工作流，这能节省实际费用，但会破坏需要长输出的代码生成。值得在每个工作区测试，但不建议作为默认推荐。
+
+# 结 束
+
+今晚就检查清单。大多数人会修复 6-8 项。少数人会修复 14 项以上。你的账单仪表盘和使用量图表会告诉你这 20 分钟是否值得。
+
+> 收藏并今晚检查清单。如果这能为你省去一个月“Claude 变笨了”的烦恼，请转发。
+>
+> 每日 AI 技巧 Telegram： [https://t.me/+_ZWrQN7GuDA3ZDEy](https://t.me/+_ZWrQN7GuDA3ZDEy)
