@@ -1,0 +1,180 @@
+---
+title: "这应该是目前最接近正解的 Agent 记忆方案"
+slug: "这应该是目前最接近正解的-agent-memory-方案"
+locale: "zh"
+description: "这应该是目前最接近正解的 Agent 记忆方案"
+category: "LLM Models"
+tags: ["Claude", "RAG", "Prompt Engineering"]
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HJibZGPboAAGIZY.jpg"
+featured: false
+date: 2026-06-04
+updatedAt: 2026-06-04
+---
+
+# 这应该是目前最接近正解的 Agent 记忆方案
+
+
+我在 CLAUDE.md 里写了 200 多行规则，就为了让 Agent 记住我是谁。
+
+写作口吻、排版禁忌、配图风格，全靠我一条条手写进去，虽然每次开新 session，这些规则都在。但这不是 Agent 的记忆，这是我手写的说明书。
+
+说明书是死的：我写下"不用破折号"，Agent 就不用。但它不知道为什么不用，不知道我纠正过它几次，不知道这个规则背后是"我觉得破折号让中文失去节奏感"这个判断。
+
+我的 Agent 在执行规则，但它没有学会规则。
+
+## 现有的记忆方案，大部分在做“搜旧聊天”
+
+
+这个问题不是没人注意到，ChatGPT 有 memory，Claude 有 project knowledge，市面上也有各种第三方记忆插件。
+
+但仔细看，它们做的事情差不多：把你过去的对话或者你手动标记的信息存起来，建一个向量索引，下次聊的时候检索相关段落塞回 context。
+
+能用，但有几个绕不开的问题。
+
+第一，存的是原始对话，信噪比很低。你三个月前和 AI 闲扯的一段话被检索出来，模型得自己判断哪些有用，经常判断错。
+
+第二，记忆是扁平的。所有信息平等存储，没有"这条比那条重要""这个结论已经被更新过"的层次。用得越久，噪音越多。
+
+第三，不会从错误中学习。你纠正过 AI 十次同样的问题，它的"记忆"里有十条纠正记录，但没有归纳出"以后别再这样做"这个策略。
+
+这些方案解决了"存"的问题，但没解决"学"的问题。
+
+## 装了 MemOS 的本地插件之后，Hermes 告诉我的一件事
+
+
+装完 MemOS Local Plugin 之后，我问 Hermes："你现在记忆是保存在哪里的？"
+
+它给了一个很清楚的回答：
+
+![](https://pbs.twimg.com/media/HJib4obagAABbWd.jpg)
+
+两条线：内置 memory 存在本地 JSON 文件里，是我主动告诉它的东西：名字、角色、偏好、写作规则。MemOS 是另一套独立的长期记忆系统，从对话中自动提取 trace（事件轨迹）、policy（行为规则）、world_model（环境知识），然后把成熟的流程结晶成可调用的 skill。
+
+Hermes 自己的总结比我解释得好："内置 memory 是我主动存的显性记事贴，MemOS 是后台自动学习积累的隐形记忆。"
+
+这就是 MemOS 和上面那些方案最大的区别。它不是帮你存对话，它从你做事的过程里自动提炼策略。
+
+MemOS 管这套叫 Reflect2Evolve。对话先沉淀为 trace，有价值的 trace 归纳成 policy（行为策略），成熟的 policy 再结晶为可复用的 skill。不是"记住你说过什么"，是"从你做事的过程里提炼出下次怎么做"。
+
+## 实测一：教它写推文
+
+
+第一轮，我告诉 Hermes 我写 X 推文的习惯：不用破折号，开头直接抛观点不铺垫，要有活人感，不能有 AI 味，然后让它写一条关于 Context Engineering 的推文。
+
+![](https://pbs.twimg.com/media/HJicShXasAA7MbY.jpg)
+
+它写完之后，我纠正了一次："这个开头太平了，换一个更锐利的钩子。我的推文习惯是第一句就抛观点或抛冲突，不要铺垫。"
+
+它立刻改了，第一句变成"暴论：Prompt Engineering 被高估了。"然后还回了一句："第一句就是观点，不留铺垫。"
+
+![](https://pbs.twimg.com/media/HJiclQrbIAAEoNo.jpg)
+
+到这里为止，和大部分 AI 助手没什么区别。真正的测试是下一步。
+
+退出 Hermes。开新 session。这次我只说了一句话：
+
+"帮我写一条 X 推文，主题是'Claude Code 的 CLAUDE.md 本质上是在做 Context Engineering'。"
+
+没有重复任何偏好。没有提醒它我是谁。
+
+然后我看到了这个：
+
+![](https://pbs.twimg.com/media/HJict5rbcAALuBI.jpg)
+
+它在写之前做了四件事：
+
+1. 自动加载了一个叫 x-content-writing 的 skill
+2. 用 memos_search 搜索了"X writing style context engineering"，耗时 4.7 秒
+3. 搜了 memos_environment，找到我的 Obsidian vault 路径
+4. 去我的 vault 里读了我之前实际发布过的 X 文章，摸节奏
+
+然后它说："好，来写。读完你最近的 X 文章，摸一下节奏，直接开写。"
+
+写出来的是这个：
+
+> CLAUDE.md 不是配置。是 Context Engineering。每往里面写一行，你就在设计模型的上下文窗口。项目结构、编码偏好、红线禁忌，全是手工注入的工作记忆。Prompt 管"这次干什么"。CLAUDE.md 管"你是谁"。后端出身应该秒懂。微服务启动先拉注册中心配置，知道自己跟哪些服务打交道。CLAUDE.md 就是 Agent 的注册中心。每次 session 先读一遍，再干活。
+
+零破折号，第一句直接抛观点，后端类比自然带出，没有"一文读懂"式的开头。
+
+这不是它简单记住了我说过不用破折号，它从我的执行过程和已发布的文章里，提炼出了一套写作策略，然后在一个全新的 session 里自动应用。
+
+这次我确实觉得和之前用的记忆方案不一样。
+
+## 实测二：做两个产品页，看风格有没有跨项目迁移
+
+
+换一个更有分量的任务。
+
+第一轮，我让 Hermes 给 ReddTrends（www.reddtrends.com）做产品介绍页，明确要求：奶油白底配暖色、文案直接不要"赋能""一站式"、布局简洁、独立开发者感觉。它做出来之后我又纠正了 CTA 按钮的文案。
+
+![](https://pbs.twimg.com/media/HJic493akAAGw4g.jpg)
+
+然后退出，开一个新 session，让它给另一个产品 MoleUninstaller 做介绍页，只给了产品名和功能描述，不给任何风格指示。
+
+![](https://pbs.twimg.com/media/HJidG8-akAEaqy6.jpg)
+
+结果：MoleUninstaller 的页面走了一个完全不同的方向：深色底，英文主标题，橙色强调色，和 ReddTrends 的暖色独立开发者风格完全不同。
+
+风格偏好没有跨项目迁移过来。
+
+这说明 MemOS 的记忆不是简单的"用户上次说了奶油白底，以后都用奶油白底"，它会区分任务上下文。但反过来说，如果你期望它记住"我做所有产品页都用暖色系"，目前还做不到，这个粒度的偏好学习可能需要更多轮的积累。
+
+## 打开 Viewer，看看它学到了什么
+
+
+跑完两轮实测之后，Viewer 里的数据变化很明显：
+
+![](https://pbs.twimg.com/media/HJidd-ObkAE-iEV.jpg)
+
+从最初的全零，到现在 47 条记忆、8 个任务、24 条经验（12 条已启用）、2 个技能、1 条环境认知。全部自动生成。
+
+经验页里最有意思的几条：
+
+![](https://pbs.twimg.com/media/HJidru6awAEk17u.jpg)
+
+"Convert WeChat Official Account article to Xiaohongshu format"，support 25，已启用。这条经验被触发了 25 次，说明 MemOS 从我反复做的公众号转小红书任务里归纳出了策略。
+
+"修改文件后通过浏览器导航验证""验证页面修改后无控制台错误"，这两条是做产品页时自动提炼出来的工程习惯。
+
+技能页也有变化：
+
+![](https://pbs.twimg.com/media/HJidxQubUAAOo39.jpg)
+
+check_obsidian_vault_path_env 从 V1 升级到了 V2，support 从 1 变成 2。MemOS 在第二次遇到类似任务时，自动升级了技能版本。这就是 Reflect2Evolve 里"Evolve"的意思：技能不是一成不变的，用得越多越成熟。
+
+三个模型各司其职：本地 Xenova 做 embedding（免费），DeepSeek V4 Flash 做摘要（便宜），DeepSeek V4 Pro 做技能进化（只在需要强推理时调用），贵的模型只用在刀刃上。
+
+所有数据存在本机 SQLite，Viewer 只监听本地，零云依赖。做过 RAG 的可以看一眼检索管线：FTS5 全文 + 向量混合，过 RRF 融合排序、MMR 去重、14 天半衰期时间衰减，再过 LLM 过滤，这比"embedding + cosine similarity"复杂一个量级，但检索质量才是记忆有没有用的分水岭。
+
+![](https://pbs.twimg.com/media/HJieAMKbYAAVgCR.jpg)
+
+## 一份核心，多 Agent 共用
+
+
+还有一个设计值得提。OpenClaw 和 Hermes 共享同一套 Reflect2Evolve 核心，只是适配器不同。你在 Hermes 里积累的经验和技能，算法层面和 OpenClaw 是通的，记忆资产不会因为切换工具归零。
+
+## 用下来的真实感受
+
+
+最让我意外的不仅仅是它记住了我的偏好，还有在第二个 session 里，它写推文之前自己跑了一串动作：加载 skill，搜索记忆，找到我的 vault，读我之前发过的文章，然后跟我说"读完你最近的文章，摸一下节奏"。
+
+我当时的反应是：这不对啊，我没让你去读我的旧文章。
+
+但它自己判断这件事该做，这个感觉和“帮我搜一下上次聊过什么”完全不同。
+
+产品页那边就没这么惊喜了，ReddTrends 的暖色风格没有迁移到 MoleUninstaller 上。想想也合理，风格偏好只出现过一次，MemOS 的经验需要 support 次数积累才会固化成策略，一次不够。
+
+所以目前的状态是：高频重复的任务效果很明显，偶发的偏好还不稳定。但方向我觉得没问题，我写了半年 CLAUDE.md，越写越觉得这活不该是人干的。
+
+MemOS Local Plugin 官网：[https://memos-claw.openmem.net/](https://memos-claw.openmem.net/)GitHub：[https://github.com/MemTensor/MemOS/tree/main/apps/memos-local-plugin](https://github.com/MemTensor/MemOS/tree/main/apps/memos-local-plugin)
+
+Agent一键安装：
+
+```text
+https://github.com/MemTensor/MemOS/tree/main/apps/memos-local-plugin
+```
+
+我是Yanhua，持续关注AI Agent和独立开发出海， 如果你对AI Agent感兴趣，欢迎关注 --> @yanhua1010
