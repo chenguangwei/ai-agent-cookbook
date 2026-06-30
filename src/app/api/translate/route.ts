@@ -23,6 +23,7 @@ const CONTENT_TYPE_DIRS: Record<ContentType, string> = {
 interface ContentItem {
   slug: string;
   title: string;
+  date: string;
   sourceLocale: string;
   contentType: ContentType;
   locales: Record<string, boolean>;
@@ -42,6 +43,22 @@ function extractTitle(content: string, format: 'mdx' | 'json', slug: string): st
   }
   const titleMatch = content.match(/^title:\s*['"](.+?)['"]/m);
   return titleMatch ? titleMatch[1] : slug;
+}
+
+/**
+ * Extract date (YYYY-MM-DD) from file content; empty string if absent.
+ */
+function extractDate(content: string, format: 'mdx' | 'json'): string {
+  if (format === 'json') {
+    try {
+      const json = JSON.parse(content);
+      return typeof json.date === 'string' ? json.date : '';
+    } catch {
+      return '';
+    }
+  }
+  const dateMatch = content.match(/^date:\s*['"]?(\d{4}-\d{2}-\d{2})/m);
+  return dateMatch ? dateMatch[1] : '';
 }
 
 /**
@@ -77,6 +94,7 @@ async function scanContentType(
 
   for (const [slug, localeMap] of Object.entries(result)) {
     let title = slug;
+    let date = '';
     let sourceLocale = '';
     for (const locale of locales) {
       if (localeMap[locale]) {
@@ -84,6 +102,7 @@ async function scanContentType(
           const filePath = path.join(dir, locale, `${slug}${ext}`);
           const content = await fs.readFile(filePath, 'utf-8');
           title = extractTitle(content, format, slug);
+          date = extractDate(content, format);
           sourceLocale = locale;
           break;
         } catch {
@@ -95,6 +114,7 @@ async function scanContentType(
     items.push({
       slug,
       title,
+      date,
       sourceLocale,
       contentType,
       locales: Object.fromEntries(locales.map((l) => [l, !!localeMap[l]])),

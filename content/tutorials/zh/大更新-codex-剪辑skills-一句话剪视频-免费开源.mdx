@@ -1,0 +1,142 @@
+---
+title: "大更新！Codex × 剪辑Skills，一句话剪视频，免费开源"
+slug: "大更新-codex-剪辑skills-一句话剪视频-免费开源"
+locale: "zh"
+description: "大更新！Codex × 剪辑Skills，一句话剪视频，免费开源"
+category: "LLM Models"
+tags: []
+techStack: []
+difficulty: "Beginner"
+duration: ""
+thumbnail: "https://pbs.twimg.com/media/HLZOYtiWwAAqjUU.jpg"
+featured: false
+date: 2026-06-24
+updatedAt: 2026-06-24
+---
+
+# 大更新！Codex × 剪辑Skills，一句话剪视频，免费开源
+
+
+我之前做过一个 2000+ Star 的剪辑 Skills。
+
+![](https://pbs.twimg.com/media/HLZPxwmW8AAM-ku.jpg)
+
+这次接上 Codex，大升级：它可以接住后续流程，继续做分镜、动画和合成。
+
+已经帮我跑出好几条千赞视频。
+
+![](https://pbs.twimg.com/media/HLZQQcEWoAA7HuX.jpg)
+
+以前做视频，要先打开剪映。
+
+现在装好 Skills，把视频和文字稿丢给 Agent，它就能把整条片子往下跑。
+
+## 我是怎么做的？
+
+
+第一步，让 Agent 安装剪辑 Skills。
+
+提示词很简单：
+
+> 帮我安装或更新 chengfeng-videocut-skills 这个剪辑 Skills。安装地址是 https://github.com/Agentchengfeng/chengfeng-videocut-skills
+
+Agent 会先跟你确认，然后自己去跑安装。装好以后，本地就能调用这套剪辑 Skills。
+
+![](https://pbs.twimg.com/media/HLZQmbpW8AAZlGg.jpg)
+
+## 生成剪后视频和字幕
+
+
+第二步，先把原始口播整理成基础素材包。
+
+![](https://pbs.twimg.com/media/HLZRMaKXAAA4H3I.jpg)
+
+我们把口播视频和文字稿交给 剪口播 Skills，就能拿到剪后视频和字幕文件。
+
+口播视频不用复杂录。我一般直接对着文字稿念一遍。如果中间涉及到具体操作，就切换画面，把操作过程录进去。
+
+直接在项目里输入斜杠命令：
+
+> /剪口播 + 视频地址 + 口播稿地址
+
+接到命令后，Agent 会先生成审核页。
+
+![](https://pbs.twimg.com/media/HLZRfCxXkAAZeoc.jpg)
+
+Agent 会把停顿、口误、重说先整理出来。我要做的，就是确认这些删除项是否对。
+
+确认没问题后，我点“执行剪辑”。
+
+这一步跑完后，Agent 直接输出剪后视频和字幕文件。得到的字幕，和剪后视频，在时间上是对齐的。
+
+## 按字幕生成分镜页面
+
+
+素材包准备好以后，在项目里输入斜杠命令，唤醒 口播成片 Skill。
+
+> /口播成片
+
+Agent 会生成一个 HTML 分镜核对页。
+
+![](https://pbs.twimg.com/media/HLZRwTgXsAEceUg.jpg)
+
+左边是 Agent 生成的画面，右边是字幕、画面任务、素材来源和镜头动作。
+
+这个 Skill 在分镜页里实际做三件事：
+
+![](https://pbs.twimg.com/media/HLZSG50WsAAsiO3.jpg)
+
+它会先按字幕时间轴拆段，再根据每一段内容选择画面来源。
+
+每一句话，到底保留原视频，还是换成截图、产品页面、结果页，或者做一个 HTML 动画，Agent 都会在这里一步处理掉。
+
+如果某一段不满意，直接告诉 Codex 第几段哪里不对。改起来也非常快。
+
+比如：
+
+> 05 这一段动画改一下。箭头指向标题，圈出右侧结果。
+
+Codex 的 Computer Use 可以打开页面，看左边画面和右边口播，再回去改 HTML 画面或标注。
+
+我的动作从“自己排分镜”，变成“看分镜，提修改一键”。
+
+## 检查时间线预览
+
+
+分镜页面确认后，就可以进入时间线预览。
+
+![](https://pbs.twimg.com/media/HLZSYYBW8AAsEbL.jpg)
+
+左边是视频预览；底部是进度条，附带文字说明；右边展示口播内容。
+
+时间线预览会按字幕时间点排动画。字幕说到哪里，动画就出现在哪里，这比自己在剪辑软件里对时间线省很多事。
+
+这里看的是：这些画面放回整条视频以后，出现得对不对。
+
+如果视频出错，反馈不用写长文，直接按片段说：
+
+> 01 保留原视频。02 图出现太早。03 画面太满，删掉下面两行字。
+
+这一步确认以后，才进入最终合成。
+
+## 用 HyperFrames 合成 MP4
+
+
+前面的视频预览确认以后，就可以让 Agent 合成。
+
+Agent 会用 HyperFrames 负责把它变成可以渲染的视频动画工程。
+
+![](https://pbs.twimg.com/media/HLZSp49XYAAAkFW.jpg)
+
+HyperFrames 对 Agent 很友好，因为它可以把 HTML 动画变成视频。只要画面能用 HTML 做出来，就能进入这条合成流程。
+
+过几分钟，就可以看到最后的动画。
+
+## 剪辑 Agent，正在逐步替代传统剪辑
+
+
+以前，视频生产围绕时间线展开。
+
+现在，视频生产开始围绕工作流展开。
+
+剪辑 Agent 正在替代传统剪辑里的操作层，把视频生产变成一条可以持续复用的自动化流程。

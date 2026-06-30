@@ -19,6 +19,7 @@ import {
 interface ContentItem {
   slug: string;
   title: string;
+  date: string;
   sourceLocale: string;
   contentType: string;
   locales: Record<string, boolean>;
@@ -41,6 +42,7 @@ export default function TranslatePage() {
   // Filters
   const [activeType, setActiveType] = useState<string>('all');
   const [filterLocale, setFilterLocale] = useState<string>('all');
+  const [hideCompleted, setHideCompleted] = useState<boolean>(true);
 
   // Multi-select
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -63,14 +65,25 @@ export default function TranslatePage() {
   }, [fetchStatus]);
 
   // Filtered items
-  const filteredItems = data?.items.filter((item) => {
+  const supportedLocales = data?.supportedLocales ?? [];
+  const isItemComplete = (item: ContentItem) =>
+    supportedLocales.length > 0 && supportedLocales.every((l) => item.locales[l]);
+
+  const filteredItems = (data?.items.filter((item) => {
     if (activeType !== 'all' && item.contentType !== activeType) return false;
     if (filterLocale !== 'all') {
       // Show items missing this locale
       if (item.locales[filterLocale]) return false;
     }
+    if (hideCompleted && isItemComplete(item)) return false;
     return true;
-  }) ?? [];
+  }) ?? [])
+    // Incomplete first, then by date desc (missing dates sink to the bottom)
+    .sort((a, b) => {
+      const completeDiff = Number(isItemComplete(a)) - Number(isItemComplete(b));
+      if (completeDiff !== 0) return completeDiff;
+      return b.date.localeCompare(a.date);
+    });
 
   // Selection helpers
   const itemKey = (item: ContentItem) => `${item.contentType}:${item.slug}`;
@@ -364,6 +377,17 @@ TRANSLATE_MODEL=gpt-4o  # or deepseek-chat, etc.`}
                       ))}
                     </select>
                   </div>
+
+                  {/* Hide completed toggle */}
+                  <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={hideCompleted}
+                      onChange={(e) => setHideCompleted(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 accent-primary-600"
+                    />
+                    Hide completed
+                  </label>
 
                   <Button variant="outline" size="sm" onClick={fetchStatus} className="gap-2">
                     <RefreshCw className="w-4 h-4" />
